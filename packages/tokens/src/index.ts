@@ -1,16 +1,13 @@
-// Placeholder scaffold. Real token values land in Phase 1 (see docs/npm-design-system-implementation-plan.md).
-export interface DesignTokens {
-  color: Record<string, unknown>;
-  typography: Record<string, unknown>;
-  elevation: Record<string, unknown>;
-  radius: Record<string, unknown>;
-  spacing: Record<string, unknown>;
-}
+// v0.1 — implements only the categories with confirmed audit values: color, radius, elevation.
+// Typography, spacing, gradients, and subject colors are deliberately not exported yet — see
+// docs/token-normalization-decisions.md and packages/tokens/README.md for what's deferred and why.
 
-export const tokens: DesignTokens = {
-  color: {},
-  typography: {},
-  elevation: {},
-  radius: {},
-  spacing: {},
-};
+export * from "./color";
+export * from "./radius";
+export * from "./elevation";
+
+import { color } from "./color";
+import { elevation } from "./elevation";
+import { radius } from "./radius";
+
+export const tokens = { color, radius, elevation };

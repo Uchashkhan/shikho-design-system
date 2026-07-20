@@ -100,7 +100,7 @@ All commands were run with `CI=true` to suppress Storybook's interactive telemet
 
 ## 5. Warnings and Unresolved Issues
 
-- **`pnpm` is not installed globally on this machine.** Both `corepack enable` and `npm install -g pnpm` failed with `EACCES` (no write permission on `/usr/local/lib/node_modules` / `/usr/local/bin` without sudo). I did not run a `sudo` command to fix this, since that's a system-level change outside this task's scope. All commands in this session used `npx --yes pnpm@9 <command>` as a workaround, which works correctly but is slower (re-resolves the pnpm CLI each invocation) and diverges from the `packageManager: "pnpm@9.15.9"` field in `package.json` (which expects a real corepack-managed `pnpm` on `PATH`). **Action needed from you:** either grant write access to `/usr/local` for global npm installs, or run `corepack enable`/`npm install -g pnpm` yourself with elevated privileges, so `pnpm <command>` works directly.
+- ~~`pnpm` is not installed globally on this machine.~~ **Resolved** — `brew install pnpm` was run in a later session; Homebrew's pnpm respects the `packageManager: "pnpm@9.15.9"` field automatically, so `pnpm <command>` now works directly on `PATH` without the `npx pnpm@9` workaround. All commands in §7 below use the real `pnpm` binary.
 - **`@storybook/addon-essentials@8.6.14` vs. core `8.6.18` version mismatch warning** — cosmetic, Storybook still builds and runs correctly; will self-resolve once dependency ranges are next bumped.
 - **Large Storybook doc-renderer chunk (~884KB)** — a Vite build-size warning from Storybook's own `DocsRenderer` bundle, not from any project code (the project currently has one placeholder component). Not actionable at this stage.
 - **Deprecated transitive subdependencies** (`glob@10.5.0`, `uuid@9.0.1`, `whatwg-encoding@3.1.1`) reported by pnpm — pulled in transitively by Storybook/Vite tooling, not a direct or actionable dependency choice here.
@@ -110,6 +110,78 @@ All commands were run with `CI=true` to suppress Storybook's interactive telemet
 
 ---
 
-## 6. Exact Next Recommended Task
+## 6. Phase 1 status
 
-**Phase 1 — Token normalization**, per `docs/npm-design-system-implementation-plan.md` §0 and §11: produce the raw-Figma-name → canonical-token-name mapping doc (radius collisions, alpha/opacity convention, the `focus_danger` binding fix, and the single selection-state vocabulary decision for Checkbox/Radio/Toggle/Chip). This mapping doc — not code — is the explicit prerequisite the audit itself calls out before any real values are written into `packages/tokens`.
+**Complete.** `docs/token-normalization-decisions.md` was produced, approved (in part), and is now implemented — see §7.
+
+---
+
+## 7. Token Package v0.1 Implementation (`@shikho/tokens` color / radius / elevation)
+
+This round implements the first production-usable slice of `@shikho/tokens`, per the approved decisions in `docs/token-normalization-decisions.md`: color, radius, and elevation only, plus the approved `focus.danger` fix. Selection-vocabulary unification, black/white opacity renaming, and alpha-convention consolidation remain explicitly deferred.
+
+### Files created or modified
+
+**Created:**
+- `packages/tokens/src/color.ts` — 11 confirmed color ramps (`primary`, `secondary`, `shikhoAi`, `secondary2`, `info`, `success`, `danger`, `warning`, `gray`, `vanillaGray`, `dark`), the 12-step `black`/`white` opacity ramps, and `focusRingColor` (5 focus-ring colors, `danger` corrected)
+- `packages/tokens/src/radius.ts` — rank-based `radius` scale (17 values) + `radiusLegacyAliases` (3 deprecated aliases)
+- `packages/tokens/src/elevation.ts` — `elevation.e1`–`e6`, each a confirmed shadow-layer list
+- `packages/tokens/src/color.test.ts`, `radius.test.ts`, `elevation.test.ts` — category-specific tests
+- `docs/token-normalization-decisions.md` — produced in the prior session, now the implemented spec (unmodified this round)
+
+**Modified:**
+- `packages/tokens/src/index.ts` — replaced the placeholder `DesignTokens`/`tokens` shape with real exports (`export * from "./color"`, `./radius`, `./elevation`) plus a `tokens = { color, radius, elevation }` aggregate; no `typography`/`spacing` keys
+- `packages/tokens/src/index.test.ts` — rewritten to assert the real root export shape and that unresolved categories are absent
+- `packages/tokens/README.md` — full rewrite per the documentation requirements (install/import, categories, naming examples, `focus.danger` fix, radius decision, aliases, deferred items, unresolved categories, "not inferred" statement)
+
+**Not modified:** nothing outside `packages/tokens/` and this documentation — `packages/ui` and `packages/icons` only reference `@shikho/tokens`'s `tokens` export as a bare type (`typeof tokens`), so reshaping its contents did not require touching either package. No audit file or Figma source was touched.
+
+### Confirmed token count
+
+≈**56 canonical values** exported as distinct, individually confirmed data points:
+- Color: 11 ramps × 11 steps = 121 primitive hex values, + 2 opacity ramps (`black`, `white`) × 12 steps = 24 hex values, + 5 `focusRingColor` values (4 confirmed-as-is + 1 corrected) = **150 confirmed color values**
+- Radius: **17 confirmed values** (`none` through `10xl`, plus `track` and `full`)
+- Elevation: **6 levels**, comprising **21 individual shadow layers** in total (1+2+3+4+5+6), each with a confirmed `y`/`blur`/`spread`, all sharing 1 confirmed shadow color
+
+Total individual confirmed data points: **150 (color) + 17 (radius) + 21 shadow layers across 6 elevation levels ≈ 188**, all cited to a specific line in `docs/audit/`.
+
+### Alias count
+
+**3 deprecated radius aliases** (`radiusLegacyAliases.borderRadiusSm2`, `.borderRadiusMd`, `.borderRadiusLg`) — each documented with `@deprecated` JSDoc pointing at its canonical replacement, added only where the audit confirmed an exact value collision between the two legacy radius systems. No color or elevation aliases were added (no equivalent confirmed collision existed for those categories).
+
+### Token categories intentionally excluded
+
+Typography, spacing, gradients, subject colors, opacity-step renaming, and any semantic "surface/emphasis" tokens (`smoke_*`, `_base`/`_med_em`) — none are exported, not even as `null` placeholders. See `packages/tokens/README.md` "Unresolved token categories" and "Deferred decisions" sections for the full list and reasoning.
+
+### Confirmation: no values guessed or inferred
+
+Every hex, numeric radius value, and shadow-layer number in `color.ts`, `radius.ts`, and `elevation.ts` carries an inline source citation to a specific `docs/audit/*.md` file, cross-checked against the source documents directly (not solely from the earlier normalization-decisions summary) before being written. Where the audit explicitly labeled a value as inferred-not-confirmed (e.g. elevations.md's geometric-progression hypothesis for e3/e4/e5, since superseded by direct confirmation in later audits) or unresolved (gradients, ~30 subject colors, focus-ring geometry, typography composites for Body 2/Overline/Para), that value was **not** implemented. The one intentional deviation from a raw Figma value — `focus.danger` — is a corrected mapping to a different *already-confirmed* value (danger's own alpha-24, `#f03d3d3d`, itself quoted verbatim from `docs/audit/alerts.md`), not an invented one.
+
+### Commands executed
+
+```
+pnpm build       # turbo run build     — 4/4 packages pass
+pnpm typecheck   # turbo run typecheck — 4/4 packages pass (7 tasks incl. tokens' own tsc --noEmit)
+pnpm test        # turbo run test      — 7/7 tasks pass, 12 new tests in packages/tokens
+pnpm lint        # turbo run lint      — 4/4 packages pass, no errors
+```
+
+All run with the real `pnpm` binary (see the resolved note in §5) and `CI=true` to avoid interactive prompts.
+
+### Validation results
+
+| Check | Status | Notes |
+|---|---|---|
+| Build | ✅ Pass | `tokens` builds ESM+CJS+`.d.ts` via tsup with no errors; downstream `icons`/`ui`/`storybook` builds unaffected |
+| Tests | ✅ Pass | 12/12 new assertions pass across `color.test.ts` (3), `radius.test.ts` (3), `elevation.test.ts` (4), `index.test.ts` (2); existing `icons`/`ui` tests still pass |
+| Typecheck | ✅ Pass | `tsc --noEmit` clean in `tokens`; `ui`/`icons` still typecheck cleanly against the reshaped `tokens` export (only referenced via `typeof tokens`) |
+| Lint | ✅ Pass | `eslint .` clean in all 4 packages, no new warnings |
+
+### Warnings or blockers
+
+- None new. `docs/.DS_Store` shows as modified in `git status` — a macOS Finder metadata artifact, not touched intentionally by this work, and not part of the token implementation.
+- The two-word radius keys (`"2xl"`, `"3xl"`, …, `"10xl"`) require bracket/string-key access in TypeScript (`radius["2xl"]` rather than `radius.2xl`) — a minor ergonomic note, not a defect; documented in code comments.
+
+### Exact next recommended task
+
+Populate `packages/ui`'s Tailwind v4 `@theme` layer (currently `src/styles.css` has no theme values — see the prior setup report) by wiring it to `@shikho/tokens`'s new `color`, `radius`, and `elevation` exports, so `tailwind-variants`-based components can start consuming real design values. This should happen **before** any real component (starting with `Button`, per the implementation plan's build-tier order) is implemented, since components need the token-backed Tailwind theme to exist first.
