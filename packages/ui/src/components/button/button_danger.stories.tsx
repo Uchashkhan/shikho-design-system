@@ -13,7 +13,7 @@ const states: ButtonDangerState[] = ["default", "hover", "focus", "disabled"];
 const meta: Meta<typeof ButtonDanger> = {
   title: "Button/button_danger",
   component: ButtonDanger,
-  args: { size: "xs", type: "primary", state: "default", children: "Delete" },
+  args: { size: "md", type: "Secondary", state: "default", children: "Learn more" },
   argTypes: {
     size: { control: "select", options: sizes },
     type: { control: "select", options: types },
@@ -25,7 +25,16 @@ export default meta;
 
 type Story = StoryObj<typeof ButtonDanger>;
 
-export const Playground: Story = {};
+/**
+ * The exactly confirmed instance — `button_danger/md/secondary/default`, discovered via the
+ * Alert audit's literal nested-instance path (docs/audit/alerts.md §11): fill `Color/gray/100`,
+ * label color `text/danger-600`. This replaced an earlier, less-confirmed derived placeholder.
+ */
+export const ConfirmedBinding: Story = {};
+
+export const Playground: Story = {
+  args: { size: "xs", type: "primary" },
+};
 
 /** Demonstrates the corrected focus.danger ring — see docs/token-normalization-decisions.md §10. */
 export const FocusRingFix: Story = {

@@ -7,3 +7,6 @@ export * from "./components/checkbox";
 export * from "./components/list";
 export * from "./components/radio";
 export * from "./components/toggle";
+export * from "./components/chip";
+export * from "./components/alert";
+export * from "./components/toast";
