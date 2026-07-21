@@ -21,3 +21,4 @@ export * from "./components/tags";
 export * from "./components/avatar";
 export * from "./components/button-group";
 export * from "./components/date-picker";
+export * from "./components/link";
