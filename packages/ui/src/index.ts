@@ -1,6 +1,12 @@
 export { Placeholder } from "./Placeholder";
 export type { PlaceholderProps } from "./Placeholder";
 
+export type {
+  ComponentDocsMeta,
+  ComponentDocsCategory,
+  ComponentDocsStatus,
+} from "./docs-meta";
+
 export * from "./components/button";
 export * from "./components/input";
 export * from "./components/checkbox";

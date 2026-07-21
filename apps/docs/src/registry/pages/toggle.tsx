@@ -1,17 +1,9 @@
 import { Toggle, type ToggleSize } from "@shikho/ui";
-import type { ComponentEntry } from "../types";
+import type { ComponentPageConfig } from "./types";
 
-export const toggleEntry: ComponentEntry = {
-  slug: "toggle",
-  name: "Toggle",
-  figmaName: "toggle",
-  category: "Forms",
-  confidence: "partially-derived",
-  summary: "Switch control rendered as a native checkbox with role=\"switch\".",
-  description:
+export const pageConfig: ComponentPageConfig = {
+  longDescription:
     "The third and final selection-control primitive. Figma spells its states `switch_ON` / `switch_OFF` — a third distinct vocabulary, differing from both Checkbox's `checked`/`unchecked` and Radio's `active`/`inactive`. It also has the most limited state coverage of the three: no hover state, and no OFF-focused variant.",
-  auditFile: "docs/audit/toggle.md",
-  exports: ["Toggle"],
   variants: [
     {
       name: "size",
@@ -28,7 +20,6 @@ export const toggleEntry: ComponentEntry = {
     "There is no hover state and no indeterminate state — both confirmed absent from toggle's enum, unlike its two siblings.",
     "`toggle_label` is a second confirmed component set, not yet implemented.",
   ],
-  importExample: `import { Toggle } from "@shikho/ui";`,
   usageExample: `import { Toggle } from "@shikho/ui";
 
 export function NotificationSetting() {

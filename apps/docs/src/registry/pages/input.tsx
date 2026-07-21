@@ -11,28 +11,11 @@ import {
   type FieldType,
   type InputFieldState,
 } from "@shikho/ui";
-import type { ComponentEntry } from "../types";
+import type { ComponentPageConfig } from "./types";
 
-export const inputEntry: ComponentEntry = {
-  slug: "input",
-  name: "Input",
-  figmaName: "input_label, input_hint, field, input_field, dropdown, textarea, digit_input, digit_field",
-  category: "Forms",
-  confidence: "deep-audited",
-  summary: "Seven component sets plus one bare instance, split between sizing and interaction state.",
-  description:
+export const pageConfig: ComponentPageConfig = {
+  longDescription:
     "Unlike Buttons, the Input family splits sizing/style (`field`) and interaction state (`input_field`, `textarea`, `digit_input`, `dropdown`) across separate component sets. Two nodes were deep-audited, so `Field` and `InputField` carry real confirmed layout, padding, booleans and instance-swap slots.",
-  auditFile: "docs/audit/input.md",
-  exports: [
-    "InputLabel",
-    "InputHint",
-    "Field",
-    "InputField",
-    "Dropdown",
-    "Textarea",
-    "DigitInput",
-    "DigitField",
-  ],
   variants: [
     {
       name: "size",
@@ -59,7 +42,6 @@ export const inputEntry: ComponentEntry = {
     "`Dropdown`, `Textarea` and `DigitInput` were never deep-audited; they reuse `field`'s confirmed baseline styling.",
     "`digit_field` is a bare Figma instance with no captured properties at all, and its relationship to `digit_input` is explicitly uninvestigated — so no multi-cell OTP layout is invented for it.",
   ],
-  importExample: `import { Field, InputField, InputLabel, InputHint } from "@shikho/ui";`,
   usageExample: `import { InputField } from "@shikho/ui";
 
 export function EmailField() {

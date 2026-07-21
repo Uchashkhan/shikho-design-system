@@ -1,17 +1,9 @@
 import { Chip, type ChipSize, type ChipState, type ChipType } from "@shikho/ui";
-import type { ComponentEntry } from "../types";
+import type { ComponentPageConfig } from "./types";
 
-export const chipEntry: ComponentEntry = {
-  slug: "chip",
-  name: "Chip",
-  figmaName: "chip",
-  category: "Data display",
-  confidence: "deep-audited",
-  summary: "Pill-shaped chip with an interactive selection trio plus two fixed-colour themes.",
-  description:
+export const pageConfig: ComponentPageConfig = {
+  longDescription:
     "Deep-audited at md/selected/focus, giving exact fill, text colour, radius and — unusually — an unambiguous focus mechanism. Chip encodes selection in its `type` property rather than a state, a different philosophy from Checkbox's explicit `checked`/`unchecked` state.",
-  auditFile: "docs/audit/chips.md",
-  exports: ["Chip"],
   variants: [
     { name: "size", values: ["lg", "md", "sm"], note: "Only md's 32px height is exactly confirmed; lg and sm are approximate overview-level observations." },
     {
@@ -29,7 +21,6 @@ export const chipEntry: ComponentEntry = {
     "How `drag`, `hover` and `disabled` actually render was never inspected; all three fall back to the confirmed per-type resting appearance.",
     "Whether a checkmark asset is swapped into one of the generic icon slots for selected chips is explicitly unconfirmed, so the slots stay empty unless a consumer supplies one.",
   ],
-  importExample: `import { Chip } from "@shikho/ui";`,
   usageExample: `import { Chip } from "@shikho/ui";
 
 export function TopicFilter({ topics, selected, onToggle }) {

@@ -99,8 +99,8 @@ export function KnownGaps({ items }: { items: string[] }) {
   );
 }
 
-export function ConfidencePill({ confidence }: { confidence: "deep-audited" | "partially-derived" }) {
-  const isDeep = confidence === "deep-audited";
+export function ConfidencePill({ status }: { status: "deep-audited" | "partially-derived" }) {
+  const isDeep = status === "deep-audited";
   return (
     <span className={`sk-pill ${isDeep ? "sk-pill--stable" : "sk-pill--partial"}`}>
       {isDeep ? "Deep-audited" : "Partly derived"}
@@ -110,4 +110,18 @@ export function ConfidencePill({ confidence }: { confidence: "deep-audited" | "p
 
 export function TokenChip({ children }: { children: ReactNode }) {
   return <span className="sk-token">{children}</span>;
+}
+
+/**
+ * Rendered wherever a component has a `docs.meta.ts` but no matching page config yet (see
+ * `apps/docs/src/registry/pages`) — the safe fallback the discovery system guarantees. Never
+ * imports anything from `@shikho/ui`, so it can never crash even for a metadata-only entry.
+ */
+export function FallbackPreview({ name }: { name: string }) {
+  return (
+    <div style={{ textAlign: "center", color: "var(--sk-text-subtle)" }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--sk-text-muted)" }}>{name}</div>
+      <div style={{ fontSize: 12, marginTop: 4 }}>No preview configured yet</div>
+    </div>
+  );
 }

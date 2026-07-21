@@ -1,33 +1,40 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Chip } from "@shikho/ui";
-import { componentRegistry } from "../registry";
+import { componentRegistry, getPageConfig } from "../registry";
 import { PageHeader, Section } from "../ui/primitives";
 
-const playable = componentRegistry.filter((entry) => entry.playground);
+const playable = componentRegistry
+  .map((entry) => ({ entry, page: getPageConfig(entry.slug) }))
+  .filter((candidate): candidate is typeof candidate & { page: NonNullable<typeof candidate.page> } =>
+    Boolean(candidate.page?.playground),
+  );
 
 export function PlaygroundPage() {
-  const [slug, setSlug] = useState(playable[0]?.slug ?? "");
-  const entry = playable.find((candidate) => candidate.slug === slug) ?? playable[0];
+  const [slug, setSlug] = useState(playable[0]?.entry.slug ?? "");
+  const current = playable.find((candidate) => candidate.entry.slug === slug) ?? playable[0];
+  const playground = current?.page.playground;
 
   const initialValues = useMemo(() => {
     const values: Record<string, string> = {};
-    for (const control of entry?.playground?.controls ?? []) {
+    for (const control of playground?.controls ?? []) {
       values[control.prop] = control.defaultValue;
     }
     return values;
-  }, [entry]);
+  }, [playground]);
 
   const [valuesBySlug, setValuesBySlug] = useState<Record<string, Record<string, string>>>({});
-  const values = valuesBySlug[entry?.slug ?? ""] ?? initialValues;
+  const values = valuesBySlug[current?.entry.slug ?? ""] ?? initialValues;
 
-  if (!entry?.playground) {
+  if (!current || !playground) {
     return (
       <div className="sk-container">
         <PageHeader title="Playground" lede="No component currently exposes a playground." />
       </div>
     );
   }
+
+  const { entry } = current;
 
   const setValue = (prop: string, next: string) =>
     setValuesBySlug((prev) => ({
@@ -47,23 +54,23 @@ export function PlaygroundPage() {
         <div className="sk-chiprow">
           {playable.map((candidate) => (
             <Chip
-              key={candidate.slug}
+              key={candidate.entry.slug}
               size="md"
-              type={candidate.slug === entry.slug ? "selected" : "unselected"}
-              textContent={candidate.name}
+              type={candidate.entry.slug === entry.slug ? "selected" : "unselected"}
+              textContent={candidate.entry.name}
               leftIcon={false}
               rightIcon={false}
-              onClick={() => setSlug(candidate.slug)}
-              aria-pressed={candidate.slug === entry.slug}
+              onClick={() => setSlug(candidate.entry.slug)}
+              aria-pressed={candidate.entry.slug === entry.slug}
             />
           ))}
         </div>
       </Section>
 
-      <Section title={entry.name} description={entry.summary}>
-        <div className="sk-preview">{entry.playground.render(values)}</div>
+      <Section title={entry.name} description={entry.description}>
+        <div className="sk-preview">{playground.render(values)}</div>
         <div className="sk-controls">
-          {entry.playground.controls.map((control) => (
+          {playground.controls.map((control) => (
             <div key={control.prop}>
               <span className="sk-control__label">{control.label}</span>
               <div className="sk-control__options">

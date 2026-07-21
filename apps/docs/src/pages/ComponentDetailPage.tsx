@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Chip } from "@shikho/ui";
-import { getComponent, type Control } from "../registry";
+import { getComponent, getPageConfig, type Control } from "../registry";
 import {
   CodeBlock,
   ConfidencePill,
+  FallbackPreview,
   KnownGaps,
   PageHeader,
   PropsTable,
@@ -49,14 +50,15 @@ function ControlGroup({
 export function ComponentDetailPage() {
   const { slug = "" } = useParams();
   const entry = getComponent(slug);
+  const page = entry ? getPageConfig(entry.slug) : undefined;
 
   const initialValues = useMemo(() => {
     const values: Record<string, string> = {};
-    for (const control of entry?.playground?.controls ?? []) {
+    for (const control of page?.playground?.controls ?? []) {
       values[control.prop] = control.defaultValue;
     }
     return values;
-  }, [entry]);
+  }, [page]);
 
   const [values, setValues] = useState<Record<string, string>>(initialValues);
 
@@ -73,7 +75,7 @@ export function ComponentDetailPage() {
     );
   }
 
-  const playground = entry.playground;
+  const playground = page?.playground;
 
   return (
     <div className="sk-container">
@@ -85,107 +87,126 @@ export function ComponentDetailPage() {
         <span>{entry.name}</span>
       </nav>
 
-      <PageHeader eyebrow={entry.category} title={entry.name} lede={entry.description} />
+      <PageHeader
+        eyebrow={entry.category}
+        title={entry.name}
+        lede={page?.longDescription ?? entry.description}
+      />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16, alignItems: "center" }}>
-        <ConfidencePill confidence={entry.confidence} />
+        <ConfidencePill status={entry.status} />
         <TokenChip>{entry.auditFile}</TokenChip>
+        <TokenChip>{entry.storybookTitle}</TokenChip>
       </div>
 
-      {playground ? (
-        <Section
-          title="Interactive preview"
-          description="Controls are built from the real Chip component. Only confirmed variant values are offered."
-        >
-          <div className="sk-preview">{playground.render(values)}</div>
-          <div className="sk-controls">
-            {playground.controls.map((control) => (
-              <ControlGroup
-                key={control.prop}
-                control={control}
-                value={values[control.prop] ?? control.defaultValue}
-                onChange={(next) => setValues((prev) => ({ ...prev, [control.prop]: next }))}
-              />
-            ))}
+      {!page ? (
+        <Section title="Documentation coming soon">
+          <div className="sk-empty">
+            <FallbackPreview name={entry.name} />
+            <p style={{ marginTop: 12, fontSize: 13 }}>
+              This component has metadata but no custom documentation page yet. It's fully
+              implemented in <span className="sk-inline-code">@shikho/ui</span> — see its own
+              README under <span className="sk-inline-code">packages/ui/src/components</span> for
+              full details, or check{" "}
+              <span className="sk-inline-code">{entry.storybookTitle}</span> in Storybook.
+            </p>
           </div>
         </Section>
-      ) : null}
-
-      <Section title="Installation">
-        <CodeBlock code={entry.importExample} />
-      </Section>
-
-      <Section title="Usage">
-        <CodeBlock code={entry.usageExample} />
-      </Section>
-
-      <Section
-        title="Confirmed variants"
-        description="Variant axes and values exactly as the Figma audit confirmed them — nothing inferred or extended."
-      >
-        <div style={{ display: "grid", gap: 16 }}>
-          {entry.variants.map((axis) => (
-            <div key={axis.name}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <span className="sk-table__name">{axis.name}</span>
-                <span className="sk-pill sk-pill--count">{axis.values.length} values</span>
-              </div>
-              <div className="sk-chiprow">
-                {axis.values.map((value) => (
-                  <TokenChip key={value}>{value}</TokenChip>
+      ) : (
+        <>
+          {playground ? (
+            <Section
+              title="Interactive preview"
+              description="Controls are built from the real Chip component. Only confirmed variant values are offered."
+            >
+              <div className="sk-preview">{playground.render(values)}</div>
+              <div className="sk-controls">
+                {playground.controls.map((control) => (
+                  <ControlGroup
+                    key={control.prop}
+                    control={control}
+                    value={values[control.prop] ?? control.defaultValue}
+                    onChange={(next) => setValues((prev) => ({ ...prev, [control.prop]: next }))}
+                  />
                 ))}
               </div>
-              {axis.note ? <p className="sk-section__desc">{axis.note}</p> : null}
+            </Section>
+          ) : null}
+
+          <Section title="Installation">
+            <CodeBlock code={entry.packageImport} />
+          </Section>
+
+          <Section title="Usage">
+            <CodeBlock code={page.usageExample} />
+          </Section>
+
+          <Section
+            title="Confirmed variants"
+            description="Variant axes and values exactly as the Figma audit confirmed them — nothing inferred or extended."
+          >
+            <div style={{ display: "grid", gap: 16 }}>
+              {page.variants.map((axis) => (
+                <div key={axis.name}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <span className="sk-table__name">{axis.name}</span>
+                    <span className="sk-pill sk-pill--count">{axis.values.length} values</span>
+                  </div>
+                  <div className="sk-chiprow">
+                    {axis.values.map((value) => (
+                      <TokenChip key={value}>{value}</TokenChip>
+                    ))}
+                  </div>
+                  {axis.note ? <p className="sk-section__desc">{axis.note}</p> : null}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </Section>
+          </Section>
 
-      {entry.states.length > 0 ? (
-        <Section
-          title="Confirmed states"
-          description="States present in the audited component set. States absent here do not exist in the source."
-        >
-          <div className="sk-chiprow">
-            {entry.states.map((state) => (
-              <TokenChip key={state}>{state}</TokenChip>
-            ))}
-          </div>
-        </Section>
-      ) : null}
-
-      {entry.showcases.length > 0 ? (
-        <Section title="Variants in context">
-          {entry.showcases.map((showcase) => (
-            <div className="sk-variant-block" key={showcase.title}>
-              <p className="sk-variant-block__title">{showcase.title}</p>
-              {showcase.description ? (
-                <p className="sk-section__desc" style={{ marginBottom: 10 }}>
-                  {showcase.description}
-                </p>
-              ) : null}
-              <div
-                className={`sk-variant-block__stage${
-                  showcase.layout === "stack" ? " sk-variant-block__stage--stack" : ""
-                }`}
-              >
-                {showcase.render()}
+          {page.states.length > 0 ? (
+            <Section
+              title="Confirmed states"
+              description="States present in the audited component set. States absent here do not exist in the source."
+            >
+              <div className="sk-chiprow">
+                {page.states.map((state) => (
+                  <TokenChip key={state}>{state}</TokenChip>
+                ))}
               </div>
-            </div>
-          ))}
-        </Section>
-      ) : null}
+            </Section>
+          ) : null}
 
-      <Section
-        title="Props"
-        description={`Exports from @shikho/ui: ${entry.exports.join(", ")}`}
-      >
-        <PropsTable rows={entry.props} />
-      </Section>
+          {page.showcases.length > 0 ? (
+            <Section title="Variants in context">
+              {page.showcases.map((showcase) => (
+                <div className="sk-variant-block" key={showcase.title}>
+                  <p className="sk-variant-block__title">{showcase.title}</p>
+                  {showcase.description ? (
+                    <p className="sk-section__desc" style={{ marginBottom: 10 }}>
+                      {showcase.description}
+                    </p>
+                  ) : null}
+                  <div
+                    className={`sk-variant-block__stage${
+                      showcase.layout === "stack" ? " sk-variant-block__stage--stack" : ""
+                    }`}
+                  >
+                    {showcase.render()}
+                  </div>
+                </div>
+              ))}
+            </Section>
+          ) : null}
 
-      <Section title="Known limitations">
-        <KnownGaps items={entry.gaps} />
-      </Section>
+          <Section title="Props" description={`Exports from @shikho/ui: ${entry.exports.join(", ")}`}>
+            <PropsTable rows={page.props} />
+          </Section>
+
+          <Section title="Known limitations">
+            <KnownGaps items={page.gaps} />
+          </Section>
+        </>
+      )}
     </div>
   );
 }

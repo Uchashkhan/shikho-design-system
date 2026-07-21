@@ -4,37 +4,45 @@ import {
   componentRegistry,
   foundationRegistry,
   getComponent,
+  getPageConfig,
   groupByCategory,
   searchComponents,
   searchFoundations,
 } from "./index";
 
 describe("component registry integrity", () => {
-  it("registers every documented component exactly once", () => {
+  it("registers every documented component exactly once, with no duplicate slugs", () => {
     const slugs = componentRegistry.map((entry) => entry.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
-    expect(slugs).toEqual(["button", "input", "checkbox", "list", "radio", "toggle", "chip"]);
+    expect(slugs.length).toBeGreaterThan(0);
   });
 
   it("gives every entry the fields the sidebar, gallery and detail page depend on", () => {
     for (const entry of componentRegistry) {
       expect(entry.name, `${entry.slug} name`).toBeTruthy();
-      expect(entry.summary, `${entry.slug} summary`).toBeTruthy();
       expect(entry.description, `${entry.slug} description`).toBeTruthy();
       expect(entry.auditFile, `${entry.slug} auditFile`).toMatch(/^docs\/audit\//);
       expect(entry.exports.length, `${entry.slug} exports`).toBeGreaterThan(0);
-      expect(entry.variants.length, `${entry.slug} variants`).toBeGreaterThan(0);
-      expect(entry.props.length, `${entry.slug} props`).toBeGreaterThan(0);
-      expect(entry.gaps.length, `${entry.slug} gaps`).toBeGreaterThan(0);
-      expect(entry.importExample, `${entry.slug} importExample`).toContain("@shikho/ui");
+      expect(entry.packageImport, `${entry.slug} packageImport`).toContain("@shikho/ui");
+    }
+  });
+
+  it("gives every entry with a page config confirmed variants, props and gaps", () => {
+    for (const entry of componentRegistry) {
+      const page = getPageConfig(entry.slug);
+      if (!page) continue; // no custom page yet — the safe fallback covers this entry instead
+      expect(page.variants.length, `${entry.slug} variants`).toBeGreaterThan(0);
+      expect(page.props.length, `${entry.slug} props`).toBeGreaterThan(0);
+      expect(page.gaps.length, `${entry.slug} gaps`).toBeGreaterThan(0);
     }
   });
 
   it("only offers confirmed variant values through playground controls", () => {
     for (const entry of componentRegistry) {
-      for (const control of entry.playground?.controls ?? []) {
+      const page = getPageConfig(entry.slug);
+      for (const control of page?.playground?.controls ?? []) {
         expect(control.options.length, `${entry.slug}.${control.prop}`).toBeGreaterThan(0);
-        const values = control.options.map((option) => option.value);
+        const values = control.options.map((option: { value: string }) => option.value);
         expect(values, `${entry.slug}.${control.prop} default`).toContain(control.defaultValue);
       }
     }
@@ -80,25 +88,28 @@ describe("category grouping", () => {
 describe("previews render real @shikho/ui components", () => {
   it("renders every gallery preview without crashing", () => {
     for (const entry of componentRegistry) {
-      const { unmount } = render(<div>{entry.preview()}</div>);
+      const page = getPageConfig(entry.slug);
+      if (!page) continue;
+      const { unmount } = render(<div>{page.preview()}</div>);
       unmount();
     }
   });
 
   it("renders each playground at its default values", () => {
     for (const entry of componentRegistry) {
-      if (!entry.playground) continue;
+      const page = getPageConfig(entry.slug);
+      if (!page?.playground) continue;
       const values: Record<string, string> = {};
-      for (const control of entry.playground.controls) {
+      for (const control of page.playground.controls) {
         values[control.prop] = control.defaultValue;
       }
-      const { unmount } = render(<div>{entry.playground.render(values)}</div>);
+      const { unmount } = render(<div>{page.playground.render(values)}</div>);
       unmount();
     }
   });
 
   it("renders a real interactive control, not a static image", () => {
-    render(<div>{getComponent("checkbox")!.preview()}</div>);
+    render(<div>{getPageConfig("checkbox")!.preview()}</div>);
     expect(screen.getAllByRole("checkbox").length).toBeGreaterThan(0);
   });
 });

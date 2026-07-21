@@ -8,7 +8,7 @@ const radiusStepCount = Object.keys(radius).length;
 const elevationLevelCount = Object.keys(elevation).length;
 
 export function OverviewPage() {
-  const deepAudited = componentRegistry.filter((c) => c.confidence === "deep-audited").length;
+  const deepAudited = componentRegistry.filter((c) => c.status === "deep-audited").length;
 
   return (
     <div className="sk-container">
@@ -94,7 +94,7 @@ export function OverviewPage() {
           {componentRegistry.map((entry) => (
             <Link key={entry.slug} to={`/components/${entry.slug}`} className="sk-linkcard">
               <div className="sk-linkcard__title">{entry.name}</div>
-              <p className="sk-linkcard__desc">{entry.summary}</p>
+              <p className="sk-linkcard__desc">{entry.description}</p>
             </Link>
           ))}
         </div>

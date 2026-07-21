@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { groupByCategory, searchComponents } from "../registry";
-import { ConfidencePill, PageHeader } from "../ui/primitives";
+import { getPageConfig, groupByCategory, searchComponents } from "../registry";
+import { ConfidencePill, FallbackPreview, PageHeader } from "../ui/primitives";
 
 export function ComponentsPage() {
   const [query, setQuery] = useState("");
@@ -43,18 +43,23 @@ export function ComponentsPage() {
             </div>
 
             <div className="sk-grid">
-              {entries.map((entry) => (
-                <Link key={entry.slug} to={`/components/${entry.slug}`} className="sk-card">
-                  <div className="sk-card__preview">{entry.preview()}</div>
-                  <div className="sk-card__body">
-                    <div className="sk-card__title">
-                      {entry.name}
-                      <ConfidencePill confidence={entry.confidence} />
+              {entries.map((entry) => {
+                const page = getPageConfig(entry.slug);
+                return (
+                  <Link key={entry.slug} to={`/components/${entry.slug}`} className="sk-card">
+                    <div className="sk-card__preview">
+                      {page ? page.preview() : <FallbackPreview name={entry.name} />}
                     </div>
-                    <p className="sk-card__desc">{entry.summary}</p>
-                  </div>
-                </Link>
-              ))}
+                    <div className="sk-card__body">
+                      <div className="sk-card__title">
+                        {entry.name}
+                        <ConfidencePill status={entry.status} />
+                      </div>
+                      <p className="sk-card__desc">{entry.description}</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ))

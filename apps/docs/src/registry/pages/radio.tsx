@@ -1,17 +1,9 @@
 import { Radio, type RadioSize } from "@shikho/ui";
-import type { ComponentEntry } from "../types";
+import type { ComponentPageConfig } from "./types";
 
-export const radioEntry: ComponentEntry = {
-  slug: "radio",
-  name: "Radio",
-  figmaName: "radio",
-  category: "Forms",
-  confidence: "partially-derived",
-  summary: "Native radio with confirmed sm/md sizes and no shape property — always circular.",
-  description:
+export const pageConfig: ComponentPageConfig = {
+  longDescription:
     "Renders a real `<input type=\"radio\">`, so grouping by `name` gives true mutually-exclusive behaviour. Figma names this control's selection concept `active`/`inactive` — the clearest cross-component naming divergence in the audit series, since Checkbox calls the same idea `checked`/`unchecked`.",
-  auditFile: "docs/audit/radio-buttons.md",
-  exports: ["Radio"],
   variants: [
     { name: "size", values: ["md", "sm"], note: "24×24 and 20×20 — identical dimensions to Checkbox at both steps." },
   ],
@@ -23,7 +15,6 @@ export const radioEntry: ComponentEntry = {
     "Figma exposes an `indeterminate` state, which the audit itself flags as conventionally unusual for a single-choice control. HTML has no native indeterminate property for radios and no visual was ever confirmed, so it is surfaced only as a `data-indeterminate` attribute with no styling attached.",
     "`radio_label` is a second confirmed component set, not yet implemented.",
   ],
-  importExample: `import { Radio } from "@shikho/ui";`,
   usageExample: `import { Radio } from "@shikho/ui";
 
 export function PlanPicker() {

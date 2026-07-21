@@ -1,17 +1,9 @@
 import { Checkbox, type CheckboxShape, type CheckboxSize } from "@shikho/ui";
-import type { ComponentEntry } from "../types";
+import type { ComponentPageConfig } from "./types";
 
-export const checkboxEntry: ComponentEntry = {
-  slug: "checkbox",
-  name: "Checkbox",
-  figmaName: "checkbox",
-  category: "Forms",
-  confidence: "partially-derived",
-  summary: "Native checkbox with confirmed sm/md sizes and a square/sphere shape choice.",
-  description:
+export const pageConfig: ComponentPageConfig = {
+  longDescription:
     "Renders a real `<input type=\"checkbox\">`. The audit's single conflated `state` enum is decomposed into separate `checked`, `indeterminate` and `disabled` props, with hover and focus handled by real CSS rather than a manually-set prop.",
-  auditFile: "docs/audit/checkboxes.md",
-  exports: ["Checkbox"],
   variants: [
     { name: "size", values: ["md", "sm"], note: "md is 24×24, sm is 20×20 — identical dimensions to Radio." },
     { name: "shape", values: ["sphere", "square"], note: "A genuine confirmed binary shape choice; Radio has no equivalent property." },
@@ -24,7 +16,6 @@ export const checkboxEntry: ComponentEntry = {
     "The audit confirms no `checked_hover` or `checked_disabled` variant exists, only bare `hover` / `disabled`.",
     "`checkbox_label` is a second confirmed component set, not yet implemented.",
   ],
-  importExample: `import { Checkbox } from "@shikho/ui";`,
   usageExample: `import { Checkbox } from "@shikho/ui";
 
 export function TermsCheckbox() {

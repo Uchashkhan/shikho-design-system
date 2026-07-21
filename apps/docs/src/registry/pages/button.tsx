@@ -11,7 +11,7 @@ import {
   type NewBlueState,
   type NewBlueType,
 } from "@shikho/ui";
-import type { ComponentEntry } from "../types";
+import type { ComponentPageConfig } from "./types";
 
 const dot = (
   <span
@@ -19,26 +19,9 @@ const dot = (
   />
 );
 
-export const buttonEntry: ComponentEntry = {
-  slug: "button",
-  name: "Button",
-  figmaName: "new_blue, new_pink, ai_rounded, ai_regular, button_success, button_danger, Greyscale, icon_button",
-  category: "Actions",
-  confidence: "partially-derived",
-  summary: "Eight separate button families, each with its own confirmed size/type/state vocabulary.",
-  description:
+export const pageConfig: ComponentPageConfig = {
+  longDescription:
     "The audit found eight sibling button component sets that do not share a common type or state vocabulary — and even disagree on the name of their largest size step. They are published as eight separate components rather than merged into one API, so those confirmed differences are preserved rather than erased.",
-  auditFile: "docs/audit/buttons.md",
-  exports: [
-    "NewBlueButton",
-    "NewPinkButton",
-    "AiRoundedButton",
-    "AiRegularButton",
-    "ButtonSuccess",
-    "ButtonDanger",
-    "GreyscaleButton",
-    "IconButton",
-  ],
   variants: [
     {
       name: "size",
@@ -63,7 +46,6 @@ export const buttonEntry: ComponentEntry = {
     "`ai_rounded` / `ai_regular`'s \"blue gradient\" type has no resolved value anywhere — Gradient/G1–G6 never resolve — so it falls back to a solid primary fill rather than an approximated gradient.",
     "`primary_button_effect` / `secondary_button_effect` (the audited 4-layer button shadows) are not applied: they are not yet implemented in @shikho/tokens.",
   ],
-  importExample: `import { NewBlueButton, ButtonDanger, IconButton } from "@shikho/ui";`,
   usageExample: `import { NewBlueButton } from "@shikho/ui";
 
 export function SaveAction() {

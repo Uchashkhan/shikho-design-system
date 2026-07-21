@@ -68,7 +68,7 @@ export function Sidebar() {
               key={entry.slug}
               to={`/components/${entry.slug}`}
               className="sk-navlink"
-              title={entry.summary}
+              title={entry.description}
             >
               {entry.name}
             </NavLink>

@@ -1,17 +1,9 @@
 import { List, type ListSize, type ListState } from "@shikho/ui";
-import type { ComponentEntry } from "../types";
+import type { ComponentPageConfig } from "./types";
 
-export const listEntry: ComponentEntry = {
-  slug: "list",
-  name: "List",
-  figmaName: "list",
-  category: "Data display",
-  confidence: "deep-audited",
-  summary: "A single composed list row with twelve slot booleans and a nested Checkbox.",
-  description:
+export const pageConfig: ComponentPageConfig = {
+  longDescription:
     "The first composed component in the library. `list` is one component set — a single row, not a container/child pair — and it nests a real Checkbox via its `leadIcon` boolean. That boolean's name is a confirmed misnomer: it controls a checkbox, not a generic icon, and is preserved rather than renamed.",
-  auditFile: "docs/audit/list.md",
-  exports: ["List"],
   variants: [
     { name: "size", values: ["md", "lg", "xl"], note: "Heights 52, 60 and 76. Only lg was deep-audited." },
     {
@@ -29,7 +21,6 @@ export const listEntry: ComponentEntry = {
     "The `leadItem` / `leadItemLg` slots are plain image layers, not confirmed nested Avatar instances; nothing renders without a supplied src.",
     "`drop_menu` appears in the same Figma frame as a bare instance with zero confirmed structure, and is not implemented.",
   ],
-  importExample: `import { List } from "@shikho/ui";`,
   usageExample: `import { List } from "@shikho/ui";
 
 export function SelectableRows({ items, onSelect }) {
