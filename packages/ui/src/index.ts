@@ -10,3 +10,5 @@ export * from "./components/toggle";
 export * from "./components/chip";
 export * from "./components/alert";
 export * from "./components/toast";
+export * from "./components/tooltip";
+export * from "./components/tags";
