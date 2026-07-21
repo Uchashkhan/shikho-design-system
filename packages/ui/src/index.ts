@@ -18,3 +18,4 @@ export * from "./components/alert";
 export * from "./components/toast";
 export * from "./components/tooltip";
 export * from "./components/tags";
+export * from "./components/avatar";

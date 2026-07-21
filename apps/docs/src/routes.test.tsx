@@ -79,10 +79,11 @@ describe("component gallery", () => {
     }
   });
 
-  it("renders live components inside the cards rather than images", () => {
-    const { container } = renderAt("/components");
-    // Real interactive elements from @shikho/ui, not <img> screenshots.
-    expect(container.querySelectorAll("img")).toHaveLength(0);
+  it("renders live components inside the cards rather than static screenshots", () => {
+    renderAt("/components");
+    // Real interactive elements from @shikho/ui, not screenshot placeholders. Avatar's own
+    // confirmed implementation legitimately renders a real <img> fill (docs/audit/avatars.md
+    // §8), so an <img> tag on its own isn't evidence of a screenshot — checkbox/switch roles are.
     expect(screen.getAllByRole("checkbox").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("switch").length).toBeGreaterThan(0);
   });
