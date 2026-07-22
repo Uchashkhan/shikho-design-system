@@ -27,11 +27,12 @@ describe("component registry integrity", () => {
     }
   });
 
-  it("gives every entry with a page config confirmed variants, props and gaps", () => {
+  it("gives every entry with a page config confirmed props and gaps", () => {
     for (const entry of componentRegistry) {
       const page = getPageConfig(entry.slug);
       if (!page) continue; // no custom page yet — the safe fallback covers this entry instead
-      expect(page.variants.length, `${entry.slug} variants`).toBeGreaterThan(0);
+      // variants.length is NOT asserted here: some components (e.g. Progress) are confirmed to
+      // have no variant property at all — a genuinely empty axis, not a missing one.
       expect(page.props.length, `${entry.slug} props`).toBeGreaterThan(0);
       expect(page.gaps.length, `${entry.slug} gaps`).toBeGreaterThan(0);
     }

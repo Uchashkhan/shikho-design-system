@@ -24,3 +24,4 @@ export * from "./components/date-picker";
 export * from "./components/link";
 export * from "./components/modal";
 export * from "./components/pagination";
+export * from "./components/progress";
