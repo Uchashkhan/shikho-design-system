@@ -27,3 +27,4 @@ export * from "./components/pagination";
 export * from "./components/progress";
 export * from "./components/sidebar-navigation";
 export * from "./components/switcher";
+export * from "./components/tab-navigation";
