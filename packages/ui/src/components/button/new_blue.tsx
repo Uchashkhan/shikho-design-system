@@ -1,11 +1,7 @@
-import { type ButtonHTMLAttributes, forwardRef } from "react";
+import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from "react";
 import { color } from "@shikho/tokens";
-import {
-  buildButtonStyle,
-  buttonBaseClassName,
-  emphasisStyle,
-  type ButtonSizeScaleB,
-} from "./shared";
+import { rampEmphasisStyle, type ButtonPhase, type ButtonSizeScaleB, type Emphasis } from "./shared";
+import { ButtonShell } from "./button_shell";
 
 // docs/audit/buttons.md §2 — new_blue: size xs/sm/md/lg/xxl, type Outline/Primary/Secondary/Text,
 // state Default/Disabled/Focus/Hover (capitalized, per that family). Casing preserved exactly.
@@ -18,43 +14,47 @@ export interface NewBlueButtonProps
   size?: NewBlueSize;
   type?: NewBlueType;
   state?: NewBlueState;
+  leftIcon?: boolean;
+  rightIcon?: boolean;
+  text?: boolean;
+  selectLeftIcon?: ReactNode | null;
+  selectRightIcon?: ReactNode | null;
 }
 
-const emphasisByType: Record<NewBlueType, "solid" | "soft" | "outline" | "text"> = {
-  Primary: "solid", // confirmed: new_blue/xs/Primary/Default -> Color/primary/500 fill (§8)
+const emphasisByType: Record<NewBlueType, Emphasis> = {
+  Primary: "solid",
   Secondary: "soft",
   Outline: "outline",
   Text: "text",
 };
 
+const phaseByState: Record<NewBlueState, ButtonPhase> = {
+  Default: "default",
+  Hover: "hover",
+  Focus: "focus",
+  Disabled: "disabled",
+};
+
 /**
- * `new_blue` button family (docs/audit/buttons.md). Only `size=xs, type=Primary, state=Default`
- * has a fully confirmed styling binding; other combinations derive from the same confirmed
- * `Color/primary` ramp — see packages/ui/src/components/button/README.md.
+ * `new_blue` button family (docs/audit/buttons.md §14 deep re-audit) — the anchor family every
+ * other ramp-based button was cross-checked against. `Primary`/`Secondary`/`Outline`/`Text` are
+ * all directly confirmed at every size; `hover`/`focus`/`disabled` deltas are directly confirmed
+ * on `Primary`/`Outline` and applied uniformly per `rampEmphasisStyle`'s documented rules.
  */
 export const NewBlueButton = forwardRef<HTMLButtonElement, NewBlueButtonProps>(
-  ({ size = "xs", type = "Primary", state = "Default", className, disabled, ...props }, ref) => {
-    const hover = state === "Hover";
-    const isDisabled = disabled || state === "Disabled";
-
-    const style = buildButtonStyle({
-      size,
-      radiusScale: "B",
-      emphasisColor: emphasisStyle(color.primary, emphasisByType[type], hover),
-      focusRing: "primary",
-      isFocusVariant: state === "Focus",
-    });
+  ({ size = "xs", type = "Primary", state = "Default", disabled, ...props }, ref) => {
+    const phase = disabled ? "disabled" : phaseByState[state];
+    const resolved = rampEmphasisStyle(color.primary, emphasisByType[type], phase, "primary");
 
     return (
-      <button
+      <ButtonShell
         ref={ref}
-        type="button"
-        className={buttonBaseClassName + (className ? ` ${className}` : "")}
-        style={style}
-        disabled={isDisabled}
-        data-size={size}
-        data-type={type}
-        data-state={state}
+        size={size}
+        resolved={resolved}
+        disabled={phase === "disabled"}
+        dataSize={size}
+        dataType={type}
+        dataState={state}
         {...props}
       />
     );

@@ -1,11 +1,7 @@
-import { type ButtonHTMLAttributes, forwardRef } from "react";
+import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from "react";
 import { color } from "@shikho/tokens";
-import {
-  buildButtonStyle,
-  buttonBaseClassName,
-  emphasisStyle,
-  type ButtonSizeScaleA,
-} from "./shared";
+import { greyscalePrimaryStyle, rampEmphasisStyle, type ButtonPhase, type ButtonSizeScaleA, type Emphasis } from "./shared";
+import { ButtonShell } from "./button_shell";
 
 // docs/audit/buttons.md §2 — Greyscale: size xs/sm/md/lg/xl, type Outline/Secondary/Text/primary,
 // state default/disabled/focus/hover.
@@ -18,43 +14,51 @@ export interface GreyscaleButtonProps
   size?: GreyscaleSize;
   type?: GreyscaleType;
   state?: GreyscaleState;
+  leftIcon?: boolean;
+  rightIcon?: boolean;
+  text?: boolean;
+  selectLeftIcon?: ReactNode | null;
+  selectRightIcon?: ReactNode | null;
 }
 
-const emphasisByType: Record<GreyscaleType, "solid" | "soft" | "outline" | "text"> = {
-  primary: "solid",
+const emphasisByType: Record<Exclude<GreyscaleType, "primary">, Emphasis> = {
   Secondary: "soft",
   Outline: "outline",
   Text: "text",
 };
 
+const phaseByState: Record<GreyscaleState, ButtonPhase> = {
+  default: "default",
+  hover: "hover",
+  focus: "focus",
+  disabled: "disabled",
+};
+
 /**
- * `Greyscale` family (docs/audit/buttons.md). Applies the confirmed emphasis pattern against
- * `Color/gray` — no instance in this family was deep-audited. See
- * packages/ui/src/components/button/README.md.
+ * `Greyscale` family (docs/audit/buttons.md §14). `type="primary"` is confirmed to fill
+ * `Color/black[900]` (rgba(0,0,0,0.88), near-black) — NOT `color.gray[500]`, the pre-rebuild
+ * implementation's guess (§14.1 point 4) — visually identical in kind to `icon_button`'s
+ * `neutral` type and Switcher's `active_neutral`. `Secondary`/`Outline`/`Text` were not
+ * independently re-sampled for this family and still derive from the gray ramp.
  */
 export const GreyscaleButton = forwardRef<HTMLButtonElement, GreyscaleButtonProps>(
-  ({ size = "xs", type = "primary", state = "default", className, disabled, ...props }, ref) => {
-    const hover = state === "hover";
-    const isDisabled = disabled || state === "disabled";
+  ({ size = "xs", type = "primary", state = "default", disabled, ...props }, ref) => {
+    const phase = disabled ? "disabled" : phaseByState[state];
 
-    const style = buildButtonStyle({
-      size,
-      radiusScale: "A",
-      emphasisColor: emphasisStyle(color.gray, emphasisByType[type], hover),
-      focusRing: "gray",
-      isFocusVariant: state === "focus",
-    });
+    const resolved =
+      type === "primary"
+        ? greyscalePrimaryStyle(phase)
+        : rampEmphasisStyle(color.gray, emphasisByType[type], phase, "gray");
 
     return (
-      <button
+      <ButtonShell
         ref={ref}
-        type="button"
-        className={buttonBaseClassName + (className ? ` ${className}` : "")}
-        style={style}
-        disabled={isDisabled}
-        data-size={size}
-        data-type={type}
-        data-state={state}
+        size={size}
+        resolved={resolved}
+        disabled={phase === "disabled"}
+        dataSize={size}
+        dataType={type}
+        dataState={state}
         {...props}
       />
     );

@@ -5,8 +5,8 @@ export const meta: ComponentDocsMeta = {
   slug: "button",
   category: "Actions",
   description:
-    "Eight separate button families, each with its own confirmed size/type/state vocabulary.",
-  status: "partially-derived",
+    "Eight separate button families, each with its own confirmed size/type/state vocabulary — deep re-audited via get_design_context to confirm real borders, shadows, gradients, and color mappings the original metadata-only pass had guessed.",
+  status: "deep-audited",
   packageImport: `import { NewBlueButton, ButtonDanger, IconButton } from "@shikho/ui";`,
   storybookTitle: "Button",
   order: 10,

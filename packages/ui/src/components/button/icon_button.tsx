@@ -1,26 +1,12 @@
 import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from "react";
-import { color, type ColorRamp } from "@shikho/tokens";
-import {
-  buildButtonStyle,
-  buttonBaseClassName,
-  emphasisStyle,
-  type ButtonSizeScaleA,
-  type Emphasis,
-  type FocusRingName,
-} from "./shared";
+import { iconButtonStyle, type ButtonPhase, type ButtonSizeScaleA, type IconButtonType as IconButtonTypeValue } from "./shared";
+import { ButtonShell } from "./button_shell";
 
-// docs/audit/buttons.md §2 — icon_button: size xs/sm/md/lg/xl, type neutral/primary/
+// docs/audit/buttons.md §2, §14.2 — icon_button: size xs/sm/md/lg/xl, type neutral/primary/
 // primary_light/quaternary/secondary/tertiary/tertiary_light (7 values, the largest type
 // vocabulary of the 8 families), state default/disabled/focus/hover.
 export type IconButtonSize = ButtonSizeScaleA;
-export type IconButtonType =
-  | "neutral"
-  | "primary"
-  | "primary_light"
-  | "quaternary"
-  | "secondary"
-  | "tertiary"
-  | "tertiary_light";
+export type IconButtonType = IconButtonTypeValue;
 export type IconButtonState = "default" | "disabled" | "focus" | "hover";
 
 export interface IconButtonProps
@@ -37,66 +23,38 @@ export interface IconButtonProps
   "aria-label": string;
 }
 
-// No instance in this family was deep-audited (§11 — internal layer hierarchy unresolved for
-// every one of the 8 sets). This is a derived, minimal color-choice + emphasis mapping:
-// `_light` suffix -> "soft" emphasis of the same ramp as its non-light sibling; `quaternary`
-// mirrors `link`'s same-named type value (docs/audit/links.md — the one confirmed deliberate
-// cross-component naming reuse in the whole audit series), treated here as a ghost/text style.
-const styleByType: Record<IconButtonType, { ramp: ColorRamp; emphasis: Emphasis }> = {
-  primary: { ramp: color.primary, emphasis: "solid" },
-  primary_light: { ramp: color.primary, emphasis: "soft" },
-  secondary: { ramp: color.secondary, emphasis: "solid" },
-  tertiary: { ramp: color.gray, emphasis: "soft" },
-  tertiary_light: { ramp: color.gray, emphasis: "text" },
-  neutral: { ramp: color.gray, emphasis: "solid" },
-  quaternary: { ramp: color.gray, emphasis: "text" },
-};
-
-const focusRingByType: Record<IconButtonType, FocusRingName> = {
-  primary: "primary",
-  primary_light: "primary",
-  secondary: "secondary",
-  tertiary: "gray",
-  tertiary_light: "gray",
-  neutral: "gray",
-  quaternary: "gray",
+const phaseByState: Record<IconButtonState, ButtonPhase> = {
+  default: "default",
+  hover: "hover",
+  focus: "focus",
+  disabled: "disabled",
 };
 
 /**
- * `icon_button` family (docs/audit/buttons.md). See
- * packages/ui/src/components/button/README.md for the derived color/emphasis mapping.
+ * `icon_button` family (docs/audit/buttons.md §14.2) — a genuinely distinct structure from the
+ * other 7 families: a single fixed-square icon slot (not left/right), its own confirmed 7-type
+ * color mapping. `secondary` is confirmed a neutral `Color/gray/100` fill, NOT the pink
+ * `Color/secondary` brand ramp the pre-rebuild implementation guessed from the type name
+ * (§14.1 point 3) — one of the clearest corrections in this rebuild. `primary_light`/
+ * `tertiary_light` were not independently sampled and are derived (§14.4).
  */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  (
-    { size = "xs", type = "primary", state = "default", icon, className, disabled, ...props },
-    ref,
-  ) => {
-    const hover = state === "hover";
-    const isDisabled = disabled || state === "disabled";
-    const { ramp, emphasis } = styleByType[type];
-
-    const style = buildButtonStyle({
-      size,
-      radiusScale: "A",
-      emphasisColor: emphasisStyle(ramp, emphasis, hover),
-      focusRing: focusRingByType[type],
-      isFocusVariant: state === "focus",
-    });
+  ({ size = "xs", type = "primary", state = "default", icon, disabled, ...props }, ref) => {
+    const phase = disabled ? "disabled" : phaseByState[state];
+    const resolved = iconButtonStyle(type, phase);
 
     return (
-      <button
+      <ButtonShell
         ref={ref}
-        type="button"
-        className={buttonBaseClassName + (className ? ` ${className}` : "")}
-        style={{ ...style, padding: style.padding, aspectRatio: "1 / 1" }}
-        disabled={isDisabled}
-        data-size={size}
-        data-type={type}
-        data-state={state}
+        size={size}
+        resolved={resolved}
+        iconOnly={icon}
+        disabled={phase === "disabled"}
+        dataSize={size}
+        dataType={type}
+        dataState={state}
         {...props}
-      >
-        {icon}
-      </button>
+      />
     );
   },
 );

@@ -27,9 +27,34 @@ type Story = StoryObj<typeof AiRoundedButton>;
 
 export const Playground: Story = {};
 
-/** "blue gradient" has no resolved value anywhere in the audit — renders as a solid placeholder. */
-export const UnresolvedGradientPlaceholder: Story = {
-  args: { type: "blue gradient" },
+/**
+ * Confirmed real gradients (docs/audit/buttons.md §14.3) — not solid ramp fills. `Primary`/
+ * `blue gradient`/`Green` are linear gradients with exact confirmed stop colors/angles; `Purple`
+ * is a 6-stop radial gradient, approximated in CSS (exact colors, non-pixel-exact geometry).
+ */
+export const GradientTypes: Story = {
+  render: () => (
+    <div style={{ display: "flex", gap: 12 }}>
+      {types.map((type) => (
+        <AiRoundedButton key={type} type={type}>
+          {type}
+        </AiRoundedButton>
+      ))}
+    </div>
+  ),
+};
+
+/** Confirmed true pill radius at every size — height/2, independently confirmed at xs and lg (§14.2). */
+export const PillRadiusAcrossSizes: Story = {
+  render: () => (
+    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      {sizes.map((size) => (
+        <AiRoundedButton key={size} size={size}>
+          {size}
+        </AiRoundedButton>
+      ))}
+    </div>
+  ),
 };
 
 export const AllVariants: Story = {

@@ -1,14 +1,12 @@
-import { type ButtonHTMLAttributes, forwardRef } from "react";
+import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from "react";
 import { color } from "@shikho/tokens";
-import {
-  buildButtonStyle,
-  buttonBaseClassName,
-  emphasisStyle,
-  type ButtonSizeScaleB,
-} from "./shared";
+import { rampEmphasisStyle, type ButtonPhase, type ButtonSizeScaleB, type Emphasis } from "./shared";
+import { ButtonShell } from "./button_shell";
 
 // docs/audit/buttons.md §2 — new_pink: size xs/sm/md/lg/xxl, type Outline/Primary/Secondary/Text,
-// state Default/Disabled/Focus/Hover. Same property vocabulary as new_blue, different base color.
+// state Default/Disabled/Focus/Hover. Structurally identical to new_blue (§14.2), confirmed via
+// new_pink/xs/Primary/Default: same border/effect/typography construction, only the fill ramp
+// differs (Color/secondary/500 — the pink brand ramp, not Color/primary).
 export type NewPinkSize = ButtonSizeScaleB;
 export type NewPinkType = "Outline" | "Primary" | "Secondary" | "Text";
 export type NewPinkState = "Default" | "Disabled" | "Focus" | "Hover";
@@ -18,44 +16,47 @@ export interface NewPinkButtonProps
   size?: NewPinkSize;
   type?: NewPinkType;
   state?: NewPinkState;
+  leftIcon?: boolean;
+  rightIcon?: boolean;
+  text?: boolean;
+  selectLeftIcon?: ReactNode | null;
+  selectRightIcon?: ReactNode | null;
 }
 
-const emphasisByType: Record<NewPinkType, "solid" | "soft" | "outline" | "text"> = {
+const emphasisByType: Record<NewPinkType, Emphasis> = {
   Primary: "solid",
   Secondary: "soft",
   Outline: "outline",
   Text: "text",
 };
 
+const phaseByState: Record<NewPinkState, ButtonPhase> = {
+  Default: "default",
+  Hover: "hover",
+  Focus: "focus",
+  Disabled: "disabled",
+};
+
 /**
- * `new_pink` button family (docs/audit/buttons.md). No instance in this family was deep-audited;
- * it reuses `new_blue`'s confirmed emphasis pattern against `Color/Secondary` (the pink brand
- * ramp — docs/audit/colors.md), which is the ramp its own family name refers to. See
- * packages/ui/src/components/button/README.md.
+ * `new_pink` button family (docs/audit/buttons.md §14) — confirmed structurally identical to
+ * `new_blue`, with `Color/secondary` (the pink brand ramp) substituted for `Color/primary`.
+ * `Secondary`/`Outline`/`Text`'s own hover/focus/disabled deltas were not independently
+ * re-sampled for this family and reuse `new_blue`'s confirmed transition rules.
  */
 export const NewPinkButton = forwardRef<HTMLButtonElement, NewPinkButtonProps>(
-  ({ size = "xs", type = "Primary", state = "Default", className, disabled, ...props }, ref) => {
-    const hover = state === "Hover";
-    const isDisabled = disabled || state === "Disabled";
-
-    const style = buildButtonStyle({
-      size,
-      radiusScale: "B",
-      emphasisColor: emphasisStyle(color.secondary, emphasisByType[type], hover),
-      focusRing: "secondary",
-      isFocusVariant: state === "Focus",
-    });
+  ({ size = "xs", type = "Primary", state = "Default", disabled, ...props }, ref) => {
+    const phase = disabled ? "disabled" : phaseByState[state];
+    const resolved = rampEmphasisStyle(color.secondary, emphasisByType[type], phase, "secondary");
 
     return (
-      <button
+      <ButtonShell
         ref={ref}
-        type="button"
-        className={buttonBaseClassName + (className ? ` ${className}` : "")}
-        style={style}
-        disabled={isDisabled}
-        data-size={size}
-        data-type={type}
-        data-state={state}
+        size={size}
+        resolved={resolved}
+        disabled={phase === "disabled"}
+        dataSize={size}
+        dataType={type}
+        dataState={state}
         {...props}
       />
     );

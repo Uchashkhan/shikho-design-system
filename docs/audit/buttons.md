@@ -205,3 +205,89 @@ Effect(type: DROP_SHADOW, color: Color/Secondary/500_alpha_24, offset: (0, 0), r
 This is the **exact same color variable** (`Color/Secondary/500_alpha_24` = `#e2008d3d`) used by `outline/focus_secondary`. A parallel `Color/danger/500` (`#f03d3d`) exists elsewhere in the design system and would be the expected source color for a "danger" focus ring, based on the pattern followed by every other focus ring in this set (`focus_primary` → primary color, `focus_success` → success color).
 
 This issue was first suspected during the Special Effects audit (based on a standalone style swatch) and is **now confirmed in an actual button-component-binding context** — the same incorrect color reference appears in the live effect-style definition consumed by the button system, not only in an isolated demo frame. **This has not been fixed or reassigned**, per your instruction.
+
+---
+
+## 14. Deep re-audit addendum (Phase 2 of the Button rebuild)
+
+**Everything below this line was added in a second pass that explicitly *did* call `get_design_context`** — the tool the original audit (§12) deliberately withheld. ~35 `get_metadata`/`get_design_context` calls were made across all 8 families, sampling every family's `Primary`/`primary`-equivalent type at multiple sizes, every scale-B family's 4 types at `xs`, representative `hover`/`focus`/`disabled` states, and 5 of `icon_button`'s 7 types. This is a deep, multi-point re-audit, not an exhaustive 700-variant enumeration — every generalization below is flagged as such where it extrapolates from a sampled point rather than a directly observed one.
+
+### 14.1 Previous implementation gaps
+
+The original `packages/ui/src/components/button/` implementation (pre-rebuild) was built entirely from §1–§13 above — i.e. from metadata and one single confirmed binding (`new_blue/xs/Primary/Default`'s fill/text/radius/icon-size/typography). Because `get_design_context` was never called, the following were **invented, not derived**, and are corrected by this pass:
+
+1. **No button ever rendered a border, shadow, or inset effect.** `primary_button_effect`/`secondary_button_effect` (§7) were documented as confirmed tokens but explicitly *not implemented* ("not implemented in `@shikho/tokens` yet... this component uses only `@shikho/tokens` exports"). The deep re-audit shows every single button in every family renders a border (or explicitly no border, itself a confirmed per-type fact) **and** a 2-part shadow construction (an outer `box-shadow` + an inset overlay `div`) on `Primary`/`Secondary`/`Outline`-equivalent types. Shipping with zero shadows/borders was a materially incomplete visual — not a simplification.
+2. **The `soft`/`outline`/`text` emphasis mappings (`emphasisStyle` in `shared.ts`) were invented from whole cloth.** The real construction is: `Primary`→solid ramp[500] fill + `black-150` border + full effect; `Secondary`→ramp[200] fill + `primary/500@12%` border + partial (e1) shadow + secondary-effect inset; `Outline`→white fill + solid ramp[500] border + same partial treatment as Secondary; `Text`→no fill, no border, no shadow at all. The old code's guessed step choices (ramp[100]/[50]/[300]/[600]/[700] in various combinations) do not match any of these.
+3. **`icon_button`'s `secondary` type was mapped to `color.secondary` (the pink brand ramp).** It is not. The confirmed fill is a **neutral `color.gray[100]`**, with no border at all — completely unrelated to the pink brand ramp. This was a plausible-sounding but wrong guess driven by name-matching (`secondary` type → `secondary` ramp), the exact failure mode this rebuild was commissioned to catch.
+4. **`Greyscale`'s `primary` type was mapped to `color.gray[500]`.** The confirmed fill is **`color.black[900]`** (`rgba(0,0,0,0.88)`, i.e. near-black), identical in kind to `icon_button`'s `neutral` type and to `Switcher`'s `active_neutral` treatment elsewhere in this system — not a mid-gray.
+5. **`ai_rounded`/`ai_regular`'s color-named types (`Primary`, `Green`, `Purple`/`purple`, `blue gradient`) were all implemented as solid ramp fills**, with `blue gradient` explicitly falling back to solid `color.primary` because `Gradient/G1`–`G6` "never resolve to stop/color data in any audit." **This is now corrected: all four types in both `ai_rounded` and `ai_regular` are real gradients**, and their exact stop colors/angles are now confirmed directly from the rendered instance's CSS (`get_design_context` renders the actual computed `backgroundImage`, which resolves even where `get_variable_defs` still reports the named `Gradient/G2`–`G5` tokens as unresolved). See §14.3.
+6. **Hover was implemented as a single ramp step darker** (`ramp[600]` from a `ramp[500]` default). The confirmed hover step for solid (`Primary`) types is **`ramp[700]`**, skipping `600` entirely. Soft/outline hover moves fill from `ramp[200]`→`ramp[300]` and border alpha from `12%`→`20%` simultaneously — a two-property shift, not a single fill change.
+7. **Focus was implemented as the default style plus an added ring** (`isFocusVariant ? { boxShadow: ... } : {}` layered on top of the base `emphasisColor`). The confirmed real behavior is that focus **replaces** the entire border/shadow/effect construction — no border, no button-effect, ring only — not an additive combination.
+8. **Disabled was implemented as a straight opacity-50 filter** (`disabled:opacity-50` in `buttonBaseClassName`) applied uniformly to whatever the type's normal style was. The confirmed real behavior is an explicit, opaque **recolor**: a very light tinted fill (the ramp's own `100`/`50` step, or plain `gray/100` for `button_success`), a light text color (the ramp's `300` step), a downgraded single-layer (e1) outer shadow, and the *secondary*-style inset overlay regardless of the button's own type — not a CSS opacity filter over the original colors.
+9. **Padding/gap were an invented placeholder scale** (§11 of the original audit explicitly disclaimed this). The deep re-audit confirms real per-size padding, root-level flex `gap`, and a *second*, additive gap contributed by the label's own wrapping `<div>` padding — a two-part gap mechanism, not a single value.
+10. **`icon_button`'s icon size was assumed to equal the general `sizing/icon/*` ramp uniformly.** The confirmed construction nests a smaller icon inside a larger fixed square button (e.g. 16px icon inside a 24px button at `xs`) — the button's own footprint and its icon size are two independent, both-confirmed numbers, not one and the same.
+
+### 14.2 Confirmed visual mappings
+
+All values below were read directly from rendered `get_design_context` output (Tailwind arbitrary-value classes and inline `style` attributes on the actual instance), not inferred from token names.
+
+**Structure (universal across all 8 families):** a root row (`display:flex; align-items:center; justify-content:center`) containing an optional `left_icon`/`right_icon` (or single `icon` for `icon_button`) slot, a `text_wrap` label div, and — only on types that have a shadow/effect — a second, absolutely-positioned `inset-0` overlay div carrying the inset-shadow layers. Each icon slot is a fixed square (`size-[Npx]`) with `filter: drop-shadow(0 1px 0.5px elevation.Black50) drop-shadow(0 3px 1.5px elevation.Black50)` (the same icon-shadow filter pattern already used system-wide, e.g. Sidebar/Switcher/Top Navigation).
+
+**Confirmed size ramp** (all 8 families use these exact pixel values; `button_danger`/`button_success`/`Greyscale`/`icon_button`'s `xl` step is pixel-identical to `new_blue`/`new_pink`/`ai_rounded`/`ai_regular`'s `xxl` step):
+
+| size (A/B) | height | padding | root gap | label-wrap padding | icon size | radius (scale families) | typography |
+|---|---|---|---|---|---|---|---|
+| xs | 24 | 6px h / 4px v | 0 | 4px each side | 14 | `radius.xs` (6) | caption_1 11/16 |
+| sm | 32 | 8px uniform | 2 | 4px each side | 16 | `radius.sm` (8) | caption_2 12/16 |
+| md | 40 | 12px h / 8px v | 4 | 4px each side | 18 | `radius.md` (10) | body_1 13/20 |
+| lg | 48 | 16px h / 12px v | 4 | 4px each side | 20 | `radius.lg` (12) | body_1 13/20 (labeled "Title/13", a confirmed duplicate per `typography.md`) |
+| xl / xxl | 56 | 16px uniform | 6 | 6px each side | 24 | `radius.lg` (12) — **same as `lg`, not a bigger step** | title_2 18/24 |
+
+`icon_button` reuses the same height values as its own fixed width×height (square), with its icon nested at one size below what the text families use at the same step (16px icon in a 24px `xs` button, vs. 14px icon in a content-hugging `xs` text button) — confirmed, not derived.
+
+**Confirmed type-emphasis construction**, demonstrated on `new_blue` (identical structure independently confirmed on `new_pink`/`ramp=secondary`, `button_danger`/`ramp=danger`, `button_success`/`ramp=success`; `Greyscale`'s `primary` uses `color.black[900]` instead of a ramp — see §14.1 point 4):
+
+| type | fill | border | text | outer shadow | inset overlay |
+|---|---|---|---|---|---|
+| `Primary`/`primary` | `ramp[500]` | `1px solid color.black[100]` (`outline/Black 150`) | `color.white[950]` | full `elevation.e2` (2-layer) | `primary_button_effect`'s 2 inner-shadow layers: `inset 0 0 8px -2px white/500, inset 0 3px 4px -3px white/600` |
+| `Secondary` | `ramp[200]` | `1px solid ramp[500]@12%` | `ramp[600]` | `elevation.e1` (1-layer only) | `secondary_button_effect`'s 2 inner-shadow layers: `inset 0 1px 3px -2px white/50, inset 0 -1px 3px -2px black/7%` |
+| `Outline` | `color.white[950]` | `1px solid ramp[500]` (solid) | `ramp[600]` | `elevation.e1` | same as `Secondary` |
+| `Text` | `color.white[950]` | none | `ramp[600]` | none | none |
+
+**Confirmed `hover` deltas** (sampled on `Primary` and `Secondary`): `Primary` fill jumps `ramp[500]`→`ramp[700]` (not `[600]`); `Secondary`/`Outline` fill jumps `ramp[200]`→`ramp[300]` and border alpha `12%`→`20%` simultaneously; the rest of each type's construction (border style, shadow, effect) is unchanged from `Default`.
+
+**Confirmed `focus` behavior** (sampled on `Primary` and `Outline`): the button-effect (both outer shadow layers and the inset overlay div) is **removed entirely** and replaced with a single outer ring, `0 0 0 3px <focusRingColor>` — geometry and 6 colors already confirmed in §6. `Primary`'s border is also removed at focus; `Outline` keeps its border. No family/type combination showed an additive ring-plus-effect construction.
+
+**Confirmed `disabled` behavior** (sampled on `new_blue Primary`/`Outline`, `button_success primary`): fill drops to the ramp's own `100` step (`Primary`) or `50` step (`Outline`) — **except `button_success`, whose `disabled` fill is a flat neutral `color.gray[100]`, not a tinted success value**, a genuine family-specific exception, not a sampling error (re-confirmed via a second, independent fetch). Text drops to the ramp's `300`/`400` step. The outer shadow always downgrades to single-layer `elevation.e1`, and the inset overlay always uses `secondary_button_effect`'s inner-shadow layers, **regardless of the button's own default type** — i.e. a `Primary` button's `Disabled` state borrows `Secondary`'s inset treatment, not its own.
+
+**Confirmed `icon_button` per-type mapping** (5 of 7 types sampled directly; `primary_light`/`tertiary_light` are extrapolated from the confirmed `_light`-suffix pattern seen system-wide and are marked derived in §14.4):
+
+| type | fill | border | shadow/effect |
+|---|---|---|---|
+| `primary` | `color.primary[500]` | `1px solid black/100` | full `primary_button_effect` |
+| `neutral` | `color.black[950]` (pure black, not the 88%-alpha `black[900]`) | `1px solid black/100` | full `primary_button_effect` |
+| `secondary` | `color.gray[100]` | none | `elevation.e1` + `secondary_button_effect` inset |
+| `tertiary` | `color.white[950]` | `1px solid black/50` (`outline/Black 50`) | `elevation.e1` + `secondary_button_effect` inset |
+| `quaternary` | transparent | none | none (bare icon, no container styling at all) |
+
+**Confirmed `ai_rounded` vs. `ai_regular` radius difference:** `ai_rounded`'s radius is a true pill at every size (`12` at `xs` = exactly half its `24` height; `24` at `lg` = exactly half its `48` height) — confirmed via two independent size samples, not assumed from the family name. `ai_regular` uses the ordinary scale radius (`6` at `xs`, matching `radius.xs`) — i.e. not a pill at all, despite sharing the same gradient definitions as `ai_rounded` (§14.3).
+
+### 14.3 Family-specific differences — the `ai_rounded`/`ai_regular` gradients
+
+All four `type` values in both families render as **real CSS gradients**, confirmed by inspecting the rendered instance's computed `backgroundImage`, not by resolving the named `Gradient/G2`–`G5` tokens (which still report empty via `get_variable_defs`, exactly as every prior audit found). This directly overturns §7/§11's "falls back to a solid `color.primary` fill" placeholder.
+
+- **`Primary`** (both `ai_rounded` and `ai_regular` — identical stops in both families, only the container radius differs): `linear-gradient(67.34deg, rgb(255,55,223) 0.54%, rgb(110,0,255) 99.41%)` — pink to violet. Bound to `Gradient/G2`.
+- **`blue gradient`**: `linear-gradient(42.88deg, rgb(74,37,225) 0.88%, rgb(123,90,255) 91.67%)` — indigo to periwinkle. Bound to `Gradient/G3`.
+- **`Green`**: `linear-gradient(223.88deg, rgb(189,219,121) 3.93%, rgb(48,138,79) 96.62%)` — light yellow-green to forest green. Bound to `Gradient/G5`.
+- **`Purple`/`purple`**: **not a linear gradient** — a 6-stop **radial** gradient rendered via an inline SVG data URI, with an affine `gradientTransform` (an elliptical, rotated radial gradient), stops `rgba(167,136,253,1)` → `rgba(135,104,220,1)` → `rgba(102,72,186,1)` → `rgba(70,40,153,1)` → `rgba(54,24,136,1)` → `rgba(37,8,120,1)` at offsets `0, 0.25, 0.5, 0.75, 0.875, 1`. Bound to `Gradient/G4`. CSS's standard `radial-gradient()` cannot express Figma's affine-transformed (skewed/rotated) ellipse; this implementation uses a CSS `radial-gradient()` with the same 6 confirmed color stops as a **documented, non-pixel-exact approximation** of the confirmed shape — the colors are exact, the geometry is not.
+
+All four types' `hover`/`disabled` gradient variants were not independently sampled (out of scope for this pass); the existing confirmed non-gradient state-transition patterns (§14.2) are applied as the nearest confirmed analogue and flagged as derived in §14.4.
+
+### 14.4 Unresolved values (honest gaps remaining after this deep re-audit)
+
+- **`ai_rounded`/`ai_regular` gradient behavior at `hover`/`focus`/`disabled`** was not independently sampled. This implementation darkens/lightens the gradient via a CSS `filter: brightness()` adjustment on hover and applies the same confirmed generic disabled/focus treatment (light neutral fill / ring-only) as the non-gradient families — an extrapolation, not a confirmed binding.
+- **`icon_button`'s `primary_light` and `tertiary_light` types** were not independently fetched. They are implemented as a lighter tint of their non-`_light` sibling (`primary_light` → `color.primary[100]` fill, no border; `tertiary_light` → transparent, no border, no shadow), following the same `_light`-suffix-as-tint pattern already confirmed elsewhere in this system (e.g. Tags' `primary_light` type) — a derived, not independently confirmed, mapping.
+- **`new_pink`/`ai_rounded`/`ai_regular`/`button_danger`/`Greyscale`'s own `Secondary`/`Outline`/`Text` (or `tertiary`) hover/focus/disabled transitions** were not independently re-sampled type-by-type in every family — the confirmed `new_blue` transition deltas (§14.2) are applied uniformly across all scale-A and scale-B families sharing that type vocabulary, since no family-specific divergence was found in any of the samples that *were* taken (`button_success`'s disabled-fill divergence, §14.2, is the one confirmed exception found).
+- **`button_danger`'s `tertiary` type** (the one type value with no direct counterpart in any other family) was not independently sampled; it is implemented using the confirmed `Outline`-shape construction (transparent fill, solid ramp-colored border) as the closest structural analogue, flagged as derived.
+- **Padding at `icon_button`'s non-`xs` sizes** was not independently re-sampled; the `xs`-confirmed pattern (padding equals half the icon-to-button size difference) is applied by rank across `sm`–`xl`.
+- Every gap already listed in §11 that this pass did not touch (default variant configuration, whether `elevation/e2` bindings are incidental, hardcoded non-variable values inside the vector icon subtree) remains unresolved, unchanged from the original audit.

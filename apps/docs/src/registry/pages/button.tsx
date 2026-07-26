@@ -21,7 +21,7 @@ const dot = (
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
-    "The audit found eight sibling button component sets that do not share a common type or state vocabulary — and even disagree on the name of their largest size step. They are published as eight separate components rather than merged into one API, so those confirmed differences are preserved rather than erased.",
+    "The audit found eight sibling button component sets that do not share a common type or state vocabulary — and even disagree on the name of their largest size step. They are published as eight separate components rather than merged into one API, so those confirmed differences are preserved rather than erased. A deep re-audit (docs/audit/buttons.md §14) later found the original implementation had captured every family's variant vocabulary but never rendered a single instance — borders, shadows, gradients, and several color mappings were invented rather than confirmed. This has been rebuilt from ~35 get_design_context calls across all 8 families; see the audit's §14.1 for exactly what was wrong.",
   variants: [
     {
       name: "size",
@@ -41,10 +41,10 @@ export const pageConfig: ComponentPageConfig = {
   ],
   states: ["default", "hover", "focus", "disabled"],
   gaps: [
-    "Only one instance in the whole family was deep-audited (new_blue at xs/Primary/Default) — plus button_danger at md/Secondary/default, discovered later via the Alert audit. Every other family's per-type colour treatment is derived from its own colour ramp, not independently confirmed.",
-    "Padding, gap, auto-layout direction and the icon-slot mechanism were never retrieved for any of the eight sets, so a minimal placeholder padding scale is used.",
-    "`ai_rounded` / `ai_regular`'s \"blue gradient\" type has no resolved value anywhere — Gradient/G1–G6 never resolve — so it falls back to a solid primary fill rather than an approximated gradient.",
-    "`primary_button_effect` / `secondary_button_effect` (the audited 4-layer button shadows) are not applied: they are not yet implemented in @shikho/tokens.",
+    "icon_button's `primary_light`/`tertiary_light` types were not independently sampled — derived as a lighter tint of their non-`_light` sibling, following the `_light`-suffix pattern confirmed elsewhere in this system.",
+    "ai_rounded/ai_regular's gradient hover/focus/disabled states were not independently sampled — hover applies a brightness() filter and disabled/focus reuse the universal confirmed recipes as the closest analogue.",
+    "button_danger's `tertiary` type has no counterpart in any other family and is implemented via the confirmed Outline-shape construction as the closest structural analogue.",
+    "Most families' own Secondary/Outline/Text hover-focus-disabled deltas were not independently re-sampled per family — new_blue's confirmed transition rules are applied uniformly, except button_success's confirmed disabled-fill exception (flat neutral gray, not a tinted success color).",
   ],
   usageExample: `import { NewBlueButton } from "@shikho/ui";
 
@@ -141,6 +141,19 @@ export function SaveAction() {
               {state}
             </NewBlueButton>
           ))}
+        </>
+      ),
+    },
+    {
+      title: "ai_rounded — confirmed real gradients, not solid fills",
+      description:
+        "Every type renders a real CSS gradient with exact confirmed stop colors/angles (docs/audit/buttons.md §14.3) — the original implementation rendered these as solid ramp fills.",
+      render: () => (
+        <>
+          <AiRoundedButton size="md" type="Primary">Primary</AiRoundedButton>
+          <AiRoundedButton size="md" type="blue gradient">blue gradient</AiRoundedButton>
+          <AiRoundedButton size="md" type="Green">Green</AiRoundedButton>
+          <AiRoundedButton size="md" type="Purple">Purple</AiRoundedButton>
         </>
       ),
     },

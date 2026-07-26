@@ -1,12 +1,6 @@
-import { type ButtonHTMLAttributes, forwardRef } from "react";
-import { color, type ColorRamp } from "@shikho/tokens";
-import {
-  buildButtonStyle,
-  buttonBaseClassName,
-  emphasisStyle,
-  type ButtonSizeScaleB,
-  type FocusRingName,
-} from "./shared";
+import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from "react";
+import { aiGradientStyle, type AiGradientType, type ButtonPhase, type ButtonSizeScaleB } from "./shared";
+import { ButtonShell } from "./button_shell";
 
 // docs/audit/buttons.md §2, §4 — ai_regular: size xs/sm/md/lg/xxl, type Green/Primary/
 // "blue gradient"/purple (lowercase "purple" here vs. "Purple" in ai_rounded — a confirmed
@@ -21,51 +15,50 @@ export interface AiRegularButtonProps
   size?: AiRegularSize;
   type?: AiRegularType;
   state?: AiRegularState;
+  leftIcon?: boolean;
+  rightIcon?: boolean;
+  text?: boolean;
+  selectLeftIcon?: ReactNode | null;
+  selectRightIcon?: ReactNode | null;
 }
 
-// Same derived color-choice mapping as ai_rounded — see that file's comment.
-const rampByType: Record<AiRegularType, ColorRamp> = {
-  Primary: color.primary,
-  Green: color.success,
-  purple: color.shikhoAi,
-  "blue gradient": color.primary,
+const phaseByState: Record<AiRegularState, ButtonPhase> = {
+  Default: "default",
+  Hover: "hover",
+  Focus: "focus",
+  Disabled: "disabled",
 };
 
-const focusRingByType: Record<AiRegularType, FocusRingName> = {
-  Primary: "primary",
-  Green: "success",
-  purple: "primary",
-  "blue gradient": "primary",
+// ai_regular's lowercase "purple" maps to the same confirmed AiGradientType key as ai_rounded's
+// capitalized "Purple" — same gradient definition, both directly confirmed (§14.3).
+const typeKey: Record<AiRegularType, AiGradientType> = {
+  Primary: "Primary",
+  Green: "Green",
+  purple: "Purple",
+  "blue gradient": "blue gradient",
 };
 
 /**
- * `ai_regular` family (docs/audit/buttons.md) — same derivation as `ai_rounded` (see
- * packages/ui/src/components/button/README.md), but keeps the token-driven scale radius
- * instead of a pill shape, per the "regular" vs. "rounded" naming distinction.
+ * `ai_regular` family (docs/audit/buttons.md §14.3) — confirmed to share the exact same 4
+ * gradient definitions as `ai_rounded` (identical stop colors/angles, re-confirmed directly on
+ * `Primary`), but keeps the ordinary scale radius (confirmed `radius.xs`=6 at `xs`, not a pill)
+ * instead of `ai_rounded`'s confirmed height/2 pill shape — the one confirmed difference between
+ * these two otherwise-identical sibling families.
  */
 export const AiRegularButton = forwardRef<HTMLButtonElement, AiRegularButtonProps>(
-  ({ size = "xs", type = "Primary", state = "Default", className, disabled, ...props }, ref) => {
-    const hover = state === "Hover";
-    const isDisabled = disabled || state === "Disabled";
-
-    const style = buildButtonStyle({
-      size,
-      radiusScale: "B",
-      emphasisColor: emphasisStyle(rampByType[type], "solid", hover),
-      focusRing: focusRingByType[type],
-      isFocusVariant: state === "Focus",
-    });
+  ({ size = "xs", type = "Primary", state = "Default", disabled, ...props }, ref) => {
+    const phase = disabled ? "disabled" : phaseByState[state];
+    const resolved = aiGradientStyle(typeKey[type], phase);
 
     return (
-      <button
+      <ButtonShell
         ref={ref}
-        type="button"
-        className={buttonBaseClassName + (className ? ` ${className}` : "")}
-        style={style}
-        disabled={isDisabled}
-        data-size={size}
-        data-type={type}
-        data-state={state}
+        size={size}
+        resolved={resolved}
+        disabled={phase === "disabled"}
+        dataSize={size}
+        dataType={type}
+        dataState={state}
         {...props}
       />
     );

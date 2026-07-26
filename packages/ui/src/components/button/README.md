@@ -15,26 +15,51 @@ Implements the 8 button component sets audited in `docs/audit/buttons.md`, as 8 
 
 Casing (`Default` vs `default`, `primary` vs `Primary`) is preserved exactly per family, per the audit's own documented inconsistency (`docs/audit/buttons.md` §4) — not normalized.
 
-## What's confirmed vs. derived
+## This rebuild
 
-**Exactly confirmed by the audit** (`docs/audit/buttons.md` §8, §10) and used as literal ground truth:
-- `NewBlueButton` at `size="xs" type="Primary" state="Default"` → fill `Color/primary/500` (`#5468ff`), text `Color/white/950` (`#ffffff`), radius `radius/custom/xs` (`6`), icon size `14`, typography 11px/16px/600-weight ("Caption 1").
-- `ButtonDanger` at `size="md" type="Secondary" state="default"` → fill `Color/gray/100`, label color `text/danger-600` — discovered via `docs/audit/alerts.md` §11, whose deep audit of `alert`/state=danger found its nested action button's literal instance path is `button_danger/md/secondary/default`. This is the component's current default (`size`/`type`), replacing an earlier, less-confirmed derived placeholder for `Secondary` (see `button_danger.tsx`'s inline comments).
-- The 6 focus-ring colors + shared ring geometry (0-blur, 3px-spread), §6 — implemented as `box-shadow: 0 0 0 3px <color>` for every family, using `focusRingColor` from `@shikho/tokens` (including the corrected `focus.danger`, applied in `ButtonDanger`).
-- Every family's exact `size`/`type`/`state` enum values (§2) — from `get_metadata` variant names, not visual data, but 100% confirmed structurally.
+The original implementation was built from `get_metadata`/`get_variable_defs` alone — it captured every family's exact `size`/`type`/`state` enum values, but never rendered a single instance to see how they actually looked. A deep re-audit (`docs/audit/buttons.md` §14, ~35 `get_design_context` calls across all 8 families) found the real visual construction was materially different from what had been guessed. See `docs/audit/buttons.md` §14.1 for the full list of what was wrong; the highlights:
 
-**Derived, not independently confirmed** — every one of the 8 families besides `new_blue`'s one audited instance has no deep-audited visual binding (§11: internal layer hierarchy, padding attribution, and icon-slot mechanism were never retrieved for any of the 8 sets). To still ship a renderable component, this implementation:
-- Maps each family to the color ramp its own name refers to (`button_danger` → `color.danger`, `button_success` → `color.success`, `Greyscale` → `color.gray`, `new_blue` → `color.primary`, `new_pink` → `color.secondary` — the pink brand ramp), and for `ai_rounded`/`ai_regular`, maps each color-named `type` value the same way (`Green` → `color.success`, `Purple`/`purple` → `color.shikhoAi`).
-- Derives `Outline`/`Secondary`/`Text`/`tertiary`/`*_light` as a `solid`/`soft`/`outline`/`text` emphasis mode reusing the **same ramp's own real steps** (50/100/200/300/600/700) — never a fabricated color, but the choice of which step maps to which emphasis is this implementation's decision, not an audit finding. **Exception:** `ButtonDanger`'s `type="Secondary"` bypasses this generic derivation entirely and uses the exactly confirmed `Color/gray/100`/`text/danger-600` pair above instead.
-- Applies the general, already-confirmed `radius` scale from `@shikho/tokens` by size-name rank (only `xs` is confirmed specifically for Buttons).
-- Applies the one confirmed typography value (11px/16px/600) uniformly across all sizes, since no other size's typography was confirmed.
-- Uses an unconfirmed, minimal placeholder padding scale (`docs/audit/buttons.md` §11 — three spacing tokens were bound somewhere in the subtree but never attributed to a specific side).
-- `hover` state reuses the same ramp's own `600` step (one shade darker than the `500` solid fill) — a real token value, applied as a reasonable, minimal interaction cue, not confirmed as the actual hover treatment.
+- **Every button now renders a real border + 2-part shadow construction** (an outer `box-shadow` plus an inset overlay `div`) that the old implementation never rendered at all.
+- **`icon_button`'s `secondary` type is a neutral `gray/100` fill** — the old code mapped it to the pink `color.secondary` brand ramp by matching the type name, which was simply wrong.
+- **`Greyscale`'s `primary` type fills with `color.black[900]`** (near-black), not `color.gray[500]`.
+- **`ai_rounded`/`ai_regular`'s 4 types are all real gradients** (3 linear, 1 radial) with exact confirmed stop colors/angles — not solid ramp fills with an unresolved-gradient placeholder.
+- **Hover jumps a solid fill from ramp[500] to ramp[700]**, not ramp[600].
+- **Focus replaces the entire border/shadow construction with a ring**, rather than adding a ring on top of the default look.
+- **Disabled is an explicit recolor** (light tinted fill, light text, downgraded shadow, the *secondary*-effect inset regardless of the button's own type) — not a CSS `opacity` filter.
 
-**Explicitly not resolved, and not approximated:**
-- `ai_rounded`/`ai_regular`'s `"blue gradient"` type — `Gradient/G1`–`G6` never resolve anywhere in the audit series. This falls back to a solid `color.primary` fill, clearly marked in code and in the `UnresolvedGradientPlaceholder` story, not an attempt to guess the gradient.
-- `primary_button_effect`/`secondary_button_effect` (the audited 4-layer button shadow composites, §7) are **not applied** — they are not implemented in `@shikho/tokens` yet (only `color`, `radius`, `elevation` are), and this component uses only `@shikho/tokens` exports, per the implementation constraints.
-- Padding/gap sides, auto-layout direction, and any icon-slot mechanism for the 7 non-`icon_button` families — never confirmed (§11), so no icon prop was added to them.
+## Internal architecture
+
+Public exports are unchanged (all 8 component names, all prop names/casing preserved). Internally, `packages/ui/src/components/button/shared.ts` now holds:
+
+- Confirmed per-size metrics (height/padding/gap/icon-size/radius/typography) shared by every family — scale A's `xl` step and scale B's `xxl` step are confirmed pixel-identical, including radius (scale B's `xxl` uses `radius.lg`, NOT `radius["2xl"]` as the old code assumed).
+- `rampEmphasisStyle(ramp, emphasis, phase, focusRing)` — the confirmed `Primary`/`Secondary`/`Outline`/`Text` construction, shared by `new_blue`, `new_pink`, `button_danger`, `button_success`, and `Greyscale`'s non-`primary` types. One shared function, not eight copies, since all five families render the exact same construction against a different ramp.
+- `greyscalePrimaryStyle(phase)` — `Greyscale`'s `primary` type, kept separate since it's confirmed to use a fixed near-black color rather than an 11-step ramp.
+- `aiGradientStyle(type, phase)` — `ai_rounded`/`ai_regular`'s confirmed gradient fills, kept separate since the fill mechanism (gradient vs. ramp) is genuinely different, not just a different color choice.
+- `iconButtonStyle(type, phase)` — `icon_button`'s own confirmed 7-type table, kept separate since its structure (single icon slot, fixed square) and color mapping are both genuinely distinct from the text-button families.
+
+`packages/ui/src/components/button/button_shell.tsx` is a shared, unexported DOM renderer (root row + icon slot(s) + label + optional inset overlay) used by all 8 families — the actual render tree shape is confirmed identical (including `icon_button` in a single-icon, no-label mode), so this is shared rather than duplicated 8 times.
+
+## Confirmed vs. derived
+
+**Exactly confirmed** (`docs/audit/buttons.md` §14.2/§14.3, from directly rendered `get_design_context` output — not from token names):
+
+- The full `Primary`/`Secondary`/`Outline`/`Text` fill/border/text/shadow construction on `new_blue`, cross-checked identically on `new_pink` (pink ramp), `button_danger` (danger ramp), `button_success` (success ramp).
+- The confirmed size ramp (height/padding/gap/icon-size/radius/typography) at all 5 steps.
+- Confirmed `hover`/`focus`/`disabled` transition rules (see the rebuild summary above).
+- `button_danger`'s `Secondary` type's exact fill/text pair, from `docs/audit/alerts.md` §11's discovery that `alert`'s nested action button is a literal `button_danger/md/secondary/default` instance.
+- `button_success`'s one confirmed family-specific exception: `disabled` fill is flat neutral `gray/100`, not a tinted success color.
+- `Greyscale`'s `primary` type (`black[900]`) and `icon_button`'s 5-of-7 sampled types (`primary`, `neutral`, `secondary`, `tertiary`, `quaternary`).
+- All 4 `ai_rounded`/`ai_regular` gradient definitions (exact stop colors, angles) — `Primary`/`blue gradient`/`Green` are linear gradients; `Purple` is a 6-stop radial gradient, approximated in CSS (exact colors, non-pixel-exact geometry — Figma's version has an affine transform CSS `radial-gradient()` cannot express).
+- `ai_rounded`'s pill radius (confirmed `height/2` at 2 independently sampled sizes) vs. `ai_regular`'s ordinary scale radius.
+- The 6 focus-ring colors + shared ring geometry (0-blur, 3px-spread), including the corrected `focus.danger` (`docs/token-normalization-decisions.md` §10) — Figma's own `outline/focus_danger` binding is still wrong; this code does not reproduce that bug.
+
+**Derived, documented as such** (`docs/audit/buttons.md` §14.4):
+
+- `icon_button`'s `primary_light`/`tertiary_light` types (not independently sampled — a lighter tint of their non-`_light` sibling, following the `_light`-suffix pattern confirmed elsewhere in this system).
+- `new_pink`/`button_danger`/`button_success`/`Greyscale`'s own `Secondary`/`Outline`/`Text`(/`tertiary`) hover/focus/disabled deltas (not independently re-sampled per family — `new_blue`'s confirmed transition rules are applied uniformly, since no sampled instance contradicted them except `button_success`'s disabled exception above).
+- `button_danger`'s `tertiary` type (no counterpart in any other family — implemented via the confirmed `Outline`-shape construction as the closest structural analogue).
+- `ai_rounded`/`ai_regular`'s gradient hover/focus/disabled states (not independently sampled — hover applies a `brightness()` filter, disabled/focus reuse the universal confirmed recipes).
+- `Greyscale`'s `Secondary`/`Outline`/`Text` types (still derived from the gray ramp via `rampEmphasisStyle`, not independently re-sampled).
 
 ## Not implemented (by explicit instruction)
 
@@ -42,7 +67,7 @@ Casing (`Default` vs `default`, `primary` vs `Primary`) is preserved exactly per
 - `pressed`/active state beyond the audited `state` enum
 - Any accessibility affordance beyond native `<button>` semantics (no `aria-pressed`, no focus trap, etc. — not present in the audit)
 - New variants beyond each family's confirmed `size`/`type`/`state` values
-- New token categories (typography, spacing, effects) in `@shikho/tokens`
+- New token categories (typography, spacing, gradients) in `@shikho/tokens` — gradient stop colors are hardcoded literals in `shared.ts`, documented inline, since no gradient token category exists
 
 ## `IconButton`'s `icon` prop
 
