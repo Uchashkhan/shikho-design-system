@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import * as uiRoot from "../../index";
 import { Tooltip } from "./tooltip";
 
@@ -9,7 +9,7 @@ describe("root export", () => {
   });
 });
 
-describe("the one confirmed property: direction", () => {
+describe("the one confirmed variant property: direction", () => {
   const directions = [
     "botom_left",
     "top_left",
@@ -22,57 +22,96 @@ describe("the one confirmed property: direction", () => {
   ] as const;
 
   it.each(directions)("renders direction=%s without crashing", (direction) => {
-    render(<Tooltip direction={direction}>Tip</Tooltip>);
+    render(<Tooltip direction={direction} heading="Tip" />);
     expect(screen.getByRole("tooltip")).toHaveAttribute("data-direction", direction);
   });
 
   it("preserves the confirmed typo verbatim rather than correcting it", () => {
-    render(<Tooltip direction="botom_left">Tip</Tooltip>);
+    render(<Tooltip direction="botom_left" heading="Tip" />);
     expect(screen.getByRole("tooltip")).toHaveAttribute("data-direction", "botom_left");
   });
 
-  it("positions above the anchor for top_center and below for bottom_center", () => {
-    const { rerender } = render(<Tooltip direction="top_center">Tip</Tooltip>);
+  it("confirmed: top_* renders BELOW the anchor and botom_*/bottom_center renders ABOVE it — derived from the confirmed pointer direction (docs/audit/tooltips.md §14), not the naive placement convention", () => {
+    const { rerender } = render(<Tooltip direction="top_center" heading="Tip" />);
     let el = screen.getByRole("tooltip");
-    expect(el.style.bottom).toContain("100%");
-    expect(el.style.top).toBe("");
-
-    rerender(<Tooltip direction="bottom_center">Tip</Tooltip>);
-    el = screen.getByRole("tooltip");
     expect(el.style.top).toContain("100%");
     expect(el.style.bottom).toBe("");
+
+    rerender(<Tooltip direction="bottom_center" heading="Tip" />);
+    el = screen.getByRole("tooltip");
+    expect(el.style.bottom).toContain("100%");
+    expect(el.style.top).toBe("");
   });
 
-  it("positions to the side for left_center and right_center", () => {
-    const { rerender } = render(<Tooltip direction="left_center">Tip</Tooltip>);
+  it("confirmed: left_center renders to the anchor's right, right_center to the anchor's left", () => {
+    const { rerender } = render(<Tooltip direction="left_center" heading="Tip" />);
     let el = screen.getByRole("tooltip");
-    expect(el.style.right).toContain("100%");
-
-    rerender(<Tooltip direction="right_center">Tip</Tooltip>);
-    el = screen.getByRole("tooltip");
     expect(el.style.left).toContain("100%");
+
+    rerender(<Tooltip direction="right_center" heading="Tip" />);
+    el = screen.getByRole("tooltip");
+    expect(el.style.right).toContain("100%");
   });
 });
 
-describe("confirmed dimensions and derived styling", () => {
-  it("applies the confirmed 240px width as a max-width, not a forced size", () => {
-    render(<Tooltip direction="top_center">Tip</Tooltip>);
+describe("confirmed rich composition (docs/audit/tooltips.md §14) — previously a bare, contentless box", () => {
+  it("renders a fixed 240px width, not a max-width", () => {
+    render(<Tooltip direction="top_center" heading="Tip" />);
     const el = screen.getByRole("tooltip");
-    expect(el.style.maxWidth).toBe("240px");
-    expect(el.style.width).toBe("");
-    expect(el.style.height).toBe("");
+    expect(el.style.width).toBe("240px");
+    expect(el.style.maxWidth).toBe("");
   });
 
-  it("renders content passed as children", () => {
-    render(<Tooltip direction="top_center">Helpful text</Tooltip>);
-    expect(screen.getByText("Helpful text")).toBeInTheDocument();
+  it("renders heading and description content", () => {
+    render(<Tooltip direction="top_center" heading="Heads up" description="More detail here." />);
+    expect(screen.getByText("Heads up")).toBeInTheDocument();
+    expect(screen.getByText("More detail here.")).toBeInTheDocument();
   });
 
-  it("uses the derived white fill and dark text consistent with the rest of the system", () => {
-    render(<Tooltip direction="top_center">Tip</Tooltip>);
-    const el = screen.getByRole("tooltip");
-    expect(el.style.backgroundColor).toBe("rgb(255, 255, 255)");
-    expect(el.style.color).toBe("rgb(10, 12, 17)");
+  it("renders a confirmed pointer triangle as a real SVG, not just a bare box", () => {
+    const { container } = render(<Tooltip direction="top_center" heading="Tip" />);
+    expect(container.querySelector("svg")).toBeInTheDocument();
+  });
+
+  it("renders the secondary and primary CTA actions and fires their click handlers", () => {
+    const onSecondary = vi.fn();
+    const onPrimary = vi.fn();
+    render(
+      <Tooltip
+        direction="top_center"
+        heading="Tip"
+        secondaryAction={{ label: "Learn more", onClick: onSecondary }}
+        primaryAction={{ label: "Got it", onClick: onPrimary }}
+      />,
+    );
+    fireEvent.click(screen.getByText("Learn more"));
+    expect(onSecondary).toHaveBeenCalled();
+    fireEvent.click(screen.getByText("Got it"));
+    expect(onPrimary).toHaveBeenCalled();
+  });
+
+  it("does not render the actions row when neither action is supplied", () => {
+    render(<Tooltip direction="top_center" heading="Tip" />);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("uses the confirmed white tip fill and dark heading text", () => {
+    const { container } = render(<Tooltip direction="top_center" heading="Tip" />);
+    const tip = container.querySelector('[data-name="tip"]') as HTMLElement;
+    expect(tip.style.background).toBe("rgb(255, 255, 255)");
+    expect(screen.getByText("Tip").style.color).toBe("rgb(10, 12, 17)");
+  });
+
+  it("confirmed: the tip omits its border on the edge touching the pointer", () => {
+    const { container, rerender } = render(<Tooltip direction="top_center" heading="Tip" />);
+    let tip = container.querySelector('[data-name="tip"]') as HTMLElement;
+    expect(tip.style.borderTop).toBeFalsy();
+    expect(tip.style.borderBottom).toBeTruthy();
+
+    rerender(<Tooltip direction="bottom_center" heading="Tip" />);
+    tip = container.querySelector('[data-name="tip"]') as HTMLElement;
+    expect(tip.style.borderBottom).toBeFalsy();
+    expect(tip.style.borderTop).toBeTruthy();
   });
 });
 
@@ -84,7 +123,7 @@ describe("no unsupported variant is exported", () => {
   });
 
   it("has no size, type, or state prop — none are confirmed to exist on tooltip", () => {
-    render(<Tooltip direction="top_center">Tip</Tooltip>);
+    render(<Tooltip direction="top_center" heading="Tip" />);
     const el = screen.getByRole("tooltip");
     expect(el).not.toHaveAttribute("data-size");
     expect(el).not.toHaveAttribute("data-type");
