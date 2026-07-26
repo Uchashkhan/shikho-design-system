@@ -16,10 +16,10 @@ const renderAt = (path: string) =>
   );
 
 describe("every route renders directly by URL", () => {
-  it("renders the overview at /", () => {
+  it("renders the landing hero at /", () => {
     renderAt("/");
     expect(
-      screen.getByRole("heading", { name: /built strictly from what the audit confirmed/i }),
+      screen.getByRole("heading", { level: 1, name: /build consistent products, faster/i }),
     ).toBeInTheDocument();
   });
 
@@ -112,7 +112,7 @@ describe("component gallery", () => {
 describe("sidebar search", () => {
   it("narrows the sidebar nav to matching components", async () => {
     const user = userEvent.setup();
-    renderAt("/");
+    renderAt("/components");
     const sidebar = screen.getByRole("complementary");
 
     expect(within(sidebar).getByRole("link", { name: "Chip" })).toBeInTheDocument();
@@ -125,7 +125,7 @@ describe("sidebar search", () => {
 
   it("reports when nothing matches", async () => {
     const user = userEvent.setup();
-    renderAt("/");
+    renderAt("/components");
 
     await user.type(screen.getByLabelText("Search documentation"), "zzzz");
 

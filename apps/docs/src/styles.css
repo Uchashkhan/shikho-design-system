@@ -746,3 +746,288 @@ a.sk-card:hover {
     display: none;
   }
 }
+
+/* ---------------------------------------------------- topnav github action */
+
+.sk-topnav__github {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: var(--sk-radius-sm);
+  color: var(--sk-text-muted);
+  font-weight: 600;
+  font-size: 13px;
+  border: 1px solid var(--sk-border);
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.sk-topnav__github:hover {
+  background: var(--sk-surface-muted);
+  color: var(--sk-text);
+  border-color: var(--sk-border-strong);
+}
+
+/* ============================================================ landing / hero */
+
+.sk-landing {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lp {
+  position: relative;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 0 24px;
+  min-height: calc(100vh - 60px);
+  background:
+    radial-gradient(120% 90% at 50% -20%, var(--sk-brand-soft), transparent 60%),
+    var(--sk-bg);
+}
+
+.lp__glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lp__glow--a {
+  width: 440px;
+  height: 440px;
+  top: -120px;
+  left: -60px;
+  background: color-mix(in srgb, var(--sk-brand) 32%, transparent);
+}
+
+.lp__glow--b {
+  width: 380px;
+  height: 380px;
+  right: -70px;
+  bottom: -140px;
+  background: color-mix(in srgb, var(--sk-brand) 20%, transparent);
+}
+
+/* -------------------------------------------------------- hero appear animation */
+
+@keyframes lp-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--lp-rest-y, 0px) + 14px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(var(--lp-rest-y, 0px));
+  }
+}
+
+.lp-fade {
+  --lp-delay: 0ms;
+  opacity: 0;
+  animation: lp-fade-up 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--lp-delay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-fade {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+.lp__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 56px 0 72px;
+  text-align: center;
+}
+
+.lp__logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.lp__eyebrow {
+  display: inline-block;
+  margin: 0 0 20px;
+  padding: 5px 12px;
+  border-radius: var(--sk-radius-full);
+  background: var(--sk-brand-soft);
+  border: 1px solid var(--sk-brand-border);
+  color: var(--sk-brand);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.lp__title {
+  margin: 0 auto;
+  max-width: 720px;
+  font-size: clamp(2.3rem, 5vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  color: var(--sk-text);
+}
+
+.lp__title-accent {
+  color: var(--sk-brand);
+}
+
+.lp__lede {
+  margin: 20px auto 0;
+  max-width: 600px;
+  color: var(--sk-text-muted);
+  font-size: clamp(1rem, 1.3vw, 1.14rem);
+  line-height: 1.6;
+}
+
+.lp__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.lp__tech {
+  margin: 20px 0 0;
+  color: var(--sk-text-subtle);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lp__tech-pkg {
+  color: var(--sk-brand);
+  font-weight: 600;
+}
+
+.lp__tech-dot {
+  margin: 0 8px;
+  color: var(--sk-border-strong);
+}
+
+.lp__cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+  margin-top: 60px;
+}
+
+.lp-card {
+  --lp-rest-y: 0px;
+  flex: 1 1 220px;
+  min-width: 210px;
+  max-width: 262px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  text-align: left;
+  background: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-xl);
+  box-shadow: var(--sk-shadow-lg);
+  transform: translateY(var(--lp-rest-y));
+}
+
+.lp-card--lift {
+  --lp-rest-y: -16px;
+}
+
+.lp-card__label {
+  color: var(--sk-text-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp-card__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 72px;
+}
+
+.lp-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.lp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lp-field__label {
+  color: var(--sk-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.lp-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.lp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--sk-text);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.lp-chiprow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 1080px) {
+  .lp-card {
+    flex-basis: 200px;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 720px) {
+  .lp__inner {
+    padding: 40px 0 56px;
+  }
+
+  .lp__cards {
+    margin-top: 44px;
+    gap: 16px;
+  }
+
+  .lp-card--lift {
+    transform: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .lp-card {
+    flex-basis: 100%;
+    max-width: 360px;
+  }
+}

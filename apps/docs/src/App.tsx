@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { Link, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { AppShell } from "./layout/AppShell";
+import { LandingShell } from "./layout/LandingShell";
 import { foundationRegistry } from "./registry";
 import { ComponentDetailPage } from "./pages/ComponentDetailPage";
 import { ComponentsPage } from "./pages/ComponentsPage";
-import { OverviewPage } from "./pages/OverviewPage";
+import { HomePage } from "./pages/HomePage";
 import { PlaygroundPage } from "./pages/PlaygroundPage";
 import { ColorsPage } from "./pages/foundations/ColorsPage";
 import { ElevationPage } from "./pages/foundations/ElevationPage";
@@ -60,8 +61,10 @@ export function App() {
 
   return (
     <Routes>
+      <Route element={<LandingShell />}>
+        <Route path="/" element={<HomePage />} />
+      </Route>
       <Route element={<AppShell />}>
-        <Route path="/" element={<OverviewPage />} />
         <Route path="/components" element={<ComponentsPage />} />
         <Route path="/components/:slug" element={<ComponentDetailPage />} />
         <Route path="/foundations" element={<Navigate to="/foundations/colors" replace />} />
