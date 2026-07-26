@@ -1,36 +1,35 @@
 # Toggle
 
-Implements the `toggle` component set audited in `docs/audit/toggle.md` — the third and final selection-control primitive alongside `Checkbox` and `Radio`. Same `get_design_context`-free audit situation as `Radio`: no deep internal-structure audit exists for this family (§6), so there is no confirmed knob/track color split or animation, only overview-level property and token data.
+Implements the `toggle` component set audited in `docs/audit/toggle.md` — the third and final selection-control primitive alongside `Checkbox` and `Radio`.
 
-`toggle_label` (the second confirmed component set) is **out of scope for this task**, same scoping decision as `checkbox_label`/`radio_label`.
+## This rebuild — ground-truth re-audit (docs/audit/toggle.md §14)
+
+The original audit deliberately never called `get_design_context` (an explicit instruction for that pass). The prior implementation reflected that gap: it rendered a bare `<input type="checkbox" role="switch">` with only a track-colored background and **no knob at all** — which is exactly why it visually looked like a plain checkbox rather than a switch (no browser has meaningful default styling for `role="switch"` on a checkbox input).
+
+A deep re-audit was performed: `get_metadata` on both `toggle` (15 variants) and `toggle_label` (4 variants), followed by `get_design_context` on all 5 states at `md`, plus `switch_OFF`/`switch_ON` at both `sm` and `lg`, plus all 4 `toggle_label` variants. Unlike `radio`, every `toggle` state decomposes into real layers with actual bound colors — there was no flattened-image limitation here.
+
+The component was rebuilt using the same hidden-native-input + custom-rendered-visual pattern as `Checkbox`/`Radio`: a real `<input type="checkbox" role="switch">` stays for semantics/keyboard/AX, visually hidden, while a sibling `aria-hidden` track+knob renders the confirmed pill track and sliding stadium-shaped knob.
 
 ## Confirmed vs. derived
 
-**Exactly confirmed** (`docs/audit/toggle.md`):
-- `size`: `lg` (40×24), `md` (**confirmed identical bounding box to `lg`, 40×24** — not a typo, reproduced faithfully), `sm` (32×20) — §4.
-- 5 raw Figma `state` values: `switch_ON_disabled`, `switch_OFF_disabled`, `switch_ON_focused`, `switch_ON`, `switch_OFF` — confirmed structurally (§2). **No `hover` state and no `switch_OFF_focused`** — the most limited focus/interaction coverage of the three selection controls (§10, §12).
-- **A third distinct selection-vocabulary**: `switch_ON`/`switch_OFF` (uppercase, `switch_` prefix), differing from both Checkbox's `checked`/`unchecked` and Radio's `active`/`inactive` (§10, §12 — table comparing all three).
-- `outline/focus_primary` is the **only** focus-ring token present in this component's export — unlike Checkbox/Radio, there is no `outline/focus_gray` here at all (§8, §11), consistent with `toggle` having only one focused variant. This removes the primary-vs-gray ambiguity that affected Checkbox/Radio's focus-ring choice.
-- `radius/border_radius_round` (1000) is present and used for the pill track shape (§8).
-
-**Derived, grounded in Toggle's own confirmed export (not borrowed from Checkbox/Radio this time):**
-- The resting track fill uses `Color/Gray 200` (`#ebecf0`), because Toggle's own §9 color export is **narrower than Checkbox's/Radio's — it does not include `Text/Gray 400`**, the exact border color those two components share and that `Radio` legitimately reused from `Checkbox`. Reusing that same gray-400 border here would have been a weaker derivation than it was for Radio, since it isn't even present in Toggle's own token list. `Color/Gray 200` is used instead because it *is* explicitly present in Toggle's own export (§9).
-- **No border is rendered at all** — no border color token appears anywhere in Toggle's confirmed export (unlike Checkbox/Radio, where at least `list.md` cross-referenced an applied border for Checkbox). This is a deliberate absence, not an oversight.
-- The focus ring reuses `focusRingColor.primary` from `@shikho/tokens`, whose value (`#5468ff3d`) is exactly `outline/primary_alpha` as confirmed here (§8, §9) — a genuine value match, not an assumption.
+**Exactly confirmed** (`docs/audit/toggle.md` §14 unless noted):
+- Outer box: `lg`/`md` = 40×24 (confirmed identical, §4), `sm` = 32×20.
+- **Track and knob are drawn at different internal sizes for `md` vs `lg`, despite the identical outer box**: `lg` track 38×22/knob 22×18 (near edge-to-edge, 1px inset); `md` track 34×20/knob 20×16 (3px inset); `sm` track 28×16/knob 16×12.
+- The knob is a uniform 2px inset from the track's edges on every side, at rest and when slid — used directly as the CSS layout mechanism (`padding: 2px` + flex `justifyContent: flex-start`/`flex-end`) rather than a per-state position table.
+- The knob is a confirmed **stadium/pill shape** (width ≠ height), not a circle.
+- Per-state colors: `switch_OFF` = `gray/200` track, white knob + `elevation.e2` shadow; `switch_ON` = `primary/500` track, white knob (same shadow) + a `primary/500`-colored checkmark; `switch_ON_focused` = same as ON + `outline/focus_primary` ring; `switch_OFF_disabled`/`switch_ON_disabled` = the **same** muted `gray/100` track (confirmed **not** primary-tinted even when "ON") + a translucent-black knob with **no shadow** — the only difference between disabled ON/OFF is whether a muted gray/100-colored checkmark appears.
+- `toggle_label` composition — a real nested `Toggle` + a `cell_content` column (`gap: 8px` row gap, `gap: 2px` label/caption gap, `items-start`), confirmed across all 4 size × direction variants.
+- **Toggle's label typography differs from Checkbox's/Radio's**: at `md`, the label is confirmed `Medium/500` weight (not Regular/400 like its siblings); at `sm`, it collapses to `caption_2`/Medium/500, matching the caption — same pattern as the other two controls' `sm` label.
+- `outline/focus_primary` is the only focus-ring token present — confirmed to apply only to the `checked` (ON) track; there is no `switch_OFF_focused` variant.
 
 **Explicitly not resolved, and not approximated:**
-- **No sliding knob/thumb is drawn.** The common toggle-switch visual (a colored track with a white knob that slides between OFF/ON positions) has zero confirmed basis anywhere in this audit — no knob color, no knob size, no track-color-when-ON value, no animation timing. Rather than invent the ubiquitous pattern, this component renders only the confirmed track fill/shape and relies on the browser's native checked-indicator rendering to communicate ON/OFF, exactly the same principle applied to `Checkbox`'s unconfirmed checkmark and `Radio`'s unconfirmed selected-dot.
-- `radius/border_radius_100` — a brand-new token first seen in this audit (§8, §10), explicitly flagged as having an unconfirmed application ("knob vs. track vs. something else," §13). **Not used anywhere in this implementation** rather than guessed onto either element.
-- `Color/disabled_base_em` — present in the token pool but its genuine application to `toggle`'s disabled states is explicitly unconfirmed (§13). Disabled styling uses the same generic `disabled:opacity-50` treatment as Checkbox/Radio instead of this specific color.
-- **No `hover` state and no `indeterminate` state** — both confirmed absent from `toggle`'s enum (§2, §4), unlike its two siblings. Neither is implemented; there is no `indeterminate` prop on `Toggle` at all (contrast with `Checkbox`/`Radio`, which both expose one for their own confirmed enum values).
+- No `hover` state and no `indeterminate` state — both confirmed absent from `toggle`'s enum (§2, §4), unlike its two siblings. Neither is implemented.
+- Whether `toggle_label` shares any literal component reuse with `checkbox_label`/`radio_label` — explicitly unconfirmed (§13); its differing bounding-box dimensions argue against it, but this isn't conclusive.
 
 ## Not implemented
 
-- **`toggle_label`** — a separate confirmed component set (§1), out of scope for this task. Notably, its confirmed bounding-box dimensions are *larger* than `checkbox_label`/`radio_label`'s (§4, §11) despite an identical property structure — worth carrying into that component's own future implementation, not something to reconcile here.
-- Whether `toggle_label` shares any literal component reuse with `checkbox_label`/`radio_label` — explicitly unconfirmed (§13).
-- Captions/descriptions, `success`/`warning`/`error` states — none exist on `toggle` (§5).
-- Any accessibility behavior beyond native `<input type="checkbox" role="switch">` semantics.
+- Captions/descriptions beyond `toggle_label`'s own confirmed caption, `success`/`warning`/`error` states — none exist on `toggle` (§5).
 
 ## Token dependencies
 
-Only `@shikho/tokens`: `color.gray[200]`, `focusRingColor.primary`, `radius.full`. No new token category introduced.
+`@shikho/tokens`: `color.gray[100]`, `color.gray[200]`, `color.primary[500]`, `color.white[950]`, `color.black[100]`, `color.gray[950]`, `color.gray[700]`, `elevation.e2`, `radius.full`. The exact track/knob pixel dimensions per size are hardcoded, confirmed-in-Figma values with no matching token — consistent with this project's policy of hardcoding only when a value is confirmed and no token exists.

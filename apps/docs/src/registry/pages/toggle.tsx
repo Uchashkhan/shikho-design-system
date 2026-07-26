@@ -3,22 +3,22 @@ import type { ComponentPageConfig } from "./types";
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
-    "The third and final selection-control primitive. Figma spells its states `switch_ON` / `switch_OFF` — a third distinct vocabulary, differing from both Checkbox's `checked`/`unchecked` and Radio's `active`/`inactive`. It also has the most limited state coverage of the three: no hover state, and no OFF-focused variant.",
+    "The third and final selection-control primitive. Figma spells its states `switch_ON` / `switch_OFF` — a third distinct vocabulary, differing from both Checkbox's `checked`/`unchecked` and Radio's `active`/`inactive`. It also has the most limited state coverage of the three: no hover state, and no OFF-focused variant. A real input stays for semantics, but the track and sliding knob are now custom-rendered from the confirmed Figma layer source, not left to the browser's native checkbox rendering.",
   variants: [
     {
       name: "size",
       values: ["lg", "md", "sm"],
-      note: "lg and md share an identical confirmed 40×24 bounding box — reproduced faithfully rather than \"fixed\" into two distinct sizes. sm is 32×20.",
+      note: "lg and md share an identical confirmed 40×24 outer box, but the track/knob drawn inside are confirmed different sizes between the two (lg's track is nearly edge-to-edge; md's is visibly narrower). sm is 32×20 overall.",
     },
   ],
   states: ["switch_OFF", "switch_ON", "switch_ON_focused", "switch_OFF_disabled", "switch_ON_disabled"],
   gaps: [
-    "No sliding knob or thumb is drawn. There is zero confirmed data for a knob colour, knob size, ON-state track colour or animation — so the ubiquitous \"coloured track + sliding white knob\" visual would be entirely invented. The browser's native indicator communicates ON/OFF instead.",
-    "Toggle's own colour export is narrower than Checkbox's and Radio's — it does not include Text/Gray 400, the border colour those two share. The resting fill is therefore grounded in Color/Gray 200, which is present in Toggle's own export, and no border is rendered at all.",
-    "`radius/border_radius_100` is a brand-new token first seen in this audit, with an explicitly unconfirmed application (knob vs. track vs. something else). It is deliberately left unused rather than guessed onto either element.",
-    "`Color/disabled_base_em` is present in the token pool but its genuine application to disabled states is unconfirmed, so generic opacity dimming is used instead.",
+    "The knob is confirmed to be a stadium/pill shape (its width and height differ), not a circle, inset a uniform 2px from the track's edges on every side and size.",
+    "The selected (ON) knob's checkmark and disabled knob's translucent fill are all read directly off the real SVG/layer source behind each state, not derived by analogy to Checkbox/Radio.",
+    "`radius/border_radius_100` is confirmed applied to the track/knob's pill radius (both use it, at their respective sizes).",
+    "`Color/disabled_base_em` is confirmed to equal `Color/gray/100`, and is applied to both disabled track states.",
     "There is no hover state and no indeterminate state — both confirmed absent from toggle's enum, unlike its two siblings.",
-    "`toggle_label` is a second confirmed component set, not yet implemented.",
+    "`toggle_label` is now implemented — composes a real nested `Toggle` plus a label/caption text column; unlike Checkbox/Radio, Toggle's own label is confirmed Medium/500 weight at both sizes, not Regular/400 at md.",
   ],
   usageExample: `import { Toggle } from "@shikho/ui";
 
