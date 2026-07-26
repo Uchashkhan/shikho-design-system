@@ -105,3 +105,23 @@ export const States: Story = {
     </div>
   ),
 };
+
+/** Confirmed left/right icon slots (docs/audit/tags.md §14) — previously entirely absent. */
+export const IconSlotComparison: Story = {
+  render: () => {
+    const dot = <span style={{ display: "block", width: "100%", height: "100%", borderRadius: 9999, background: "currentColor" }} />;
+    return (
+      <div style={{ display: "flex", gap: 8 }}>
+        <Tags selectLeftIcon={dot} selectRightIcon={dot}>
+          Both icons
+        </Tags>
+        <Tags selectLeftIcon={dot} rightIcon={false}>
+          Left only
+        </Tags>
+        <Tags leftIcon={false} selectRightIcon={dot}>
+          Right only
+        </Tags>
+      </div>
+    );
+  },
+};

@@ -89,11 +89,20 @@ export const DisabledComparison: Story = {
 };
 
 /**
- * Keyboard-focus ring — confirmed geometry (0-blur, 3px-spread) and color (`outline/Gray 300`)
- * from `docs/audit/checkboxes.md` §8. Tab to this checkbox to see it; the audit could not confirm
- * whether `outline/focus_primary` applies instead for the checked state (§13), so this
- * implementation uses the gray ring uniformly — see the component README.
+ * Keyboard-focus ring — confirmed to depend on checked state (docs/audit/checkboxes.md §14):
+ * unchecked_focused rings gray/300; checked_focused rings a primary-alpha color instead. Tab to
+ * each checkbox below to compare.
  */
 export const FocusRing: Story = {
-  args: { autoFocus: true },
+  render: () => (
+    <div style={{ display: "flex", gap: 16 }}>
+      <Checkbox aria-label="Unchecked, tab to focus" />
+      <Checkbox checked readOnly aria-label="Checked, tab to focus" />
+    </div>
+  ),
+};
+
+/** Confirmed hover treatment (docs/audit/checkboxes.md §14) — the border swaps from gray/400 to primary/500, no fill change. Hover the box below. */
+export const HoverState: Story = {
+  render: () => <Checkbox aria-label="Hover me" />,
 };

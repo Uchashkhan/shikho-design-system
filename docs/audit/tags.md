@@ -146,3 +146,20 @@ Confirmed reuse of: `elevation/e2`, `elevation/e5` (every prior audit); `seconda
 - Whether `chip`'s and `tags`' architectural differences reflect genuinely different intended use cases or independent design evolution — inferred, not confirmed.
 - Default variant configuration for `tags`.
 - Variable Collection / Mode metadata — not retrievable, consistent with every prior audit in this series.
+
+---
+
+## 13. Deep re-audit addendum (visual implementation correction pass)
+
+The audit above never called `get_design_context` (§6: "No deep instance audit ... was performed for this component family") — the resulting implementation was built entirely from metadata/token names, with every fill/border/padding/typography value either a plausible-sounding guess or a flat opacity-dimmed placeholder. A second pass (16 `get_design_context` calls — all 11 types at `md`/`default`; `tertiary` at `hover` and `sm`; `primary` at `lg`, `sm`, and `disabled`) found the real construction was materially different:
+
+- **Radius was assumed to be the full pill** (`radius/border_radius_round`), following Chip's shape. Confirmed real: `tags` uses the `radius/custom/xs|sm|md` scale (6/8/10px at sm/md/lg) — a small rounded rectangle, not a pill at all. This is likely the single largest visual miss in the pre-rebuild implementation.
+- **Every size rendered at the same font size** (12px) with horizontal-only padding. Confirmed real: `lg` uses `caption_2` (12px), `md`/`sm` use `caption_1` (11px) — a genuine per-size typography split — and padding/gap vary by size (`sm`/`lg` have a root `gap`, `md` does not; `sm` has zero vertical padding).
+- **Icon slots did not exist at all.** Confirmed real: every sampled instance has `left_icon`/`right_icon` slots (14/16/12px depending on size) with the same `elevation/e2` drop-shadow filter confirmed system-wide.
+- **`tertiary` was guessed as a lighter, borderless gray** (`gray/50` fill, `gray/600` text). Confirmed real: a white fill with a `black/50`(4%) border and `gray/700` text — structurally the neutral analogue of `primary_outline`, not "secondary but lighter." Its `hover` state is independently confirmed: fill darkens from white to `gray/100`.
+- **`primary_outline` was guessed as a transparent background with a fully opaque `primary/500` border.** Confirmed real: an opaque white fill with the border at only 24% alpha (`primary/500_alpha_24`).
+- **The solid `primary` type was guessed as borderless** (`border: 1px solid transparent`). Confirmed real: a `black/50`(4%) border — while "Danger Filled"/"Success Filled" are confirmed genuinely borderless. This asymmetry between `primary` and the two "Filled" severities is real, not an inconsistency introduced by this rebuild.
+- **`disabled` was a generic `opacity: 0.5` dim on top of each type's own resting fill.** Confirmed real (sampled on `primary`): a flat `Color/vanilla_gray/100` (`#f6f4ef`) fill — a genuinely distinct token from the gray ramp's own `gray/100` (`#f4f4f6`) — `gray/400` text, no border regardless of the type's own border, and the resting inset shadow is **kept** (unlike Button/Chip's disabled treatment, which drops it).
+- **The confirmed inset shadow (`special_drop`) was never applied at all.**
+
+Every correction above is implemented in `packages/ui/src/components/tags/tags.tsx`'s `TAG_VISUAL`/`SIZE_METRICS` tables and cited inline; see `packages/ui/src/components/tags/README.md` for the consumer-facing confirmed-vs-derived summary. Not independently sampled in this pass: `hover` for `info`/`warning`/`success`/`primary_light` (derived from the confirmed `_alpha_12`→`_alpha_20` system already documented in §8) and for `secondary`/`primary_outline` (derived as one step darker/tinted); `hover` for the 3 solid-fill types (`primary`, `Danger Filled`, `Success Filled` — no confirmed hover exists for any solid fill in this family); icon size at `sm` (derived by rank from the confirmed 14px@md/16px@lg progression).

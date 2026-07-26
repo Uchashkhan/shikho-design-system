@@ -3,18 +3,17 @@ import type { ComponentPageConfig } from "./types";
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
-    "Renders a real `<input type=\"checkbox\">`. The audit's single conflated `state` enum is decomposed into separate `checked`, `indeterminate` and `disabled` props, with hover and focus handled by real CSS rather than a manually-set prop.",
+    "A real <input type=\"checkbox\"> is kept for semantics/keyboard/AX, but is now visually hidden — a deep re-audit (docs/audit/checkboxes.md §14) found the browser's own native checked/indeterminate indicator could not reproduce Figma's confirmed checkmark glyph, tint colors, or dash artwork, so a custom-rendered visual box now drives the actual appearance. The audit's single conflated `state` enum is decomposed into separate `checked`, `indeterminate`, `disabled`, `hover`, and `focus` handling.",
   variants: [
-    { name: "size", values: ["md", "sm"], note: "md is 24×24, sm is 20×20 — identical dimensions to Radio." },
+    { name: "size", values: ["md", "sm"], note: "md is 24×24 (18×18 visible box), sm is 20×20 (16×16 visible box) — the visible box is confirmed smaller than the component's own footprint." },
     { name: "shape", values: ["sphere", "square"], note: "A genuine confirmed binary shape choice; Radio has no equivalent property." },
   ],
   states: ["unchecked", "checked", "indeterminate", "hover", "focused", "disabled"],
   gaps: [
-    "No `get_design_context` deep audit exists for this family. The resting visual (white fill, 2px gray-400 border, 6px radius) is cross-confirmed via the nested Checkbox instance found in the List audit.",
-    "There is no confirmed checkmark glyph, checked-state fill or indeterminate-dash artwork anywhere. Rather than invent the ubiquitous \"blue fill + white check\" pattern, the browser's native indicator renders on top of the confirmed resting box.",
-    "Whether outline/focus_primary or outline/focus_gray applies to checked vs. unchecked focus was never confirmed — the neutral gray ring is applied uniformly.",
-    "The audit confirms no `checked_hover` or `checked_disabled` variant exists, only bare `hover` / `disabled`.",
-    "`checkbox_label` is a second confirmed component set, not yet implemented.",
+    "checked's exact fill/checkmark colors were not decomposable from Figma's flattened image asset — the conventional solid primary/500 fill + white checkmark is used as the most likely candidate, explicitly derived rather than confirmed.",
+    "hover for checked/indeterminate has no confirmed visual — both render identically to their non-hover look.",
+    "checkbox_label is now implemented (previously out of scope) — confirmed to compose a real nested Checkbox plus a label (Regular 400 weight) and optional caption.",
+    "Radio's own visual still derives from Checkbox's pre-rebuild values and was not re-confirmed as part of this pass.",
   ],
   usageExample: `import { Checkbox } from "@shikho/ui";
 

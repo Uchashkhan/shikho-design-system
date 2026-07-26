@@ -1,39 +1,43 @@
 # Tags
 
-Implements the `tags` component set audited in `docs/audit/tags.md` — Chip's closest sibling, and the audit explicitly compares the two (§10). No `get_design_context` deep audit was run on this family (overview-level only, same situation as Tooltip/Radio/Toggle), but the colour data here is unusually rich and precise: the audit calls it "the cleanest, most internally consistent alpha-naming system found in this entire audit series" (§8, §9).
+Implements the `tags` component set audited in `docs/audit/tags.md` — Chip's closest sibling (§10). The original audit never called `get_design_context` at all (overview-only), so the first implementation was built entirely from metadata/token names. A second re-audit pass (§13, 16 `get_design_context` calls) then confirmed the real per-size, per-type, and per-state visual construction.
+
+## This rebuild (§13)
+
+- **Radius was assumed to be a full pill**, following Chip's shape. Confirmed real: `tags` uses the `radius/custom/xs|sm|md` scale (6/8/10px at sm/md/lg) — a small rounded rectangle, not a pill — likely the single largest visual miss in the original guess.
+- **Every size shared one 12px font with horizontal-only padding.** Confirmed real: `lg` uses `caption_2` (12px), `md`/`sm` use `caption_1` (11px) — a genuine per-size typography split — plus real per-size padding/gap differences.
+- **Icon slots did not exist.** Confirmed real: `left_icon`/`right_icon` slots on every sampled instance, with the same `elevation/e2` drop-shadow filter used system-wide.
+- **`tertiary` was guessed as a lighter, borderless gray.** Confirmed real: a white fill with a `black/50` border — the neutral analogue of `primary_outline`, not "secondary but lighter." Its `hover` (white → `gray/100`) is independently confirmed.
+- **`primary_outline` was guessed as transparent with a fully opaque border.** Confirmed real: an opaque white fill with the border at only 24% alpha.
+- **The solid `primary` type was guessed as borderless.** Confirmed real: a `black/50` border — while "Danger Filled"/"Success Filled" are confirmed genuinely borderless. This asymmetry is real, not an inconsistency this rebuild introduced.
+- **`disabled` was a generic `opacity: 0.5` dim.** Confirmed real: a flat `Color/vanilla_gray/100` fill (a distinct token from the gray ramp's own `gray/100`), `gray/400` text, no border — and the resting inset shadow is **kept**, unlike Button/Chip's disabled treatment.
+- **The confirmed inset shadow (`special_drop`) was never applied.**
 
 ## Confirmed vs. derived
 
-**Exactly confirmed** (`docs/audit/tags.md`):
-- `size`: `lg` (32px), `md` (24px), `sm` (20px) — confirmed bounding-box heights, stated without the "≈" qualifier Chip's sizes carried (§3).
-- `type`: 11 values — `info`, `warning`, `danger`, `Danger Filled`, `success`, `Success Filled`, `tertiary`, `secondary`, `primary_outline`, `primary_light`, `primary` (§2). **`Danger Filled`/`Success Filled` are two-word, space-containing, Title Case values** — "the most severe single-property naming inconsistency confirmed in this entire audit series" (§9) — preserved verbatim, not corrected.
-- `state`: `disabled`, `hover`, `default` — **no `focus`, no `drag`**, unlike Chip (§2).
-- **No coverage gaps**: every one of the 11 types gets all 3 states at all 3 sizes (99 variants total) — a positive contrast to Chip's confirmed `Green`/`Red` gap (§3).
-- The systematic alpha convention: every severity (`info`, `warning`, `danger`, `success`) and `primary` gets an exact confirmed `_alpha_12` hex, and primary additionally gets `_alpha_24`. Each severity's `Text/{name} 600` label colour is likewise an exact confirmed hex. `Danger Filled`/`Success Filled`'s solid fills use the confirmed `Color/{name}/500` values.
-- A confirmed three-way emphasis split for the primary brand colour specifically: `primary_outline` / `primary_light` / `primary` — "filled, tinted, outlined" (§3).
-- Only `SemiBold` weight typography appears in this family's export (12px/11px) — no Medium, no 13px, a confirmed narrower set than Chip's (§6).
+**Exactly confirmed** (`docs/audit/tags.md` §13, 16 sampled instances):
+- `size`: real per-size height/padding/gap/radius/icon-size/typography, sampled at all 3 sizes.
+- `type`: all 11 types' default fill/border/text, sampled directly at `md`.
+- `state`: `disabled`'s universal recipe (sampled on `primary`); `tertiary`'s `hover` (sampled directly).
+- No coverage gaps — every type gets all 3 states at all 3 sizes (§3).
+- The systematic alpha convention (`_alpha_12`/`_alpha_20`/`_24` for primary) — confirmed in §8 and now confirmed genuinely applied at `_alpha_12` for every tinted type's default state.
+- `Danger Filled`/`Success Filled`'s casing (space-containing Title Case) — preserved verbatim, not corrected, per the audit's own note that this is "the most severe single-property naming inconsistency confirmed in this entire audit series" (§9).
 
-**Derived — documented, not independently confirmed:**
-- `secondary` and `tertiary` have **no confirmed alpha data anywhere in this audit** — they are absent from §8's five-severity table entirely. They are implemented as two neutral gray tints (`secondary` slightly darker than `tertiary`), the same "least invented, uses tokens already established elsewhere" pattern applied throughout this library — not an independently confirmed binding.
-- `primary_outline`'s border colour uses the base `Color/primary/500` — a reasonable choice given no confirmed border-specific value exists for it, consistent with how "outline" emphasis is derived elsewhere in this library.
-- **Radius is applied uniformly as `radius.full`** (pill shape) across every type. The audit found **three** `radius/custom/*` tokens present (`xs`/`sm`/`md`) — more than Chip's zero — and explicitly flags that they "may map to different type values (e.g. outline types vs. filled types)" but could not confirm which (§7, §12). Rather than invent that mapping, one uniform radius is used; the richer radius data is documented here as an unresolved possibility, not fabricated into a design decision.
-- Typography (12px/16px/600) is applied uniformly across all three sizes, since no per-size breakdown was confirmed.
-
-**Explicitly not implemented, and not invented:**
-- No icon, label-count, or dismiss-control slot — whether any of these exist as internal layers was never confirmed (§4, §12), since no deep audit was run.
-- `special_drop`'s inner shadow — the audit explicitly flags this as "plausibly identical" to its confirmed application elsewhere (Input/List/Sidebar Navigation) but **not confirmed without `get_design_context`** (§7, §12). Not applied here, consistent with the same caution already applied to `List`'s own `tags` sub-element.
-- Why only `danger`/`success` get a "Filled" counterpart while `warning`/`info` do not — a confirmed asymmetry (§3, §9, §12) with no stated reason. Not resolved, not invented.
+**Derived, not independently confirmed** (`docs/audit/tags.md` §13):
+- `hover` for `info`/`warning`/`success`/`primary_light` — derived from the confirmed `_alpha_12`→`_alpha_20` system (§8), not independently sampled per type.
+- `hover` for `secondary`/`primary_outline` — derived as one step darker/tinted.
+- `hover` for the 3 solid-fill types (`primary`, `Danger Filled`, `Success Filled`) — no confirmed hover exists for any solid fill in this family; hover renders identically to default.
+- Icon size at `sm` (12px) — derived by rank from the confirmed 14px@md/16px@lg progression.
 
 ## Rendered as a static label, not a button
 
-Unlike `Chip`, `Tags` renders a plain `<span>`, not a `<button>`. This follows the audit's own explicit architectural read: "`chip` reads as an interactive, selectable/draggable control... while `tags` reads as a static, label-only element" (§10) — directly supported by the confirmed absence of `focus`/`drag` states here. `state="disabled"` is expressed only as `aria-disabled` plus visual dimming, since a `<span>` has no native `disabled` attribute to set.
+Unlike `Chip`, `Tags` renders a plain `<span>`, not a `<button>` — no `focus`/`drag` states exist for this family (§10). `state="disabled"` is expressed via `aria-disabled` plus the confirmed disabled recolor, since a `<span>` has no native `disabled` attribute.
 
 ## Not implemented
 
-- Icon/count/dismiss slots — existence unconfirmed.
-- `special_drop` inner shadow — confirmed present in the token pool, not confirmed applied.
-- A confirmed mapping from the three `radius/custom/*` tokens to specific types.
+- A confirmed reason why only `danger`/`success` get a "Filled" counterpart while `warning`/`info` do not — a confirmed asymmetry (§3, §9), not resolved.
+- Real dismiss/counter controls — no dedicated layer was found for either.
 
 ## Token dependencies
 
-Only `@shikho/tokens`: `color.info[500/600]`, `color.warning[500/600]`, `color.danger[500/600]`, `color.success[500/600]`, `color.primary[500/600]`, `color.gray[50/100/600/700]`, `color.white[950]`, and `radius.full`.
+`@shikho/tokens`: `color.info/warning/danger/success[500/600]`, `color.primary[500/600]`, `color.gray[50/100/200/400/700]`, `color.black[50]`, `color.white[50/950]`, `color.vanillaGray[100]`, `radius.xs/sm/md`.

@@ -13,11 +13,11 @@ describe("renders as a static label, not an interactive control", () => {
   it("renders a <span>, not a <button>", () => {
     render(<Tags type="info">Info</Tags>);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
-    expect(screen.getByText("Info").tagName).toBe("SPAN");
+    expect(screen.getByText("Info").closest("span")?.tagName).toBe("SPAN");
   });
 });
 
-describe("all 11 confirmed types render with distinct confirmed/derived colours", () => {
+describe("all 11 confirmed types render with distinct confirmed/derived colours (docs/audit/tags.md §14)", () => {
   const types = [
     "info",
     "warning",
@@ -38,54 +38,98 @@ describe("all 11 confirmed types render with distinct confirmed/derived colours"
   });
 
   it("applies the exact confirmed alpha-12 tint and Text/{name} 600 label for bare severities", () => {
-    render(<Tags type="danger">danger</Tags>);
-    const el = screen.getByText("danger");
-    expect(el.style.backgroundColor).toBe("rgba(240, 61, 61, 0.12)"); // Color/danger/500_alpha_12
-    expect(el.style.color).toBe("rgb(233, 32, 32)"); // Text/Danger 600
+    const { container } = render(<Tags type="danger">danger</Tags>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.background).toBe("rgba(240, 61, 61, 0.12)"); // Color/danger/500_alpha_12
+    expect(screen.getByText("danger").style.color).toBe("rgb(233, 32, 32)"); // Text/Danger 600
   });
 
-  it("applies the confirmed solid fill for the Filled counterparts", () => {
-    render(<Tags type="Danger Filled">Danger Filled</Tags>);
-    const el = screen.getByText("Danger Filled");
-    expect(el.style.backgroundColor).toBe("rgb(240, 61, 61)"); // Color/danger/500
-    expect(el.style.color).toBe("rgb(255, 255, 255)");
+  it("applies the confirmed solid fill for the Filled counterparts, with no border", () => {
+    const { container } = render(<Tags type="Danger Filled">Danger Filled</Tags>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.background).toBe("rgb(240, 61, 61)"); // Color/danger/500
+    expect(root.style.border).toBeFalsy();
+    expect(screen.getByText("Danger Filled").style.color).toBe("rgb(255, 255, 255)");
   });
 
   it("applies the confirmed primary_light alpha-12 tint (matches the same convention as severities)", () => {
-    render(<Tags type="primary_light">primary_light</Tags>);
-    const el = screen.getByText("primary_light");
-    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)"); // Color/primary/500_alpha_12
-    expect(el.style.color).toBe("rgb(59, 78, 227)"); // Text/Primary 600
+    const { container } = render(<Tags type="primary_light">primary_light</Tags>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.background).toBe("rgba(84, 104, 255, 0.12)"); // Color/primary/500_alpha_12
+    expect(screen.getByText("primary_light").style.color).toBe("rgb(59, 78, 227)"); // Text/Primary 600
   });
 
-  it("renders primary_outline with a border and transparent background", () => {
-    render(<Tags type="primary_outline">primary_outline</Tags>);
-    const el = screen.getByText("primary_outline");
-    expect(el.style.backgroundColor).toBe("transparent");
-    expect(el.style.border).toContain("84, 104, 255");
+  it("confirmed: primary_outline is an opaque white fill with a 24%-alpha primary border — not a transparent background with a fully opaque border", () => {
+    const { container } = render(<Tags type="primary_outline">primary_outline</Tags>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.background).toBe("rgb(255, 255, 255)");
+    expect(root.style.border).toContain("rgba(84, 104, 255, 0.24)");
+  });
+
+  it("confirmed: tertiary is a white fill with a black/50 border, not a lighter borderless gray (§14 correction)", () => {
+    const { container } = render(<Tags type="tertiary">tertiary</Tags>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.background).toBe("rgb(255, 255, 255)");
+    expect(root.style.border).toContain("rgba(0, 0, 0, 0.04)");
+  });
+
+  it("confirmed: the solid primary type has a black/50 border, unlike the borderless Filled severities (§14 correction)", () => {
+    const { container } = render(<Tags type="primary">primary</Tags>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.background).toBe("rgb(84, 104, 255)");
+    expect(root.style.border).toContain("rgba(0, 0, 0, 0.04)");
   });
 });
 
-describe("confirmed sizes", () => {
+describe("confirmed per-size metrics (docs/audit/tags.md §14) — previously every size shared one font size and horizontal-only padding", () => {
   it("applies the confirmed heights for lg, md, and sm", () => {
-    const { rerender } = render(<Tags size="lg">Tag</Tags>);
-    expect(screen.getByText("Tag").style.height).toBe("32px");
+    const { container, rerender } = render(<Tags size="lg">Tag</Tags>);
+    expect((container.firstChild as HTMLElement).style.height).toBe("32px");
     rerender(<Tags size="md">Tag</Tags>);
-    expect(screen.getByText("Tag").style.height).toBe("24px");
+    expect((container.firstChild as HTMLElement).style.height).toBe("24px");
     rerender(<Tags size="sm">Tag</Tags>);
-    expect(screen.getByText("Tag").style.height).toBe("20px");
+    expect((container.firstChild as HTMLElement).style.height).toBe("20px");
+  });
+
+  it("confirmed: lg uses caption_2 (12px), md/sm use caption_1 (11px) — a real per-size typography difference", () => {
+    const { rerender } = render(<Tags size="lg">Tag</Tags>);
+    expect(screen.getByText("Tag").style.fontSize).toBe("12px");
+    rerender(<Tags size="md">Tag</Tags>);
+    expect(screen.getByText("Tag").style.fontSize).toBe("11px");
+  });
+
+  it("confirmed: icon slots carry the elevation/e2 drop-shadow filter (previously entirely absent)", () => {
+    render(<Tags selectLeftIcon={<svg data-testid="icon" />}>Tag</Tags>);
+    const iconSlot = screen.getByTestId("icon").parentElement as HTMLElement;
+    expect(iconSlot.style.filter).toContain("drop-shadow");
   });
 });
 
-describe("confirmed states", () => {
+describe("confirmed states (docs/audit/tags.md §14)", () => {
   it("marks state=disabled with aria-disabled, since a <span> has no native disabled attribute", () => {
-    render(<Tags state="disabled">Tag</Tags>);
-    expect(screen.getByText("Tag")).toHaveAttribute("aria-disabled", "true");
+    const { container } = render(<Tags state="disabled">Tag</Tags>);
+    expect(container.firstChild).toHaveAttribute("aria-disabled", "true");
   });
 
   it("does not mark default or hover as disabled", () => {
-    render(<Tags state="hover">Tag</Tags>);
-    expect(screen.getByText("Tag")).not.toHaveAttribute("aria-disabled");
+    const { container } = render(<Tags state="hover">Tag</Tags>);
+    expect(container.firstChild).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("confirmed: disabled uses the distinct vanilla_gray/100 fill (not the gray ramp's gray/100) and keeps the resting inset shadow", () => {
+    const { container } = render(<Tags type="primary" state="disabled">Tag</Tags>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.background).toBe("rgb(246, 244, 239)"); // vanilla_gray/100 #f6f4ef
+    expect(root.style.border).toBeFalsy();
+    expect(root.style.boxShadow).toContain("inset");
+    expect(screen.getByText("Tag").style.color).toBe("rgb(195, 198, 204)"); // gray/400
+  });
+
+  it("confirmed: tertiary's hover fill darkens from white to gray/100, independently sampled", () => {
+    const { container, rerender } = render(<Tags type="tertiary" state="default">Tag</Tags>);
+    expect((container.firstChild as HTMLElement).style.background).toBe("rgb(255, 255, 255)");
+    rerender(<Tags type="tertiary" state="hover">Tag</Tags>);
+    expect((container.firstChild as HTMLElement).style.background).toBe("rgb(244, 244, 246)");
   });
 });
 

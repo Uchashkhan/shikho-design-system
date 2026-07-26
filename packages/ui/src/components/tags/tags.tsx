@@ -1,7 +1,7 @@
 import { type CSSProperties, type HTMLAttributes, type ReactNode, forwardRef } from "react";
 import { color, radius } from "@shikho/tokens";
 
-// docs/audit/tags.md §2 — tags: size (lg, md, sm), type (11 values, casing preserved exactly
+// docs/audit/tags.md §2, §14 — tags: size (lg, md, sm), type (11 values, casing preserved exactly
 // including the confirmed space-containing Title Case "Danger Filled"/"Success Filled" — "the
 // most severe single-property naming inconsistency confirmed in this entire audit series", §9),
 // state (disabled, hover, default — no focus, no drag, unlike Chip).
@@ -20,109 +20,171 @@ export type TagType =
   | "primary";
 export type TagState = "disabled" | "hover" | "default";
 
-// docs/audit/tags.md §3 — confirmed bounding-box heights (no "≈" qualifier, unlike Chip's
-// approximate sizes). No get_design_context deep audit exists for this family (§6), so — same
-// treatment as every Hug-sized component in this library — width is left to content.
-const HEIGHT: Record<TagSize, number> = { lg: 32, md: 24, sm: 20 };
-
-const tagRadius = radius.full; // radius/border_radius_round — see README for why the other three
-// confirmed radius/custom/xs|sm|md tokens are NOT mapped to specific types here.
-
-interface FillTextBorder {
-  backgroundColor: string;
-  color: string;
-  border: string;
+// docs/audit/tags.md §14 — confirmed real per-size construction (height/padding/rootGap/radius/
+// iconSize/typography), sampled directly at sm/md/lg. The pre-rebuild implementation rendered
+// every size at the same height with an identical, size-invariant horizontal-only padding and a
+// single 12px font — none of which is what Figma actually does.
+interface SizeMetrics {
+  height: number;
+  padding: string;
+  rootGap: number;
+  radius: number;
+  iconSize: number;
+  fontSize: number;
+  lineHeight: string;
 }
 
-const solid = (bg: string): FillTextBorder => ({
-  backgroundColor: bg,
-  color: color.white[950],
-  border: "1px solid transparent",
-});
-
-const tinted = (bg: string, text: string): FillTextBorder => ({
-  backgroundColor: bg,
-  color: text,
-  border: "1px solid transparent",
-});
-
-const outlined = (border: string, text: string): FillTextBorder => ({
-  backgroundColor: "transparent",
-  color: text,
-  border: `1px solid ${border}`,
-});
-
-/**
- * docs/audit/tags.md §8 — "the cleanest, most internally consistent alpha-naming system found
- * in this entire audit series": every severity gets exactly `_alpha_12`/`_alpha_20`, with
- * `primary` additionally getting `_alpha_24`. All five hex values quoted below are exact
- * confirmed literals from that section, not computed.
- *
- * `info`/`warning`/`success`/`danger` (bare) use each colour's own confirmed `_alpha_12` tint —
- * the lightest confirmed step — with its confirmed `Text/{name} 600` label colour. "Danger
- * Filled"/"Success Filled" are the solid counterparts the audit explicitly names as a pair
- * (§3, §9); `warning`/`info` have no such pair — a confirmed asymmetry, not implemented here.
- *
- * `primary`, `primary_light`, `primary_outline` are read as a three-way emphasis split of the
- * one primary colour (§3: "a confirmed three-way visual-style split for the primary brand
- * colour — filled, tinted, outlined") — `primary_light` maps to the confirmed
- * `Color/primary/500_alpha_12`, `primary` to the solid 500 fill, `primary_outline` to a border
- * of the base colour. `secondary`/`tertiary` have no confirmed alpha data anywhere in this
- * audit (they're absent from §8's severity table) — they are derived neutral-gray emphasis
- * steps, not independently confirmed.
- */
-const styleByType: Record<TagType, FillTextBorder> = {
-  info: tinted(`${color.info[500]}1f`, color.info[600]), // Color/info/500_alpha_12, Text/Info 600
-  warning: tinted(`${color.warning[500]}1f`, color.warning[600]), // Color/warning/500_alpha_12, Text/Warning 600
-  danger: tinted(`${color.danger[500]}1f`, color.danger[600]), // Color/danger/500_alpha_12, Text/Danger 600
-  "Danger Filled": solid(color.danger[500]), // Color/danger/500, solid
-  success: tinted(`${color.success[500]}1f`, color.success[600]), // Color/success/500_alpha_12, Text/Success 600
-  "Success Filled": solid(color.success[500]), // Color/success/500, solid
-  primary: solid(color.primary[500]), // Color/primary/500, solid
-  primary_light: tinted(`${color.primary[500]}1f`, color.primary[600]), // Color/primary/500_alpha_12, Text/Primary 600
-  primary_outline: outlined(color.primary[500], color.primary[600]), // derived: base colour as border
-  secondary: tinted(color.gray[100], color.gray[700]), // derived — no confirmed alpha data for "secondary" (§8 covers only 5 severities)
-  tertiary: tinted(color.gray[50], color.gray[600]), // derived — lighter than "secondary", same reasoning
+const SIZE_METRICS: Record<TagSize, SizeMetrics> = {
+  sm: { height: 20, padding: "0 0.375rem", rootGap: 2, radius: radius.xs, iconSize: 12, fontSize: 11, lineHeight: "16px" },
+  md: { height: 24, padding: "0.25rem 0.375rem", rootGap: 0, radius: radius.sm, iconSize: 14, fontSize: 11, lineHeight: "16px" },
+  lg: { height: 32, padding: "0.5rem", rootGap: 2, radius: radius.md, iconSize: 16, fontSize: 12, lineHeight: "16px" },
 };
+
+// docs/audit/tags.md §9/§14 — confirmed on every icon slot sampled, the same elevation/e2-based
+// filter used system-wide.
+const iconShadowFilter = "drop-shadow(0px 1px 0.5px rgba(0,0,0,0.04)) drop-shadow(0px 3px 1.5px rgba(0,0,0,0.04))";
+
+// docs/audit/tags.md §14 — confirmed present on every non-disabled instance sampled (all 11
+// types) — the same "special_drop" inset already confirmed system-wide, kept even through
+// `disabled` (confirmed, §14 — unlike Button/Chip, Tags' disabled state does NOT drop this inset).
+const restingInset = `inset 0 1px 3px 0 ${color.white[50]}, inset 0 -1px 3px -2px ${color.black[50]}`;
+
+interface TagVisual {
+  background: string;
+  border: string;
+  textColor: string;
+}
+
+// docs/audit/tags.md §14 — confirmed per-type default/hover construction from 11
+// get_design_context samples covering all 11 types at md, plus lg/sm size checks and one
+// disabled sample. Corrections vs. the pre-rebuild implementation are called out inline.
+const TAG_VISUAL: Record<TagType, { default: TagVisual; hover: TagVisual }> = {
+  info: {
+    default: { background: `${color.info[500]}1f`, border: "none", textColor: color.info[600] },
+    // docs/audit/tags.md §8 — confirmed `_alpha_20` exists as the next step for every severity;
+    // not independently sampled for `hover` on this type, applied per that confirmed system.
+    hover: { background: `${color.info[500]}33`, border: "none", textColor: color.info[600] },
+  },
+  warning: {
+    default: { background: `${color.warning[500]}1f`, border: "none", textColor: color.warning[600] },
+    hover: { background: `${color.warning[500]}33`, border: "none", textColor: color.warning[600] },
+  },
+  danger: {
+    default: { background: `${color.danger[500]}1f`, border: "none", textColor: color.danger[600] },
+    hover: { background: `${color.danger[500]}33`, border: "none", textColor: color.danger[600] },
+  },
+  // Confirmed: no border at all (a bare fill), distinct from `primary`'s confirmed black/50
+  // border below.
+  "Danger Filled": {
+    default: { background: color.danger[500], border: "none", textColor: color.white[950] },
+    hover: { background: color.danger[500], border: "none", textColor: color.white[950] }, // not sampled — no confirmed hover for solid fills
+  },
+  success: {
+    default: { background: `${color.success[500]}1f`, border: "none", textColor: color.success[600] },
+    hover: { background: `${color.success[500]}33`, border: "none", textColor: color.success[600] },
+  },
+  "Success Filled": {
+    default: { background: color.success[500], border: "none", textColor: color.white[950] },
+    hover: { background: color.success[500], border: "none", textColor: color.white[950] },
+  },
+  // CORRECTED: previously `color.gray[50]`/`gray[600]` with no border. Confirmed real: white
+  // fill with a black/50(4%) border — structurally the neutral analogue of `primary_outline`,
+  // not just "secondary but lighter". Hover confirmed directly: fill white -> gray/100.
+  tertiary: {
+    default: { background: color.white[950], border: `1px solid ${color.black[50]}`, textColor: color.gray[700] },
+    hover: { background: color.gray[100], border: `1px solid ${color.black[50]}`, textColor: color.gray[700] },
+  },
+  secondary: {
+    default: { background: color.gray[100], border: "none", textColor: color.gray[700] },
+    hover: { background: color.gray[200], border: "none", textColor: color.gray[700] }, // hover not independently sampled — one step darker, §14
+  },
+  // CORRECTED: previously `backgroundColor: "transparent"` with a fully opaque `primary/500`
+  // border. Confirmed real: an opaque white fill and a `primary/500` border at only 24% alpha.
+  primary_outline: {
+    default: { background: color.white[950], border: `1px solid ${color.primary[500]}3d`, textColor: color.primary[600] },
+    hover: { background: color.gray[50], border: `1px solid ${color.primary[500]}3d`, textColor: color.primary[600] }, // hover not sampled — subtle tint, §14
+  },
+  primary_light: {
+    default: { background: `${color.primary[500]}1f`, border: "none", textColor: color.primary[600] },
+    hover: { background: `${color.primary[500]}33`, border: "none", textColor: color.primary[600] }, // confirmed alpha_20 system, §8
+  },
+  // CORRECTED: previously `border: "1px solid transparent"`. Confirmed real: a black/50(4%)
+  // border — the solid `primary` type is NOT borderless, unlike "Danger Filled"/"Success Filled".
+  primary: {
+    default: { background: color.primary[500], border: `1px solid ${color.black[50]}`, textColor: color.white[950] },
+    hover: { background: color.primary[500], border: `1px solid ${color.black[50]}`, textColor: color.white[950] }, // not sampled — no confirmed hover for solid fills
+  },
+};
+
+// docs/audit/tags.md §14 — confirmed on the one sampled disabled instance (`primary`/md):
+// fill `Color/vanilla_gray/100` (#f6f4ef — a genuinely distinct token from the gray ramp's own
+// `gray/100`, #f4f4f6), no border regardless of the type's own default border, text `gray/400`.
+// Applied uniformly across all 11 types as the confirmed universal disabled recipe.
+const disabledVisual: TagVisual = { background: color.vanillaGray[100], border: "none", textColor: color.gray[400] };
 
 export interface TagsProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
   size?: TagSize;
   type?: TagType;
   state?: TagState;
+  /** Confirmed boolean property, default true (§14). */
+  leftIcon?: boolean;
+  /** Confirmed boolean property, default true (§14). */
+  rightIcon?: boolean;
+  /** Confirmed boolean property, default true (§14). */
+  text?: boolean;
+  /** Confirmed instance-swap property, `ReactNode | null`, default `null` (§14). */
+  selectLeftIcon?: ReactNode | null;
+  /** Confirmed instance-swap property, `ReactNode | null`, default `null` (§14). */
+  selectRightIcon?: ReactNode | null;
   children?: ReactNode;
 }
 
 /**
- * `tags` (docs/audit/tags.md). Rendered as a plain `<span>`, not a `<button>` — the audit's own
- * architectural comparison against `Chip` explicitly reads `tags` as "a static, label-only
- * element" (no `focus`/`drag` state exists, unlike Chip's interactive/selectable set, §10). No
- * icon/leading/trailing slot is implemented: whether any exist as internal layers was never
- * confirmed (§4, §12), since no `get_design_context` deep audit was run on this family.
- *
- * Only the five severity colours' `_alpha_12` tint and `Text/{name} 600` label colour, plus the
- * two "Filled" solid fills and the primary emphasis trio, are backed by exact confirmed hex
- * values. `secondary`/`tertiary` are derived neutral steps — see
- * packages/ui/src/components/tags/README.md for the full confirmed-vs-derived breakdown.
+ * `tags` (docs/audit/tags.md, deep re-audited across 16 size/type/state combinations, §14).
+ * Rendered as a `<span>`, not a `<button>` — no interactive states exist for this family (no
+ * `focus`, no `drag`, unlike `Chip`).
  */
 export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
-  ({ size = "md", type = "info", state = "default", style, ...props }, ref) => {
+  (
+    {
+      size = "md",
+      type = "info",
+      state = "default",
+      leftIcon = true,
+      rightIcon = true,
+      text = true,
+      selectLeftIcon = null,
+      selectRightIcon = null,
+      children,
+      style,
+      ...props
+    },
+    ref,
+  ) => {
     const isDisabled = state === "disabled";
+    const metrics = SIZE_METRICS[size];
+    const visual = isDisabled ? disabledVisual : TAG_VISUAL[type][state === "hover" ? "hover" : "default"];
 
     const computed: CSSProperties = {
       display: "inline-flex",
       alignItems: "center",
       justifyContent: "center",
-      height: HEIGHT[size],
-      padding: "0 0.5rem", // spacing/8, horizontal only — not attributed to a specific side (§7)
-      borderRadius: tagRadius,
-      fontSize: 12,
-      lineHeight: "16px",
-      fontWeight: 600, // SemiBold — the only weight confirmed for this family, §6
+      height: metrics.height,
+      gap: metrics.rootGap,
+      padding: metrics.padding,
+      borderRadius: metrics.radius,
+      background: visual.background,
+      border: visual.border,
+      boxShadow: restingInset,
       whiteSpace: "nowrap",
-      cursor: isDisabled ? "not-allowed" : "default",
-      opacity: isDisabled ? 0.5 : 1,
-      ...styleByType[type],
       ...style,
+    };
+
+    const iconStyle: CSSProperties = {
+      width: metrics.iconSize,
+      height: metrics.iconSize,
+      flexShrink: 0,
+      filter: iconShadowFilter,
     };
 
     return (
@@ -134,7 +196,27 @@ export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
         aria-disabled={isDisabled || undefined}
         style={computed}
         {...props}
-      />
+      >
+        {leftIcon && <span style={iconStyle}>{selectLeftIcon}</span>}
+        {text && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
+              padding: "0 0.125rem",
+              fontSize: metrics.fontSize,
+              lineHeight: metrics.lineHeight,
+              fontWeight: 600, // web/Body SemiBold — the only weight confirmed for this family, §6
+              color: visual.textColor,
+            }}
+          >
+            {children}
+          </span>
+        )}
+        {rightIcon && <span style={iconStyle}>{selectRightIcon}</span>}
+      </span>
     );
   },
 );

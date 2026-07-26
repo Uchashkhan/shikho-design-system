@@ -1,53 +1,71 @@
 import {
+  type CSSProperties,
   type InputHTMLAttributes,
   forwardRef,
   useEffect,
   useImperativeHandle,
   useRef,
+  useState,
 } from "react";
 import { color, radius } from "@shikho/tokens";
-import { tv } from "tailwind-variants";
 
-// docs/audit/checkboxes.md §2, §4 — checkbox: size (md=24×24, sm=20×20), shape (sphere, square).
+// docs/audit/checkboxes.md §2, §4, §14 — checkbox: size (md=24×24, sm=20×20), shape (sphere,
+// square). The visible "base" box is confirmed smaller than the component's own bounding box —
+// 16×16 centered inside the 20px sm footprint, 18×18 inside the 24px md footprint — not a box
+// that fills its full footprint with a 2px border as the pre-rebuild implementation assumed.
 export type CheckboxSize = "md" | "sm";
 export type CheckboxShape = "sphere" | "square";
 
-const sizePx: Record<CheckboxSize, number> = { md: 24, sm: 20 };
+const outerSizePx: Record<CheckboxSize, number> = { md: 24, sm: 20 };
+const boxSizePx: Record<CheckboxSize, number> = { md: 18, sm: 16 };
 
-// Confirmed visual values — none from checkboxes.md's own overview audit directly (no
-// get_design_context was run on this family, §6 header), but cross-confirmed via
-// docs/audit/list.md §7: the nested Checkbox instance found there
-// (`checkbox/theme_light/sm/square/unchecked/default`) has a "base" layer with white fill,
-// a 2px `Text/gray-400` border, and `radius/border_radius_xs` (6px) — the exact same radius
-// token checkboxes.md §8 confirms `checkbox` itself uses ("the ONLY small radius token").
-// list.md §12 explicitly calls this "very likely the same underlying component."
-const uncheckedFill = color.white[950]; // Color/White 100 / Color/white/950 = #ffffff
-const uncheckedBorder = color.gray[400]; // Text/gray-400
-const squareRadius = radius.xs; // radius/border_radius_xs = 6
+const squareRadius = radius.xs; // radius/border_radius_xs = 6, confirmed §8/§14
 
-// docs/audit/checkboxes.md §8 — outline/focus_gray = Effect(DROP_SHADOW, outline/Gray 300, 0,0,0,3).
-// §8/§13 flag that BOTH outline/focus_primary and outline/focus_gray are "strong candidates" for
-// the checked_focused/unchecked_focused rings, but which applies to which is explicitly
-// unconfirmed. This implementation applies the gray ring (the neutral candidate) to every
-// keyboard-focus state uniformly, rather than presuming an unconfirmed primary/gray assignment.
-const focusRingColor = color.gray[300]; // outline/Gray 300
+interface StateVisual {
+  background: string;
+  border: string;
+  ring?: string;
+}
 
-// Structural/interaction classes only — the confirmed pixel/color values (size, border, radius,
-// focus-ring color) come from @shikho/tokens via inline style below, since no Tailwind theme is
-// wired to those tokens yet (packages/ui/src/styles.css has no @theme values, same as Button/
-// Input). `size`/`shape` are still modeled as tailwind-variants axes so the variant surface is
-// explicit and consistent with the confirmed component API, not just documented in types.
-const checkboxStyles = tv({
-  base:
-    "cursor-pointer transition-colors outline-none " +
-    "disabled:cursor-not-allowed disabled:opacity-50 " +
-    "focus-visible:shadow-[var(--checkbox-focus-ring)]",
-  variants: {
-    size: { md: "", sm: "" },
-    shape: { square: "", sphere: "" },
-  },
-  defaultVariants: { size: "sm", shape: "square" },
-});
+const focusRingPrimary = `0 0 0 3px ${color.primary[500]}3d`; // outline/focus_primary — confirmed applied to checked_focused, §14
+const focusRingGray = `0 0 0 3px ${color.gray[300]}`; // outline/focus_gray — confirmed applied to unchecked_focused, §14
+
+// docs/audit/checkboxes.md §14 — confirmed per-state visual construction from 9
+// get_design_context samples (unchecked/hover/checked/checked_focused/unchecked_focused/
+// indeterminate/indeterminate_disabled/disabled at sm, plus unchecked at md). The pre-rebuild
+// implementation rendered a real <input type="checkbox"> WITHOUT appearance:none, relying on the
+// browser's own native checked/indeterminate indicator — which cannot reproduce Figma's actual
+// checkmark glyph, tint colors, or dash artwork, and looks different in every browser.
+function resolveVisual(checked: boolean, indeterminate: boolean, disabled: boolean, hover: boolean, focused: boolean): StateVisual {
+  if (disabled) {
+    // docs/audit/checkboxes.md §14 — confirmed via indeterminate_disabled (solid gray/400 base,
+    // no border); no literal "checked_disabled" variant exists (§2/§10), so plain `disabled`
+    // (necessarily unchecked) uses the same solid-gray recipe, with or without the dash.
+    return { background: color.gray[400], border: "none" };
+  }
+  if (indeterminate) {
+    // Confirmed exactly, §14: a light primary tint base (NOT a solid dark fill, unlike every
+    // other "on" state in this family) with a primary/500 dash — a genuinely distinctive choice.
+    return { background: color.primary[100], border: "none" };
+  }
+  if (checked) {
+    // The confirmed instance renders as a single flattened image asset — the containing box
+    // dimensions/position are confirmed, but the internal fill/checkmark colors were not
+    // decomposable from it. This uses the conventional solid-fill + white-checkmark treatment
+    // (derived, not confirmed) since it's the one "on" state where the asset couldn't be read.
+    return {
+      background: color.primary[500],
+      border: "none",
+      ring: focused ? focusRingPrimary : undefined, // confirmed exactly for checked_focused, §14
+    };
+  }
+  // unchecked
+  return {
+    background: color.white[950],
+    border: `2px solid ${focused ? color.gray[600] : hover ? color.primary[500] : color.gray[400]}`,
+    ring: focused ? focusRingGray : undefined, // confirmed exactly for unchecked_focused, §14
+  };
+}
 
 export interface CheckboxProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "size" | "type" | "checked"> {
@@ -64,26 +82,29 @@ export interface CheckboxProps
 }
 
 /**
- * `checkbox` (docs/audit/checkboxes.md). Renders a real `<input type="checkbox">` — native
- * semantics are used deliberately (checked/unchecked/indeterminate/disabled all reflect true
- * DOM/AX state) rather than a fully custom `appearance-none` widget, because the audit has **no
- * confirmed checkmark glyph, checked-state fill, or indeterminate-dash artwork anywhere** (no
- * `get_design_context` deep audit exists for this family). The one confirmed visual — the
- * resting/unchecked box (white fill, 2px `Text/gray-400` border, `radius/border_radius_xs`,
- * §8, cross-confirmed via `docs/audit/list.md` §7) — is applied directly. The checked/
- * indeterminate indicator itself is left to the browser's native rendering rather than invented.
- * See `packages/ui/src/components/checkbox/README.md` for the full confirmed-vs-unresolved
- * breakdown.
+ * `checkbox` (docs/audit/checkboxes.md, deep re-audited across 9 size/shape/state combinations,
+ * §14). A real `<input type="checkbox">` is kept for semantics/keyboard/AX, but is now visually
+ * hidden — its checked/indeterminate/disabled/focus state drives a custom-rendered visual box,
+ * since the browser's own native indicator cannot reproduce Figma's confirmed checkmark glyph,
+ * tint colors, or dash artwork (a genuine correction from the pre-rebuild native-rendering
+ * approach, not a stylistic preference).
  */
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   (
     {
       size = "sm",
       shape = "square",
+      checked,
+      defaultChecked,
       indeterminate = false,
       disabled,
       className,
       style,
+      onFocus,
+      onBlur,
+      onMouseEnter,
+      onMouseLeave,
+      onChange,
       ...props
     },
     ref,
@@ -91,35 +112,95 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     const internalRef = useRef<HTMLInputElement>(null);
     useImperativeHandle(ref, () => internalRef.current as HTMLInputElement);
 
+    const [uncontrolledChecked, setUncontrolledChecked] = useState(defaultChecked ?? false);
+    const [focused, setFocused] = useState(false);
+    const [hovered, setHovered] = useState(false);
+    const isControlled = checked !== undefined;
+    const resolvedChecked = isControlled ? !!checked : uncontrolledChecked;
+
     useEffect(() => {
       if (internalRef.current) {
         internalRef.current.indeterminate = indeterminate;
       }
     }, [indeterminate]);
 
-    const boxSize = sizePx[size];
+    const outerSize = outerSizePx[size];
+    const boxSize = boxSizePx[size];
+    const visual = resolveVisual(resolvedChecked, indeterminate, !!disabled, hovered, focused);
+
+    const boxStyle: CSSProperties = {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: boxSize,
+      height: boxSize,
+      background: visual.background,
+      border: visual.border,
+      borderRadius: shape === "square" ? squareRadius : radius.full,
+      boxShadow: visual.ring,
+      pointerEvents: "none",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    };
 
     return (
-      <input
-        ref={internalRef}
-        type="checkbox"
-        disabled={disabled}
-        data-size={size}
-        data-shape={shape}
-        data-indeterminate={indeterminate || undefined}
-        className={checkboxStyles({ size, shape, className })}
-        style={{
-          width: boxSize,
-          height: boxSize,
-          margin: 0,
-          backgroundColor: uncheckedFill,
-          border: `2px solid ${uncheckedBorder}`,
-          borderRadius: shape === "square" ? squareRadius : radius.full,
-          ["--checkbox-focus-ring" as string]: `0 0 0 3px ${focusRingColor}`,
-          ...style,
-        }}
-        {...props}
-      />
+      <span
+        className={"relative inline-flex shrink-0" + (className ? ` ${className}` : "")}
+        style={{ width: outerSize, height: outerSize, ...style }}
+      >
+        <input
+          ref={internalRef}
+          type="checkbox"
+          checked={resolvedChecked}
+          disabled={disabled}
+          data-size={size}
+          data-shape={shape}
+          data-indeterminate={indeterminate || undefined}
+          className="absolute inset-0 m-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+          style={{ width: outerSize, height: outerSize }}
+          onChange={(e) => {
+            if (!isControlled) setUncontrolledChecked(e.target.checked);
+            onChange?.(e);
+          }}
+          onFocus={(e) => {
+            setFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            onBlur?.(e);
+          }}
+          onMouseEnter={(e) => {
+            setHovered(true);
+            onMouseEnter?.(e);
+          }}
+          onMouseLeave={(e) => {
+            setHovered(false);
+            onMouseLeave?.(e);
+          }}
+          {...props}
+        />
+        <span aria-hidden style={boxStyle}>
+          {indeterminate && (
+            <span
+              style={{ width: 8, height: 2, borderRadius: 1, background: disabled ? color.gray[600] : color.primary[500] }}
+            />
+          )}
+          {!indeterminate && resolvedChecked && !disabled && (
+            <svg width="70%" height="70%" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M3 8.5L6.5 12L13 4.5"
+                stroke={color.white[950]}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </span>
+      </span>
     );
   },
 );

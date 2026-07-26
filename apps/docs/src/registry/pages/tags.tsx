@@ -17,7 +17,7 @@ const TYPES: TagType[] = [
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
-    "Chip's closest sibling — the audit explicitly compares the two. No get_design_context deep audit was run (overview-level only), but the colour data is unusually rich: the audit calls it \"the cleanest, most internally consistent alpha-naming system found in this entire audit series.\" Rendered as a static <span>, not a <button> — tags reads as a label-only element with no focus or drag state.",
+    "Chip's closest sibling — the audit explicitly compares the two. The original audit never called get_design_context (overview-level only); a deep re-audit (docs/audit/tags.md §13, 16 get_design_context calls) later corrected several guesses, most notably that Tags is NOT a full pill like Chip — it uses a small rounded-rectangle radius scale (6/8/10px). Rendered as a static <span>, not a <button> — tags reads as a label-only element with no focus or drag state.",
   variants: [
     { name: "size", values: ["lg", "md", "sm"], note: "Confirmed bounding-box heights (32/24/20px), stated without the \"≈\" qualifier Chip's sizes carried." },
     {
@@ -29,11 +29,9 @@ export const pageConfig: ComponentPageConfig = {
   ],
   states: ["default", "hover", "disabled"],
   gaps: [
-    "secondary and tertiary have no confirmed alpha data anywhere in this audit — they're absent from the severity table entirely. Implemented as two neutral gray tints, not an independently confirmed binding.",
-    "primary_outline's border colour uses the base Color/primary/500 — a reasonable choice given no confirmed border-specific value exists for it.",
-    "Radius is applied uniformly as radius.full (pill shape). The audit found three radius/custom/* tokens present and explicitly flags they may map to different types, but could not confirm which — that mapping is documented as unresolved, not invented.",
-    "No icon, label-count, or dismiss-control slot — whether any of these exist as internal layers was never confirmed, since no deep audit was run.",
-    "special_drop's inner shadow is confirmed present in the token pool but not confirmed applied here — not implemented.",
+    "hover for info/warning/success/primary_light is derived from the confirmed alpha_12 -> alpha_20 system rather than independently sampled per type.",
+    "hover for the 3 solid-fill types (primary, Danger Filled, Success Filled) has no confirmed visual anywhere in the audit — renders identically to default.",
+    "Icon size at the sm step (12px) is derived by rank from the confirmed 14px@md/16px@lg progression, not independently sampled.",
     "Why only danger/success get a \"Filled\" counterpart while warning/info do not is a confirmed asymmetry with no stated reason. Not resolved, not invented.",
   ],
   usageExample: `import { Tags } from "@shikho/ui";
@@ -121,8 +119,8 @@ export function StatusLabel({ status }: { status: "success" | "danger" | "warnin
       ),
     },
     {
-      title: "secondary / tertiary — derived neutrals",
-      description: "No confirmed alpha data exists for either; implemented as two neutral gray tints.",
+      title: "secondary / tertiary",
+      description: "tertiary is confirmed as a white fill with a black/50 border — the neutral analogue of primary_outline, not just \"secondary but lighter\" as originally guessed.",
       render: () => (
         <>
           <Tags type="secondary">secondary</Tags>
