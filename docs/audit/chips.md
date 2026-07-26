@@ -172,3 +172,20 @@ Confirmed reuse of: `elevation/e2` (icon shadows, every prior audit); `outline/p
 - The real icon glyph content beyond the placeholder asset URL.
 - Default variant configuration for `chip`.
 - Variable Collection / Mode metadata — not retrievable, consistent with every prior audit in this series.
+
+---
+
+## 13. Deep re-audit addendum (visual implementation correction pass)
+
+The original audit above deep-audited exactly one instance (`selected`/md/`focus`) and the resulting implementation then reused that single confirmed fill/text/radius as a neutral fallback for every other type, and rendered every non-`focus` state identically regardless of `type`. A second pass (11 more `get_design_context` calls — `unselected` at default/hover/disabled/drag; `selected` at default/hover/disabled; `selected_neutral` at default; `Green`/`Red` at default) found the real construction was materially different:
+
+- **`unselected`'s fill was assumed to be `gray/100`.** Confirmed real: plain white (`Color/white/950`) with a `black/50`(4%) border and a confirmed inset shadow — neither the fill, border, nor inset existed in the pre-rebuild implementation.
+- **`selected` was assumed to have no border at all.** Confirmed real: a `primary/400` border on both `default` and `hover` — a materially incomplete visual without it.
+- **`selected_neutral`'s text was assumed to be `gray/700` (same as `unselected`).** Confirmed real: `gray/950` (near-black) — a genuinely distinct color, not a duplicate.
+- **`Green`/`Red`'s fill/text mapping (`success/500`/`danger/500`, white text) was already correct** (the audit's own "plausible" guess turned out right) — but both were missing their confirmed `black/150`(12%) border.
+- **`hover` had no distinct visual for any type** — confirmed real: `unselected` lightens to `gray/50`; `selected` darkens to `primary/300`; both keep their border and inset unchanged.
+- **`disabled` had no distinct visual** — confirmed real: a flat `gray/100` fill, no border, `gray/400` text, and — for `selected` specifically — a confirmed **SemiBold** (600) weight, a genuine one-off change from every other state's Medium (500).
+- **`drag` was not implemented at all** — confirmed real (sampled on `unselected`): the fill darkens one step, the border is kept, and the resting inset shadow is replaced by a 5-layer outer "lift" shadow identical to `elevation.e5`.
+- **Icon slots carried no visual shadow at all** — the pre-rebuild code applied the confirmed `elevation/e2` drop-shadow as a CSS `boxShadow` on the icon's own (empty, transparent) bounding box, which draws a rectangular shadow rather than one following the icon glyph's silhouette. Every other component in this system implements the identical confirmed effect as `filter: drop-shadow()` — this was a genuine rendering bug, not a style choice.
+
+Every correction above is implemented in `packages/ui/src/components/chip/chip.tsx`'s `CHIP_VISUAL` table and cited inline; see `packages/ui/src/components/chip/README.md` for the consumer-facing confirmed-vs-derived summary. Not independently re-sampled in this pass: `selected`/`selected_neutral`'s own `drag` states (derived from `unselected`'s confirmed drag pattern) and `selected_neutral`'s `hover`/`disabled` states (derived from the same family pattern, keeping this type's own confirmed `gray/950` text).

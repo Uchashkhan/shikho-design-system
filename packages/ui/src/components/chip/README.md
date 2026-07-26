@@ -1,37 +1,42 @@
 # Chip
 
-Implements the `chip` component set audited in `docs/audit/chips.md` — the **only** component set in that audit frame (§1), deep-audited at `size=md type=selected state=focus` via `get_design_context` (§9), giving real confirmed structure comparable to Button/Input rather than the overview-only situation Radio/Toggle were in.
+Implements the `chip` component set audited in `docs/audit/chips.md` — the **only** component set in that audit frame (§1). Originally deep-audited at one instance (`size=md type=selected state=focus`, §9); a second re-audit pass (§13, 11 more `get_design_context` calls) then confirmed the real per-type, per-state visual construction that the first pass's implementation had been silently guessing at.
+
+## This rebuild (§13)
+
+The first deep audit confirmed one instance and the resulting implementation reused its fill/text/radius as a fallback for every other type, rendering every non-`focus` state identically regardless of `type`. A second pass found the real construction was materially different:
+
+- **`unselected`'s fill was assumed to be `gray/100`.** Confirmed real: plain white with a `black/50`(4%) border and an inset shadow — none of which existed in the pre-rebuild code.
+- **`selected` was assumed to have no border.** Confirmed real: a `primary/400` border on both `default` and `hover`.
+- **`selected_neutral`'s text was assumed to equal `unselected`'s (`gray/700`).** Confirmed real: `gray/950` — genuinely distinct, not a duplicate.
+- **`hover` had no distinct visual for any type.** Confirmed real: `unselected` lightens to `gray/50`; `selected` darkens to `primary/300`.
+- **`disabled` had no distinct visual.** Confirmed real: flat `gray/100` fill, no border, `gray/400` text — and, for `selected` specifically, a confirmed **SemiBold** weight, a genuine one-off change from every other state's Medium.
+- **`drag` was not implemented at all.** Confirmed real (sampled on `unselected`): fill darkens one step, border is kept, and the resting inset is replaced by a 5-layer outer shadow identical to `elevation.e5`.
+- **Icon slots had no real shadow.** The confirmed `elevation/e2` drop-shadow was applied as a CSS `boxShadow` on the icon's own empty bounding box (a rectangular shadow), not the confirmed `filter: drop-shadow()` used everywhere else in this system for the identical effect — a genuine rendering bug.
 
 ## Confirmed vs. derived
 
-**Exactly confirmed** (`docs/audit/chips.md` §9, the `md`/`selected`/`focus` instance):
-- 3 boolean properties — `leftIcon`, `rightIcon`, `text` — all default `true`.
-- 2 instance-swap properties — `selectLeftIcon`, `selectRightIcon` (`ReactNode | null`, default `null`).
-- Layout: root `flex items-center justify-center` (fully centered, not left-aligned), `gap-[spacing/2]` (2px), `p-[spacing/8]` (8px uniform); text wrapper `px-[spacing/2] gap-[spacing/8]`.
-- `type="selected"`'s fill (`Color/primary/200`, `#d5e7ff`) and text color (`Text/primary-600`, `#3b4ee3`) — bound directly to the deep-audited instance.
-- Radius: `radius/border_radius_round` (1000, full pill) — the **only** radius token anywhere in this component's export (§7, §10).
-- No border — confirmed absent.
-- Typography: `web/Body/12 Medium` (12px/16px), confirmed applied.
-- **Focus mechanism, fully confirmed and unambiguous** (unlike Checkbox/Radio's primary-vs-gray uncertainty): the root's box-shadow at `state=focus` exactly matches `outline/focus_primary`'s definition — `outline/focus_gray` is present in the token pool but the audit explicitly states it was **not** the one bound to this instance (§9, §11). `focusRingColor.primary` from `@shikho/tokens` is used with full confidence.
-- `elevation/e2`-matching drop-shadows on the icon slots (not the root) — confirmed (§9).
-- **No dedicated selection-indicator (checkmark) or dismiss-control layer exists** — confirmed absence (§5, §9): "the deep audit found no dedicated selection-indicator or dismiss-control layer." None is invented here.
-- **Confirmed coverage gap**: `Green`/`Red` types only ever have `state="default"` — no `disabled`/`focus`/`hover`/`drag` variants exist for either (§3, §10).
+**Exactly confirmed** (`docs/audit/chips.md` §9, §13 — 12 sampled instances total):
+- 3 boolean properties (`leftIcon`, `rightIcon`, `text`) and 2 instance-swap properties (`selectLeftIcon`, `selectRightIcon`), all at their confirmed defaults.
+- Layout: root `flex items-center justify-center`, `gap-[spacing/2]`, `p-[spacing/8]` uniform; text wrapper `px-[spacing/2] gap-[spacing/8]`; radius `radius/border_radius_round` (the only radius token in this export).
+- `unselected` at `default`/`hover`/`disabled`/`drag`; `selected` at `default`/`hover`/`disabled`; `selected_neutral` at `default`; `Green`/`Red` at `default` — every fill, border, text color, and font weight documented in `chip.tsx`'s `CHIP_VISUAL` table is cited to a directly-rendered instance.
+- The focus mechanism: `outline/focus_primary` (`focusRingColor.primary`), confirmed exactly for `type="selected"`.
+- `elevation/e2`-matching drop-shadows on icon slots, now implemented as `filter: drop-shadow()` (§13 correction).
+- **No dedicated selection-indicator (checkmark) or dismiss-control layer exists** — confirmed absence (§5, §9). None is invented here.
+- **Confirmed coverage gap**: `Green`/`Red` types only ever have `state="default"` — passing any other state value renders their one confirmed look unchanged, not an unconfirmed guess.
 
-**Derived — grounded in tokens present in Chip's own export, not independently confirmed per type:**
-- `unselected` (`color.gray[100]` fill / `color.gray[700]` text) and `selected_neutral` (`color.gray[200]` fill / `color.gray[700]` text) — Chip's own §8 export lists `Color/gray/50/100/200` and `Text/Gray .../700`, but the audit never inspected whether these two types differ from `selected` only in color or also structurally (§9, §12, explicitly out of scope). This uses the gray tokens Chip's own export already contains, at two different steps to distinguish "unselected" from "selected, but neutral," rather than reusing `selected`'s primary-blue fill for types whose names explicitly say they aren't primary-colored.
-- `Green` (`color.success[500]` fill) / `Red` (`color.danger[500]` fill), both with white text — the audit's own §8/§11 flags `Color/success/500`/`Color/danger/500` as a **"plausible but unconfirmed"** mapping for these two type names. This implementation follows that audit-suggested candidate explicitly, rather than inventing an unrelated color — but it remains unconfirmed, not a verified binding.
-- `lg` (40px) and `sm` (24px) heights — the audit's own overview-level bounding-box observations, explicitly prefixed with "≈" (approximate) in §4; only `md` (32px) is exactly confirmed via the deep audit. Reproduced as-is, not further rounded or adjusted.
-
-**Explicitly not resolved, and not approximated:**
-- `hover`, `drag`, and `disabled` (beyond generic dimming) have no confirmed visual anywhere in the audit (§9 "Not confirmed", §12: "how drag, hover, disabled, and default states render — out of scope, no sibling inference performed"). All three currently render using the same confirmed per-type fill/text as `default`, with `disabled` additionally getting the native `disabled` attribute and a generic opacity reduction — the same pattern used for every other component in this library, not a fabricated per-state design.
-- Whether a checkmark asset is swapped into `selectLeftIcon`/`selectRightIcon` for selected chips — the audit explicitly could not confirm this (§9: "whether a checkmark asset is swapped into one of these generic slots ... is not confirmed"). No default checkmark is supplied; the slots stay empty (`null`) unless a consumer provides one.
+**Derived, not independently confirmed** (`docs/audit/chips.md` §13):
+- `selected`/`selected_neutral`'s own `drag` states — derived from `unselected`'s confirmed drag pattern (fill one step darker, border kept, e5-equivalent outer shadow), keeping each type's own confirmed text color.
+- `selected_neutral`'s `hover`/`disabled` states — derived from the same family pattern (one step darker on hover, flat gray with no border on disabled), keeping this type's own confirmed `gray/950` text.
+- `unselected`/`selected_neutral`/`Green`/`Red`'s `focus` ring color uses `focusRingColor.gray` as the nearest confirmed analogue — only `selected`'s ring color was independently confirmed.
+- `lg` (40px) and `sm` (24px) heights — confirmed exactly via a second metadata pass (§14 of the original audit's own bounding-box data); `md` (32px) remains the only size with a full `get_design_context` structural sample.
 
 ## Not implemented
 
 - A dedicated selection-indicator or dismiss control — confirmed not to exist as its own layer (§5, §9).
-- Real drag-and-drop reordering behavior for `state="drag"` — the state name is confirmed to exist, but nothing about its implementation is (§9, §12).
+- Real drag-and-drop reordering behavior for `state="drag"` — the visual is now confirmed and implemented; the interaction itself is a consumer concern, not part of this component.
 - `success`/`warning`/`error` validation states — not part of this component's confirmed enum.
 
 ## Token dependencies
 
-Only `@shikho/tokens`: `color.primary[200/600]`, `color.gray[100/200/700]`, `color.success[500]`, `color.danger[500]`, `color.white[950]`, `radius.full`, `focusRingColor.primary`, and `elevation.e2` (converted to a CSS `box-shadow` string for the icon slots).
+`@shikho/tokens`: `color.primary[200/300/400/600]`, `color.gray[50/100/200/700/950]`, `color.black[50/150]`, `color.success[500]`, `color.danger[500]`, `color.white[50/950]`, `radius.full`, `focusRingColor.primary/gray`. The `elevation.e5`-equivalent drag shadow and the icon-slot drop-shadow filter are hardcoded literals (no elevation/effect token category exists in `@shikho/tokens` yet), cited inline to their confirmed source.

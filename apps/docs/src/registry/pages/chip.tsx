@@ -16,9 +16,9 @@ export const pageConfig: ComponentPageConfig = {
   states: ["default", "hover", "focus", "drag", "disabled"],
   gaps: [
     "Green and Red only ever appear with `state=default` — no disabled, focus, hover or drag variant exists for either. A confirmed coverage gap.",
-    "Only `type=selected` has an exactly confirmed fill and text colour. `unselected` and `selected_neutral` use gray tokens present in Chip's own export; Green and Red follow the audit's own \"plausible but unconfirmed\" mapping to the success and danger ramps.",
+    "A deep re-audit (docs/audit/chips.md §13) confirmed the real fill/border/text for unselected, selected, and selected_neutral across default/hover/disabled/drag — corrections from the original single-instance audit included a border on `selected` (previously missing), a distinct gray/950 text on `selected_neutral` (previously assumed same as unselected), and a SemiBold weight on `selected`'s disabled state.",
     "The deep audit found no dedicated selection-indicator (checkmark) or dismiss-control layer — only generic icon slots. Neither is invented here.",
-    "How `drag`, `hover` and `disabled` actually render was never inspected; all three fall back to the confirmed per-type resting appearance.",
+    "`selected`/`selected_neutral`'s own `drag` states, and `selected_neutral`'s `hover`/`disabled`, were not independently re-sampled — they're derived from `unselected`'s confirmed state-transition pattern, keeping each type's own confirmed text color.",
     "Whether a checkmark asset is swapped into one of the generic icon slots for selected chips is explicitly unconfirmed, so the slots stay empty unless a consumer supplies one.",
   ],
   usageExample: `import { Chip } from "@shikho/ui";

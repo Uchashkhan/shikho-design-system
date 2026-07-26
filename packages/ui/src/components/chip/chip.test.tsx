@@ -80,6 +80,55 @@ describe("confirmed coverage gap: Green/Red only meaningfully support state=defa
   });
 });
 
+describe("confirmed corrections from the deep re-audit (docs/audit/chips.md §14)", () => {
+  it("unselected/default is white with a black/50 border and the resting inset — not a flat gray fill with no border", () => {
+    render(<Chip type="unselected" textContent="Chip" />);
+    const chip = screen.getByRole("button", { name: "Chip" });
+    expect(chip.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(chip.style.border).toContain("rgba(0, 0, 0, 0.04)");
+    expect(chip.style.boxShadow).toContain("inset");
+  });
+
+  it("unselected/hover lightens to gray/50", () => {
+    render(<Chip type="unselected" state="hover" textContent="Chip" />);
+    expect(screen.getByRole("button", { name: "Chip" }).style.backgroundColor).toBe("rgb(249, 249, 250)");
+  });
+
+  it("selected/default has a primary/400 border — previously missing entirely", () => {
+    render(<Chip type="selected" textContent="Chip" />);
+    expect(screen.getByRole("button", { name: "Chip" }).style.border).toContain("133, 164, 255");
+  });
+
+  it("selected/disabled renders SemiBold text weight, distinct from every other state's Medium", () => {
+    render(<Chip type="selected" state="disabled" textContent="Chip" />);
+    expect(screen.getByRole("button", { name: "Chip" }).style.fontWeight).toBe("600");
+  });
+
+  it("selected_neutral/default text is gray/950, not gray/700 (distinct from unselected)", () => {
+    render(<Chip type="selected_neutral" textContent="Chip" />);
+    expect(screen.getByRole("button", { name: "Chip" }).style.color).toBe("rgb(10, 12, 17)");
+  });
+
+  it("Green/Red render a confirmed black/150 border, not borderless", () => {
+    render(<Chip type="Green" textContent="Chip" />);
+    expect(screen.getByRole("button", { name: "Chip" }).style.border).toContain("rgba(0, 0, 0, 0.12)");
+  });
+
+  it("drag state replaces the resting inset with the confirmed elevation.e5-equivalent outer shadow", () => {
+    render(<Chip type="unselected" state="drag" textContent="Chip" />);
+    const chip = screen.getByRole("button", { name: "Chip" });
+    expect(chip.style.boxShadow).not.toContain("inset");
+    expect(chip.style.boxShadow).toContain("56px");
+  });
+
+  it("icon slots use a drop-shadow filter, not a boxShadow, on the (empty) icon bounding box", () => {
+    render(<Chip selectLeftIcon={<svg data-testid="icon" />} textContent="Chip" />);
+    const iconSlot = screen.getByTestId("icon").parentElement as HTMLElement;
+    expect(iconSlot.style.filter).toContain("drop-shadow");
+    expect(iconSlot.style.boxShadow).toBeFalsy();
+  });
+});
+
 describe("no unsupported variant is exported", () => {
   it("rejects a size/type/state value outside the confirmed enum at the type level", () => {
     // @ts-expect-error - "xl" is not a confirmed chip size (only lg/md/sm exist, §2)

@@ -60,8 +60,8 @@ export const SelectedVsUnselectedComparison: Story = {
 
 /**
  * All 5 confirmed `state` values (§2) for the interactive trio — `disabled`, `focus`, `hover`,
- * `drag`, `default`. `drag` has no confirmed visual anywhere in the audit (§9, §12) and
- * currently renders identically to `default`, documented in the README rather than invented.
+ * `drag`, `default`. `drag` is confirmed (docs/audit/chips.md §13) to replace the resting inset
+ * with a 5-layer outer "lift" shadow identical to `elevation.e5`.
  */
 export const AllConfirmedStates: Story = {
   render: () => (
@@ -97,8 +97,7 @@ export const DisabledComparison: Story = {
   ),
 };
 
-/** Hover comparison — no confirmed visual exists for `hover` either (§9/§12); shown to make that
- * gap visible rather than hidden. */
+/** Hover comparison — confirmed (§13): `selected` darkens from `primary/200` to `primary/300`. */
 export const HoverComparison: Story = {
   render: () => (
     <div style={{ display: "flex", gap: 12 }}>
