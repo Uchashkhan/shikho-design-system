@@ -43,14 +43,66 @@ describe("Field", () => {
     render(<Field selectLeftIcon={<svg data-testid="custom-icon" />} />);
     expect(screen.getByTestId("custom-icon")).toBeInTheDocument();
   });
+
+  describe("confirmed per-size metrics (docs/audit/input.md §14) — previously every size rendered identically to md", () => {
+    it.each([
+      ["sm", 32, "8px"],
+      ["md", 40, "10px"],
+      ["lg", 48, "12px"],
+      ["xl", 56, "16px"],
+    ] as const)("size=%s renders the confirmed %ipx height and %s radius", (size, height, radiusPx) => {
+      const { container } = render(<Field size={size} />);
+      const field = container.firstChild as HTMLElement;
+      expect(field.style.height).toBe(`${height}px`);
+      expect(field.style.borderRadius).toBe(radiusPx);
+    });
+  });
+
+  it("confirmed: icon slots carry the elevation/e2 drop-shadow filter (previously missing entirely)", () => {
+    render(<Field selectLeftIcon={<svg data-testid="left-icon" />} />);
+    const iconSlot = screen.getByTestId("left-icon").parentElement as HTMLElement;
+    expect(iconSlot.style.filter).toContain("drop-shadow");
+  });
+
+  it("confirmed: type=textarea renders a single text row with a resizer glyph, not the default 3-slot layout", () => {
+    const { container } = render(<Field type="textarea" textContent="Notes" />);
+    expect(screen.getByText("Notes")).toBeInTheDocument();
+    expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument(); // the resizer glyph
+  });
+
+  it("confirmed: type=advanced_with_buttons composes a real NewPinkButton action, not a drawn approximation", () => {
+    render(<Field type="advanced_with_buttons" textContent="Input text" buttonLabels={["Send"]} />);
+    expect(screen.getByRole("button", { name: "Send" })).toBeInTheDocument();
+  });
 });
 
-describe("InputField", () => {
+describe("InputField — confirmed per-state chrome (docs/audit/input.md §14)", () => {
   it("applies the confirmed active-state border and fill", () => {
     const { container } = render(<InputField state="active" />);
     const field = container.querySelector("[data-type='default']") as HTMLElement;
     expect(field.style.backgroundColor).toBe("rgb(255, 255, 255)"); // Color/smoke_base
     expect(field.style.border).toContain("246, 129, 215"); // outline/Secondary 300 #f681d7
+  });
+
+  it("confirmed: error uses a danger-colored border but the SAME ring color as active", () => {
+    const { container } = render(<InputField state="error" />);
+    const field = container.querySelector("[data-type='default']") as HTMLElement;
+    expect(field.style.border).toContain("246, 137, 137"); // outline/Danger 300 #f68989
+    expect(field.style.boxShadow).toContain("#e2008d3d"); // Color/Secondary/500_alpha_24 ring, confirmed shared with active
+  });
+
+  it("confirmed: hover darkens the fill AND lightens the text — a two-property shift, not a single fill change", () => {
+    const { container } = render(<InputField state="hover" fieldProps={{ textContent: "Input text" }} />);
+    const field = container.querySelector("[data-type='default']") as HTMLElement;
+    expect(field.style.backgroundColor).toBe("rgb(235, 236, 240)"); // smoke_high / gray[200]
+    expect(screen.getByText("Input text").style.color).toBe("rgb(140, 146, 156)"); // gray/600
+  });
+
+  it("confirmed: disabled recolors the label, field text, and hint all to gray/400 — not a straight dim/opacity", () => {
+    render(<InputField state="disabled" labelContent="Email" hintProps={{ hintTextContent: "Hint" }} />);
+    expect(screen.getByText("Email").style.color).toBe("rgb(195, 198, 204)");
+    // Hint's text color is set on its container div (inherited by the span), not the span itself.
+    expect(screen.getByText("Hint").parentElement?.style.color).toBe("rgb(195, 198, 204)");
   });
 
   it("marks the disabled state as aria-disabled", () => {
@@ -65,20 +117,54 @@ describe("InputField", () => {
   });
 });
 
-describe("remaining Input family members render their confirmed state vocabulary", () => {
-  it("Dropdown", () => {
+describe("Dropdown — confirmed per-state chrome, shared with InputField (§14)", () => {
+  it("renders its confirmed state vocabulary", () => {
     render(<Dropdown state="error">Select an option</Dropdown>);
     expect(screen.getByRole("button", { name: "Select an option" })).toBeInTheDocument();
   });
 
+  it("confirmed: naked has no fill and no inner shadow — only the elevation/e2 outer shadow", () => {
+    const { container } = render(<Dropdown state="naked">Select an option</Dropdown>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.style.backgroundColor).toBe("transparent");
+    expect(el.style.boxShadow).not.toContain("inset");
+  });
+
+  it("confirmed: disabled reuses the same flat-gray chrome as InputField's disabled state", () => {
+    const { container } = render(<Dropdown state="disabled">Select an option</Dropdown>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.style.backgroundColor).toBe("rgb(244, 244, 246)");
+    expect(el.style.color).toBe("rgb(195, 198, 204)");
+  });
+});
+
+describe("DigitInput — confirmed distinct typography and per-state colors (§14)", () => {
+  it("uses the confirmed heading_1 typography (22px/32px), not body_1", () => {
+    render(<DigitInput state="active" aria-label="Digit 1" />);
+    const input = screen.getByRole("textbox", { name: "Digit 1" });
+    expect(input.style.fontSize).toBe("22px");
+    expect(input.style.lineHeight).toBe("32px");
+  });
+
+  it("confirmed: default/hover show a dash placeholder; filled/active/error show a real digit", () => {
+    render(<DigitInput state="default" aria-label="Digit" />);
+    expect(screen.getByRole("textbox", { name: "Digit" })).toHaveAttribute("placeholder", "-");
+  });
+
+  it("confirmed: active and error share the same ring color, differing only in border", () => {
+    const { rerender } = render(<DigitInput state="active" aria-label="Digit" />);
+    const input = screen.getByRole("textbox", { name: "Digit" });
+    expect(input.style.boxShadow).toContain("#e2008d3d");
+    rerender(<DigitInput state="error" aria-label="Digit" />);
+    expect(input.style.boxShadow).toContain("#e2008d3d");
+    expect(input.style.border).toContain("246, 137, 137"); // danger/300, distinct from active's border
+  });
+});
+
+describe("remaining Input family members render their confirmed state vocabulary", () => {
   it("Textarea", () => {
     render(<Textarea state="filled" defaultValue="hello" aria-label="Message" />);
     expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("hello");
-  });
-
-  it("DigitInput", () => {
-    render(<DigitInput state="active" aria-label="Digit 1" />);
-    expect(screen.getByRole("textbox", { name: "Digit 1" })).toBeInTheDocument();
   });
 
   it("DigitField falls back to a single DigitInput when no children are supplied", () => {

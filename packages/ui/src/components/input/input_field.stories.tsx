@@ -29,14 +29,14 @@ export default meta;
 
 type Story = StoryObj<typeof InputField>;
 
-/** The one deep-audited state (docs/audit/input.md §8): confirmed border, fill, and focus ring. */
+/** The active state: confirmed border, fill, and ring (docs/audit/input.md §8). */
 export const ConfirmedActiveState: Story = {
   args: { state: "active" },
 };
 
 export const Playground: Story = {};
 
-/** Only `active` has a confirmed distinct visual — the other 6 states share field's confirmed default look. */
+/** All 7 confirmed states now render their own distinct chrome (docs/audit/input.md §14) — previously only `active` did. */
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, width: 320 }}>

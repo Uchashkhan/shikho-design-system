@@ -24,12 +24,12 @@ export default meta;
 
 type Story = StoryObj<typeof Field>;
 
-/** The one exactly confirmed instance: size=md, type=default (docs/audit/input.md §9). */
+/** The anchor confirmed instance: size=md, type=default (docs/audit/input.md §9). */
 export const ConfirmedBinding: Story = {};
 
 export const Playground: Story = {};
 
-/** size/type values beyond md/default have no confirmed layout data and currently render identically. */
+/** Confirmed per-size metrics (docs/audit/input.md §14) and all 3 confirmed types. */
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

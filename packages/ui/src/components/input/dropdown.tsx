@@ -1,10 +1,12 @@
 import { type HTMLAttributes, forwardRef } from "react";
-import { baseFieldClassName, fieldFillDefault, fieldRadiusMd, innerShadow, typography } from "./shared";
+import { radius } from "@shikho/tokens";
+import { fieldChromeInnerShadow, fieldChromeStyle } from "./shared";
 
-// docs/audit/input.md §2, §4 — dropdown: state naked|disabled|error|active|brand|
+// docs/audit/input.md §2, §4, §14 — dropdown: state naked|disabled|error|active|brand|
 // active_no_focus|hover|default_dark|default (9 values — a distinct vocabulary shared with no
 // other Input component); auto_layout TRUE|FALSE (§13: not confirmed whether this is a real
-// component boolean property or only encoded in the variant name).
+// component boolean property or only encoded in the variant name; exposed since the axis itself
+// is confirmed real, §2).
 export type DropdownState =
   | "naked"
   | "disabled"
@@ -18,43 +20,63 @@ export type DropdownState =
 
 export interface DropdownProps extends HTMLAttributes<HTMLDivElement> {
   state?: DropdownState;
-  /** Confirmed as an existing variant axis (§2); whether it is a real boolean prop or only a
-   * variant-name convention was never confirmed (§13). Exposed here since the axis is real. */
   autoLayout?: boolean;
 }
 
+const CHROME_STATES = new Set(["default", "default_dark", "hover", "error", "active", "disabled"]);
+
 /**
- * `dropdown` (docs/audit/input.md). No `get_design_context` deep audit was performed on this
- * set — only its state/auto_layout variant axes and its membership in the overview-level token
- * pool are confirmed (§2, §6). This reuses `field`'s own confirmed default appearance (radius,
- * fill, inner shadow, typography) as a neutral baseline, since no independent visual data exists
- * for `dropdown` — not a claim that dropdown looks like field, just the least-invented option.
+ * `dropdown` (docs/audit/input.md §14, deep re-audited across default/active/disabled/naked).
+ * `default`/`default_dark`/`hover`/`error`/`active`/`disabled` are confirmed to share `field`'s
+ * exact chrome construction (fill/border/ring/inner-shadow) — the same `fieldChromeStyle` table
+ * `InputField` uses, not a re-derived approximation. `naked` is confirmed genuinely different: no
+ * fill, no inner shadow, only the confirmed `elevation/e2` outer drop-shadow. `brand`/
+ * `active_no_focus` were not independently sampled (§13) and reuse `active`'s confirmed chrome
+ * minus the ring, as the closest confirmed analogue — documented, not verified.
  */
 export const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
-  ({ state = "default", autoLayout = false, className, style, children, ...props }, ref) => (
-    <div
-      ref={ref}
-      role="button"
-      aria-disabled={state === "disabled" || undefined}
-      data-state={state}
-      data-auto-layout={autoLayout}
-      className={baseFieldClassName + (className ? ` ${className}` : "")}
-      style={{
-        gap: "0.25rem",
-        padding: "0.5rem 0.625rem",
-        borderRadius: fieldRadiusMd,
-        backgroundColor: fieldFillDefault,
-        boxShadow: innerShadow,
-        justifyContent: "space-between",
-        width: autoLayout ? "auto" : "100%",
-        ...typography,
-        ...style,
-      }}
-      {...props}
-    >
-      {children}
-    </div>
-  ),
+  ({ state = "default", autoLayout = false, className, style, children, ...props }, ref) => {
+    const isDisabled = state === "disabled";
+    const chromeState = CHROME_STATES.has(state) ? (state as Parameters<typeof fieldChromeStyle>[0]) : "default";
+    const chrome = fieldChromeStyle(chromeState);
+
+    const isNaked = state === "naked";
+    const dropsRing = state === "brand" || state === "active_no_focus";
+
+    return (
+      <div
+        ref={ref}
+        role="button"
+        aria-disabled={isDisabled || undefined}
+        data-state={state}
+        data-auto-layout={autoLayout}
+        className={
+          "inline-flex items-center transition-colors outline-none disabled:cursor-not-allowed" +
+          (className ? ` ${className}` : "")
+        }
+        style={{
+          gap: "0.25rem",
+          padding: isNaked ? "0.75rem 0" : "0.5rem 0.625rem",
+          borderRadius: radius.lg,
+          backgroundColor: isNaked ? "transparent" : chrome.background,
+          border: isNaked ? "none" : chrome.border,
+          boxShadow: isNaked
+            ? "0px 1px 1px -0.5px rgba(0,0,0,0.04), 0px 3px 3px -1.5px rgba(0,0,0,0.04)" // confirmed elevation/e2, §14
+            : [fieldChromeInnerShadow(chromeState), dropsRing ? undefined : chrome.boxShadow].filter(Boolean).join(", ") || "none",
+          color: chrome.textColor,
+          justifyContent: "space-between",
+          width: autoLayout ? "auto" : "100%",
+          fontSize: 13,
+          lineHeight: "20px",
+          fontWeight: 500,
+          ...style,
+        }}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  },
 );
 
 Dropdown.displayName = "Dropdown";
