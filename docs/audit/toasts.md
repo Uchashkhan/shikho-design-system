@@ -201,3 +201,29 @@ Confirmed reuse of: `elevation/e2` (every prior audit); `elevation/e5` (confirme
 - Why the same nested `button_danger` instance renders with different fills across Toast and Alert.
 - Default variant configuration for `toast`.
 - Variable Collection / Mode metadata — not retrievable, consistent with every prior audit in this series.
+
+---
+
+## 14. Deep re-audit addendum — all 5 severities checked, real icon glyphs recovered (this pass)
+
+§9 deep-audited only the `danger` instance, mirroring the same gap already found and closed in `alert` (docs/audit/alerts.md §14). This section applies the identical re-audit method here: `get_design_context` re-run on `default` (`66074:28508`), `success` (`66074:28532`), `warning` (`66074:28544`), `info` (`66074:28556`), and `danger` again (`66074:28520`, re-verified), then the real `imgVector` asset URLs behind the severity icon, the dismiss icon, and the `feature_icon` glyph were downloaded across multiple severities.
+
+**Confirmed — Toast's severity icon is byte-identical to Alert's** (the same info-circle path data), tinted per state — but `default`'s own tint is confirmed `#0A0C11` (`gray-950`, near-black), genuinely different from Alert's `Default`, which is confirmed primary-tinted (`#5468FF`). `danger`/`success`/`warning`/`info` all match Alert's own severity-500 tints exactly.
+
+**Confirmed — Toast's dismiss icon is byte-identical to Alert's close icon** (the same "X" path data), but fixed `#8C929C` (`gray-600`) fill — confirmed different from Alert's `gray-700`.
+
+**Confirmed — the `feature_icon` glyph is a plain filled circle with no distinguishing shape** (a flat `#0A0C11` circle, no path detail) — this is generic placeholder content in the audited instance, not a real icon worth reproducing as a default. `featureIconContent` remains an opt-in slot with no default content.
+
+**Confirmed — the primary action button's construction genuinely differs by severity, and differs from Alert's equivalent buttons too:**
+- `danger`: `button_danger`, fill `Color/danger/500_alpha_12` (already confirmed in §9/§11).
+- `success`: `button_success` — newly confirmed, fill `Color/success/500_alpha_12`, text `text/success-600`.
+- `warning`/`info`: plainly named `"button"`, flat `gray/100` fill + `gray/700` text — **not** tinted.
+- `default` (the baseline severity): also plainly named `"button"`, but confirmed to use `Color/secondary/500` fill + white text — matching the styling Alert uses for its separate "Dismiss" button, not the neutral gray/gray-700 combination `warning`/`info` use here. A third distinct button treatment, not a simple two-way split.
+
+This means Toast's danger/success buttons are confirmed **tinted-background** (unlike Alert's danger/success buttons, which are confirmed flat neutral gray with only the *text* tinted) — a genuine, confirmed divergence between the two sibling components for nominally the same severity concept.
+
+**Confirmed — `default`'s border is `outline/gray-100` (`#f4f4f6`)**, not `gray-200` as previously derived when only `danger` had been sampled — the same correction already made for Alert.
+
+**Confirmed unchanged across all 5 severities:** root fill/radius/elevation, the `items-center` row layout, asymmetric padding, and the dismiss button's inline rounded-square shape/position.
+
+**Rebuild:** `toast.tsx` now renders real default icons — the confirmed info-circle (tinted per `state`, with `default`'s own confirmed near-black tint) for the left icon, and the confirmed "X" (`gray-600`) for the dismiss button — both rendered whenever the caller doesn't supply `icon`/`dismissIcon` overrides. The action button now branches on `state`: `ButtonDanger`/`ButtonSuccess` with a tinted background for `danger`/`success`, a `secondary/500`-filled button for `default`, and a plain neutral `gray/100`/`gray/700` button for `warning`/`info`. `default`'s border color was corrected from a derived `gray/200` guess to the confirmed `gray/100`.

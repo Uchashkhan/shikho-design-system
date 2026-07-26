@@ -103,6 +103,76 @@ describe("all confirmed severities render", () => {
   });
 });
 
+describe("confirmed default icons — previously missing entirely (docs/audit/toasts.md §14)", () => {
+  it("renders a real default severity icon (an SVG) when none is supplied", () => {
+    const { container } = render(<Toast state="danger" />);
+    expect(container.querySelector("svg")).toBeInTheDocument();
+  });
+
+  it("confirmed: default's icon is gray-950, NOT primary-tinted like Alert's Default", () => {
+    const { container } = render(<Toast state="default" />);
+    const path = container.querySelector("svg path") as SVGPathElement;
+    expect(path.getAttribute("fill")).toBe("#0a0c11");
+  });
+
+  it("confirmed: danger/success/warning/info icons tint to that severity's own 500 color", () => {
+    const { container, rerender } = render(<Toast state="danger" />);
+    expect((container.querySelector("svg path") as SVGPathElement).getAttribute("fill")).toBe("#f03d3d");
+    rerender(<Toast state="success" />);
+    expect((container.querySelector("svg path") as SVGPathElement).getAttribute("fill")).toBe("#35c220");
+  });
+
+  it("still allows overriding the default icon via the icon prop", () => {
+    render(<Toast icon={<span data-testid="custom-glyph" />} />);
+    expect(screen.getByTestId("custom-glyph")).toBeInTheDocument();
+  });
+
+  it("renders a real default dismiss ('X') icon when none is supplied", () => {
+    render(<Toast />);
+    const dismissButton = screen.getByRole("button", { name: "Dismiss" });
+    expect(dismissButton.querySelector("svg")).toBeInTheDocument();
+  });
+
+  it("still allows overriding the default dismiss icon via the dismissIcon prop", () => {
+    render(<Toast dismissIcon={<span data-testid="custom-dismiss" />} />);
+    expect(screen.getByTestId("custom-dismiss")).toBeInTheDocument();
+  });
+});
+
+describe("confirmed per-severity action button composition (docs/audit/toasts.md §14)", () => {
+  it("composes the real ButtonSuccess (not ButtonDanger) for state=success, with a success-tinted background", () => {
+    render(<Toast state="success" actionContent="UNDO" />);
+    const button = screen.getByRole("button", { name: "UNDO" });
+    expect(button.style.backgroundColor).toBe("rgba(53, 194, 32, 0.12)"); // success/500_alpha_12
+    expect(button.style.color).toBe("rgb(42, 153, 25)"); // text/success-600
+  });
+
+  it("confirmed: warning/info render a plain neutral gray button, not tinted by severity", () => {
+    for (const state of ["warning", "info"] as const) {
+      const { unmount } = render(<Toast state={state} actionContent="UNDO" />);
+      const button = screen.getByRole("button", { name: "UNDO" });
+      expect(button.style.backgroundColor).toBe("rgb(244, 244, 246)"); // gray/100
+      expect(button.style.color).toBe("rgb(91, 97, 109)"); // gray/700
+      unmount();
+    }
+  });
+
+  it("confirmed: state=default's own action button uses secondary/500 fill + white text, distinct from warning/info", () => {
+    render(<Toast state="default" actionContent="UNDO" />);
+    const button = screen.getByRole("button", { name: "UNDO" });
+    expect(button.style.backgroundColor).toBe("rgb(226, 0, 141)"); // secondary/500
+    expect(button.style.color).toBe("rgb(255, 255, 255)");
+  });
+});
+
+describe("confirmed correction to root styling (docs/audit/toasts.md §14)", () => {
+  it("confirmed: default's border is gray/100, not gray/200", () => {
+    const { container } = render(<Toast state="default" />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.border).toContain("244, 244, 246"); // gray/100 #f4f4f6
+  });
+});
+
 describe("no unsupported variant is exported", () => {
   it("rejects a state value outside the confirmed enum, and rejects Alert's capitalized Default", () => {
     // @ts-expect-error - "Default" (capitalized) is alert's baseline value, not toast's (§2, §11)

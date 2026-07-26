@@ -5,7 +5,7 @@ const STATES: ToastState[] = ["default", "danger", "success", "warning", "info"]
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
-    "Deep-audited at state=\"danger\" and explicitly compared node-by-node against Alert's own deep audit. Toast and Alert share the same severity architecture and even the same nested ButtonDanger dependency (\"doubly confirmed across both Alert and Toast\"), but the audit found real, confirmed structural differences between them at nearly every level: items-center instead of items-start, asymmetric padding instead of uniform, elevation/e6 instead of e5, a row-oriented alert_cell instead of column, an inline rounded-square dismiss button instead of an absolutely-positioned circular one, and a featureIcon slot Alert doesn't have at all. None of these are collapsed toward Alert's implementation.",
+    "Deep-audited across all 5 severities and explicitly compared node-by-node against Alert's own deep audit. Toast and Alert share the same severity architecture, but a fresh re-audit found the action button's construction is a genuine three-way split by severity: danger/success compose ButtonDanger/ButtonSuccess with a TINTED background (confirmed different from Alert's flat neutral background), warning/info render a plain neutral gray button, and default gets its own distinct secondary/500-filled button. Both icon slots (the left severity icon and the inline dismiss 'X') now render real default glyphs by default — downloaded directly from Figma's own SVG source, and confirmed byte-identical in shape to Alert's own icons, though toast tints its default-state icon gray-950 rather than Alert's primary-tinted Default.",
   variants: [
     {
       name: "state",
@@ -15,12 +15,11 @@ export const pageConfig: ComponentPageConfig = {
   ],
   states: [],
   gaps: [
-    "Only state=\"danger\" has confirmed layout/color data — whether default/success/warning/info share this exact structure is out of scope in the audit, same situation as Alert.",
+    "Only danger and success compose a severity-tinted Button family member (ButtonDanger/ButtonSuccess) with a TINTED background — confirmed different from Alert's equivalent, which tints only the text. warning/info are neutral gray; default is its own secondary/500-filled button.",
     "The root-level gap between icon/feature-icon/alert_cell/dismiss-button isn't explicitly restated for Toast — this reuses Alert's confirmed 16px root gap as the least-invented available baseline, documented as unconfirmed for Toast specifically.",
-    "The nested button_danger instance is confirmed the same dependency as Alert's, but renders with a different fill (Color/danger/500_alpha_12 vs. Alert's Color/gray/100) — \"a confirmed, deliberate-looking but unexplained visual divergence\" the audit could not resolve further.",
-    "Whether the shorter, unqualified \"button_danger\" instance name here (vs. Alert's fully path-qualified one) reflects a meaningful binding difference is explicitly unconfirmed. This implementation still composes ButtonDanger with type=\"Secondary\", applying only the confirmed fill override.",
+    "Whether the shorter, unqualified \"button_danger\" instance name here (vs. Alert's fully path-qualified one) reflects a meaningful binding difference is explicitly unconfirmed, though the fill/text values are now confirmed for both danger and success.",
     "secondary_button_effect (2 of 4 layers confirmed applied to the action button) is not implemented — the same gap ButtonDanger itself already has.",
-    "No real icon or feature-icon glyph content exists yet — no @shikho/icons glyphs exist.",
+    "The feature_icon slot's real glyph is confirmed to be a plain filled circle with no distinguishing shape in the audited instance — generic placeholder content, not implemented as a default.",
   ],
   usageExample: `import { Toast } from "@shikho/ui";
 
@@ -42,8 +41,8 @@ function DangerToast() {
     { name: "featureIcon / featureIconContent", type: "boolean / ReactNode", defaultValue: "false", description: "A 28×28 slot with no equivalent in Alert — the only boolean across Alert/Toast that defaults off." },
     { name: "titleContent", type: "ReactNode", description: "15px/24px SemiBold, identical to Alert's." },
     { name: "desc / descriptionContent", type: "boolean / ReactNode", defaultValue: "true", description: "13px/20px Regular, Text/Gray 600 — confirmed different from Alert's Gray 700." },
-    { name: "actionButton / actionContent / onActionClick", type: "boolean / ReactNode / () => void", defaultValue: "true", description: "Composes ButtonDanger with a confirmed different fill override from Alert's." },
-    { name: "rightIcon / dismissIcon / onDismissClick / dismissButtonLabel", type: "boolean / ReactNode / () => void / string", defaultValue: "true / … / … / \"Dismiss\"", description: "Inline rounded-square dismiss button — confirmed not absolutely positioned, unlike Alert's corner button." },
+    { name: "actionButton / actionContent / onActionClick", type: "boolean / ReactNode / () => void", defaultValue: "true", description: "danger/success compose ButtonDanger/ButtonSuccess with a tinted background; warning/info are neutral; default is secondary/500-filled." },
+    { name: "rightIcon / dismissIcon / onDismissClick / dismissButtonLabel", type: "boolean / ReactNode / () => void / string", defaultValue: "true / … / … / \"Dismiss\"", description: "Inline rounded-square dismiss button — confirmed not absolutely positioned, unlike Alert's corner button. Renders a confirmed default 'X' icon unless overridden." },
   ],
   preview: () => (
     <Toast
@@ -74,7 +73,7 @@ function DangerToast() {
   showcases: [
     {
       title: "All five severities",
-      description: "Only danger is deep-audited; the shared white fill and e6 shadow apply uniformly across the rest.",
+      description: "Every severity is now deep-audited: danger/success get a tinted-background button, warning/info stay neutral, and default gets its own secondary/500 button.",
       layout: "stack",
       render: () => (
         <>

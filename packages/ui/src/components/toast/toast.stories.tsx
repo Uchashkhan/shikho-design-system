@@ -26,8 +26,10 @@ export const ConfirmedBinding: Story = {};
 
 export const Playground: Story = {};
 
-/** Every confirmed severity. Only `danger` has confirmed color/layout data; the other three
- * reuse the audit's own confirmed `outline/{severity}_alpha` hex values (§8), identical to Alert's. */
+/** Every confirmed severity — a fresh re-audit (docs/audit/toasts.md §14) confirmed the border,
+ * icon tint, and action-button composition for all 5, not just `danger`. Note `default`'s icon
+ * is gray-950 (not primary-tinted like Alert's `Default`), and its own action button uses
+ * secondary/500 + white text — distinct from warning/info's neutral gray button. */
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -53,6 +55,29 @@ export const ComposedButtonDependencyComparison: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <Toast titleContent="Toast (button fill: danger alpha-12)" actionContent="UNDO" />
+    </div>
+  ),
+};
+
+/**
+ * Confirmed via a fresh get_design_context re-audit (docs/audit/toasts.md §14): only `danger` and
+ * `success` compose a severity-tinted Button family member (`ButtonDanger`/`ButtonSuccess`) with a
+ * TINTED background — confirmed different from Alert's equivalent, which tints only the text.
+ * `warning`/`info` render a plain neutral gray button; `default` gets its own distinct
+ * secondary/500-filled button.
+ */
+export const ActionButtonBySeverity: Story = {
+  render: () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {states.map((state) => (
+        <Toast
+          key={state}
+          state={state}
+          titleContent={state}
+          descriptionContent="danger/success get a tinted-background button; warning/info stay neutral; default is pink."
+          actionContent="UNDO"
+        />
+      ))}
     </div>
   ),
 };
