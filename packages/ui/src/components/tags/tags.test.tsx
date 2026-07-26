@@ -133,6 +133,26 @@ describe("confirmed states (docs/audit/tags.md §14)", () => {
   });
 });
 
+describe("confirmed hover corrections from a fresh re-audit (docs/audit/tags.md §14)", () => {
+  it("confirmed: the three solid-fill types DO have a real hover — darkening from ramp-500 to ramp-600, previously assumed unconfirmed and left unchanged", () => {
+    const { container, rerender } = render(<Tags type="primary" state="default">Tag</Tags>);
+    expect((container.firstChild as HTMLElement).style.background).toBe("rgb(84, 104, 255)"); // primary/500
+    rerender(<Tags type="primary" state="hover">Tag</Tags>);
+    expect((container.firstChild as HTMLElement).style.background).toBe("rgb(59, 78, 227)"); // primary/600
+
+    rerender(<Tags type="Danger Filled" state="hover">Tag</Tags>);
+    expect((container.firstChild as HTMLElement).style.background).toBe("rgb(233, 32, 32)"); // danger/600
+
+    rerender(<Tags type="Success Filled" state="hover">Tag</Tags>);
+    expect((container.firstChild as HTMLElement).style.background).toBe("rgb(42, 153, 25)"); // success/600
+  });
+
+  it("confirmed: primary_outline's hover fill is a light primary tint, not the previously-guessed plain gray/50", () => {
+    const { container } = render(<Tags type="primary_outline" state="hover">Tag</Tags>);
+    expect((container.firstChild as HTMLElement).style.background).toBe("rgba(84, 104, 255, 0.12)"); // primary/500_alpha_12
+  });
+});
+
 describe("no unsupported variant is exported", () => {
   it("rejects a state value outside the confirmed 3-value enum — no focus, no drag", () => {
     // @ts-expect-error - "focus" is not a confirmed tags state (only disabled/hover/default exist, §2)

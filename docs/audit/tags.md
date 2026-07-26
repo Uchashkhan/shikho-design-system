@@ -163,3 +163,15 @@ The audit above never called `get_design_context` (§6: "No deep instance audit 
 - **The confirmed inset shadow (`special_drop`) was never applied at all.**
 
 Every correction above is implemented in `packages/ui/src/components/tags/tags.tsx`'s `TAG_VISUAL`/`SIZE_METRICS` tables and cited inline; see `packages/ui/src/components/tags/README.md` for the consumer-facing confirmed-vs-derived summary. Not independently sampled in this pass: `hover` for `info`/`warning`/`success`/`primary_light` (derived from the confirmed `_alpha_12`→`_alpha_20` system already documented in §8) and for `secondary`/`primary_outline` (derived as one step darker/tinted); `hover` for the 3 solid-fill types (`primary`, `Danger Filled`, `Success Filled` — no confirmed hover exists for any solid fill in this family); icon size at `sm` (derived by rank from the confirmed 14px@md/16px@lg progression).
+
+---
+
+## 14. Fresh re-audit addendum — corrections to §13's own hover derivations (this pass)
+
+§13's rebuild left several hover states as guessed/derived rather than independently confirmed — most notably asserting "no confirmed hover exists for any solid fill in this family." A fresh, non-trusting re-check (6 additional `get_design_context` fetches on real hover node instances: `info`/md, `secondary`/md, `primary_outline`/md, `primary`/md, `Danger Filled`/md, `Success Filled`/md) disproves that and finds concrete corrections:
+
+- **The 3 solid-fill types DO have a real, confirmed hover: the fill darkens from the ramp's `500` step to its `600` step.** `primary`/hover = `Color/primary/600` (`#3b4ee3`, was guessed unchanged at `500`); `Danger Filled`/hover = `Color/danger/600` (`#e92020`, was guessed unchanged); `Success Filled`/hover = `Color/success/600` (`#2a9919`, was guessed unchanged). Borders (where present) and text colors are confirmed unchanged between default/hover for all three.
+- **`primary_outline`'s hover fill was guessed as a plain `gray/50`; the confirmed real value is `Color/primary/500_alpha_12`** (a light primary tint, matching `primary_light`'s own default fill) — the border and text color are confirmed unchanged.
+- **`info`'s hover fill (`info/500_alpha_20`) and `secondary`'s hover fill (`gray/200`) were already correct** — confirmed exactly, no change needed. This cross-checks the `_alpha_12`→`_alpha_20` system already documented in §8/§13 as genuinely correct for at least one severity type.
+
+Not independently re-sampled in this pass (still derived, same caveats as §13): `hover` for `warning`/`success`/`primary_light` (the `_alpha_12`→`_alpha_20` pattern, now cross-checked correct on `info`) and `tertiary` (already independently confirmed in §13).

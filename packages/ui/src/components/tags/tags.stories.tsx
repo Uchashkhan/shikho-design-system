@@ -106,6 +106,27 @@ export const States: Story = {
   ),
 };
 
+/**
+ * Confirmed via a fresh get_design_context re-check (docs/audit/tags.md §14): the 3 solid-fill
+ * types (`primary`, `Danger Filled`, `Success Filled`) DO have a real, confirmed hover — the fill
+ * darkens from the ramp's 500 step to its 600 step. `primary_outline`'s hover was also corrected:
+ * a light primary tint (`primary/500_alpha_12`), not a plain gray. All 4 were previously guessed
+ * unchanged/wrong.
+ */
+export const CorrectedHoverStates: Story = {
+  render: () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {(["primary", "Danger Filled", "Success Filled", "primary_outline"] as TagType[]).map((type) => (
+        <div key={type} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <span style={{ width: 110, fontSize: 12 }}>{type}</span>
+          <Tags type={type} state="default">default</Tags>
+          <Tags type={type} state="hover">hover</Tags>
+        </div>
+      ))}
+    </div>
+  ),
+};
+
 /** Confirmed left/right icon slots (docs/audit/tags.md §14) — previously entirely absent. */
 export const IconSlotComparison: Story = {
   render: () => {

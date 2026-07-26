@@ -73,19 +73,21 @@ const TAG_VISUAL: Record<TagType, { default: TagVisual; hover: TagVisual }> = {
     default: { background: `${color.danger[500]}1f`, border: "none", textColor: color.danger[600] },
     hover: { background: `${color.danger[500]}33`, border: "none", textColor: color.danger[600] },
   },
-  // Confirmed: no border at all (a bare fill), distinct from `primary`'s confirmed black/50
-  // border below.
+  // CORRECTED (docs/audit/tags.md §14 fresh re-check) — previously assumed no confirmed hover
+  // existed for solid fills. A direct get_design_context fetch on this exact hover instance shows
+  // it DOES: the fill darkens from the ramp's 500 step to its 600 step, border stays borderless.
   "Danger Filled": {
     default: { background: color.danger[500], border: "none", textColor: color.white[950] },
-    hover: { background: color.danger[500], border: "none", textColor: color.white[950] }, // not sampled — no confirmed hover for solid fills
+    hover: { background: color.danger[600], border: "none", textColor: color.white[950] },
   },
   success: {
     default: { background: `${color.success[500]}1f`, border: "none", textColor: color.success[600] },
     hover: { background: `${color.success[500]}33`, border: "none", textColor: color.success[600] },
   },
+  // CORRECTED — see "Danger Filled" above; same confirmed 500->600 darkening pattern.
   "Success Filled": {
     default: { background: color.success[500], border: "none", textColor: color.white[950] },
-    hover: { background: color.success[500], border: "none", textColor: color.white[950] },
+    hover: { background: color.success[600], border: "none", textColor: color.white[950] },
   },
   // CORRECTED: previously `color.gray[50]`/`gray[600]` with no border. Confirmed real: white
   // fill with a black/50(4%) border — structurally the neutral analogue of `primary_outline`,
@@ -100,9 +102,11 @@ const TAG_VISUAL: Record<TagType, { default: TagVisual; hover: TagVisual }> = {
   },
   // CORRECTED: previously `backgroundColor: "transparent"` with a fully opaque `primary/500`
   // border. Confirmed real: an opaque white fill and a `primary/500` border at only 24% alpha.
+  // hover CORRECTED (§14 fresh re-check): a direct get_design_context fetch shows hover fills with
+  // `primary/500_alpha_12` (a light primary tint), not the previously-guessed plain `gray/50`.
   primary_outline: {
     default: { background: color.white[950], border: `1px solid ${color.primary[500]}3d`, textColor: color.primary[600] },
-    hover: { background: color.gray[50], border: `1px solid ${color.primary[500]}3d`, textColor: color.primary[600] }, // hover not sampled — subtle tint, §14
+    hover: { background: `${color.primary[500]}1f`, border: `1px solid ${color.primary[500]}3d`, textColor: color.primary[600] },
   },
   primary_light: {
     default: { background: `${color.primary[500]}1f`, border: "none", textColor: color.primary[600] },
@@ -110,9 +114,12 @@ const TAG_VISUAL: Record<TagType, { default: TagVisual; hover: TagVisual }> = {
   },
   // CORRECTED: previously `border: "1px solid transparent"`. Confirmed real: a black/50(4%)
   // border — the solid `primary` type is NOT borderless, unlike "Danger Filled"/"Success Filled".
+  // hover CORRECTED (§14 fresh re-check): confirmed the fill darkens to `primary/600` (not
+  // staying at 500 as previously guessed) — the same 500->600 darkening pattern confirmed on
+  // "Danger Filled"/"Success Filled" too. Border stays unchanged.
   primary: {
     default: { background: color.primary[500], border: `1px solid ${color.black[50]}`, textColor: color.white[950] },
-    hover: { background: color.primary[500], border: `1px solid ${color.black[50]}`, textColor: color.white[950] }, // not sampled — no confirmed hover for solid fills
+    hover: { background: color.primary[600], border: `1px solid ${color.black[50]}`, textColor: color.white[950] },
   },
 };
 
