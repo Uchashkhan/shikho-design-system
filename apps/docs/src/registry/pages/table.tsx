@@ -51,7 +51,7 @@ export const pageConfig: ComponentPageConfig = {
   states: ["default", "loading"],
   gaps: [
     "The audited default instance showed all 3 avatar slots, both tags, and every icon slot on simultaneously — treated here as a spec-sheet illustration, not a literal confirmed default. Every optional slot defaults to hidden, requiring explicit opt-in.",
-    "header_compact was not independently re-audited — its padding is derived by scaling header's confirmed padding the same way default scales to default_compact.",
+    "header_compact's padding, gap, avatar size, icon size, and heading typography are all independently confirmed (a fresh get_design_context re-check) — it is NOT simply header/default_compact scaled: its avatar stays fixed at 24px (same as header, unlike default's compact scaling), while its heading text genuinely shrinks to caption_2 (12/16), unlike every other type's body_1 (13/20).",
     "The dropdown and icon-button action slots are implemented inline with table_cell's own confirmed exact values, rather than composing the Input family's own Dropdown component (whose confirmed radius doesn't match).",
     "Sorting, column alignment, pagination controls, expandable rows, status indicators, and sticky headers do not appear in any audited instance — not implemented.",
     "table (the bare Figma instance) was never expanded internally — not implemented, consistent with the existing sidebar_nav/tab_nav precedent.",

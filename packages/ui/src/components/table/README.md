@@ -2,6 +2,10 @@
 
 Implements `table_cell`. The original overview audit (`table.md`) never ran `get_design_context` and — based on `table_cell` exposing "zero boolean properties in this metadata" — speculated it might be a simple two-property leaf. A deep re-audit (`docs/audit/table-deep-audit.md`) confirms the opposite: `table_cell` is one of the richest single components audited in this entire library.
 
+## Fresh re-audit corrections (docs/audit/table-deep-audit.md §7)
+
+Unlike several other components in this project's history, `TableCell` was never falling back to unstyled native rendering — it was already built from the deep audit above with real `Checkbox`/`Tags` reuse. A fresh `get_design_context` re-check on all 4 `state=default` variants (not trusting the existing implementation's values without re-verifying them) still found concrete mismatches: the header family's avatar/icon sizes and root gap were wrong for `header_compact` specifically (it does not scale the same way `default`→`default_compact` does); `default`/`default_compact`'s heading was hardcoded SemiBold when it's confirmed Medium; `header_compact`'s heading text size was hardcoded to `header`'s 13/20 instead of its own confirmed 12/16; the nested `Tags` used the wrong size (`sm` instead of the confirmed-matching `md`); and the system-wide "special_drop" inset shadow was applied to the wrong slot (`icon_button` instead of `dropdown`). See §7 for the full per-item breakdown.
+
 ## What's implemented
 
 - **`TableCell`** — covering both confirmed `type` families (`header`/`header_compact` vs. `default`/`default_compact`) and both `state` values (`default`, `loading`).

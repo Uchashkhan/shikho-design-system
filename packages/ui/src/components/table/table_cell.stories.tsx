@@ -105,6 +105,32 @@ export const LoadingState: Story = {
   ),
 };
 
+/**
+ * Confirmed corrections from a fresh get_design_context re-audit (docs/audit/table-deep-audit.md
+ * §6): the header family's avatar is fixed at 24px (not scaled per header/header_compact); only
+ * `header_compact` drops its heading text to caption_2 (12/16); `default`/`default_compact`'s
+ * heading is Medium(500) weight, not SemiBold like the header family; and `default_compact`'s
+ * root gap (8px) is narrower than `default`'s (12px).
+ */
+export const ConfirmedCorrections: Story = {
+  render: () => (
+    <div style={{ width: 700, border: "1px solid #f4f4f6", borderRadius: 8 }}>
+      <TableCell type="header" heading="header (SemiBold, 13/20, 24px avatar)" avatar={{ size: "md", src: AVATAR }} />
+      <TableCell
+        type="header_compact"
+        heading="header_compact (SemiBold, 12/16, still 24px avatar)"
+        avatar={{ size: "sm", src: AVATAR }}
+      />
+      <TableCell type="default" heading="default (Medium, 13/20, 12px gap)" avatar={{ size: "sm", src: AVATAR }} />
+      <TableCell
+        type="default_compact"
+        heading="default_compact (Medium, 13/20, 8px gap)"
+        avatar={{ size: "sm", src: AVATAR }}
+      />
+    </div>
+  ),
+};
+
 /** Interactive row-selection checkbox. */
 export const InteractiveSelection: Story = {
   render: () => {

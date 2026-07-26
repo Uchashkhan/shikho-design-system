@@ -102,3 +102,57 @@ describe("checkbox interactivity", () => {
     expect(onCheckedChange).toHaveBeenCalledWith(true);
   });
 });
+
+describe("confirmed corrections from a fresh get_design_context re-audit (docs/audit/table-deep-audit.md §6)", () => {
+  it("confirmed: the header family's avatar is fixed at 24px regardless of avatar.size or header vs. header_compact", () => {
+    const { container, rerender } = render(
+      <TableCell type="header" heading="Row" avatar={{ size: "md", src: "/a.png" }} />,
+    );
+    let avatarSlot = container.querySelector("span > img")!.parentElement as HTMLElement;
+    expect(avatarSlot.style.width).toBe("24px");
+    rerender(<TableCell type="header_compact" heading="Row" avatar={{ size: "sm", src: "/a.png" }} />);
+    avatarSlot = container.querySelector("span > img")!.parentElement as HTMLElement;
+    expect(avatarSlot.style.width).toBe("24px");
+  });
+
+  it("confirmed: default_compact's root gap (8px) is genuinely narrower than default's (12px)", () => {
+    const { container, rerender } = render(<TableCell type="default" heading="Row" />);
+    expect((container.firstChild as HTMLElement).style.gap).toBe("0.75rem");
+    rerender(<TableCell type="default_compact" heading="Row" />);
+    expect((container.firstChild as HTMLElement).style.gap).toBe("0.5rem");
+  });
+
+  it("confirmed: header_compact's heading text drops to caption_2 (12/16), unlike header/default/default_compact's body_1 (13/20)", () => {
+    render(<TableCell type="header_compact" heading="Name" />);
+    const heading = screen.getByText("Name");
+    expect(heading.parentElement?.style.fontSize).toBe("12px");
+    expect(heading.parentElement?.style.lineHeight).toBe("16px");
+  });
+
+  it("confirmed: header's heading is SemiBold(600), but default's heading is Medium(500), not SemiBold", () => {
+    const { rerender } = render(<TableCell type="header" heading="Name" />);
+    expect(screen.getByText("Name").style.fontWeight).toBe("600");
+    rerender(<TableCell type="default" heading="Name" />);
+    expect(screen.getByText("Name").style.fontWeight).toBe("500");
+  });
+
+  it("confirmed: tag1/tag2 use Tags' md size (24px height), not sm (20px)", () => {
+    render(<TableCell heading="Row" tag1="Gray" tag2="Primary" />);
+    expect(screen.getByText("Gray").closest("[data-size]")).toHaveAttribute("data-size", "md");
+    expect(screen.getByText("Primary").closest("[data-size]")).toHaveAttribute("data-size", "md");
+  });
+
+  it("confirmed: the dropdown field carries the real 2-layer special_drop inset shadow, not a single flat shadow", () => {
+    render(<TableCell heading="Row" dropdownContent="Admin" />);
+    const button = screen.getByText("Admin").closest("button") as HTMLElement;
+    expect(button.style.boxShadow).toContain("#ffffff0a");
+    expect(button.style.boxShadow).toContain("rgba(0,0,0,0.07)");
+    expect(button.style.boxShadow.match(/inset/g)?.length).toBe(2);
+  });
+
+  it("confirmed: the icon_button action carries NO inset shadow (previously misapplied there instead of the dropdown)", () => {
+    render(<TableCell heading="Row" actionIcon={<span data-testid="icon" />} />);
+    const button = screen.getByTestId("icon").closest("button") as HTMLElement;
+    expect(button.style.boxShadow).toBeFalsy();
+  });
+});
