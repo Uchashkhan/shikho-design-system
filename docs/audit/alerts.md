@@ -216,3 +216,34 @@ Plus known values: `Text/Primary 500`, `Text/Gray 600/700/950`, `Text/White 950`
 - Whether `alert` truly uses only `radius/custom/md`, or additional radius steps exist unbound in this subtree.
 - Default variant configuration for `alert`.
 - Variable Collection / Mode metadata — not retrievable, consistent with every prior audit in this series.
+
+---
+
+## 14. Deep re-audit addendum — all 5 severities checked, real icon glyphs recovered (this pass)
+
+§11 deep-audited only the `danger` instance and left every other severity's structure/icon unconfirmed. This section closes that gap: `get_design_context` was re-run on `Default` (`66071:28126`), `success` (`66071:28150`), `warning` (`66071:28162`), `info` (`66071:28174`), and `danger` again (`66071:28138`, re-verified rather than trusted from memory), then the actual `imgVector` asset URLs behind the severity icon and the corner close icon were downloaded across multiple severities to recover their real SVG source.
+
+**Confirmed — the severity icon is the SAME glyph in every state, only re-tinted.** Downloading the icon asset behind all 5 severities shows byte-identical path data (an info-circle) in every case — the confirmed literal layer name "icon / info" is not a mislabeling artifact, it turns out to genuinely always be an info-circle, regardless of severity. Only the `fill` differs, and it exactly matches that severity's own `500` color:
+
+| `state` | Icon fill |
+|---|---|
+| `Default` | `#5468FF` (`primary/500`) |
+| `danger` | `#F03D3D` (`danger/500`) |
+| `success` | `#35C220` (`success/500`) |
+| `warning` | `#FCBF04` (`warning/500`) |
+| `info` | `#118BE8` (`info/500`) |
+
+**Confirmed — the corner close-button icon is ALSO the same glyph in every state**, a simple "X", downloaded and byte-compared across `Default`/`success` — identical path data, fixed fill `#5B616D` (`text/gray-700`), not tinted by severity at all.
+
+**Confirmed — the corner `icon_button` has a `gray/100` fill**, not transparent as the pre-rebuild implementation assumed (every one of the 5 re-fetched samples shows `bg-[var(--color/gray/100,#f4f4f6)]` on this element).
+
+**Confirmed — `Default`'s border is `outline/gray-100` (`#f4f4f6`)**, not `gray-200` as previously derived when only `danger` had been sampled (there was no `Default` data to check that guess against before).
+
+**Confirmed — the primary action button's construction genuinely differs by severity, not just by color:**
+- `danger`: literally named `button_danger/md/secondary/default` — the real `ButtonDanger` component, `text/danger-600` text (already confirmed in §11).
+- `success`: literally named `button_success/md/secondary/default` — a newly confirmed second cross-component dependency, on `ButtonSuccess`, `text/success-600` text.
+- `Default`/`warning`/`info`: named plainly `"button"` (no severity-specific path), with a flat `gray/100` fill and `gray/700` text — **confirmed NOT color-tinted**, unlike `danger`/`success`. This is a real, non-trivial asymmetry: only 2 of the 5 severities compose a themed Button family member for their first action; the other 3 share one plain neutral button.
+
+**Confirmed unchanged across all 5 severities:** the second action button ("Dismiss": `secondary/500` fill, white text), the root's fill/radius/shadow, the layout structure, and the typography.
+
+**Rebuild:** `alert.tsx` now renders real default icons — the confirmed info-circle (tinted per `state`) for the left icon slot, and the confirmed "X" for the corner close button — both as inline SVGs built from the exact downloaded path data, rendered whenever the caller doesn't supply `icon`/`closeIcon` overrides. The primary action button now branches on `state`: `ButtonDanger` for `danger`, `ButtonSuccess` for `success` (a newly confirmed nested dependency), and a plain neutral button for `Default`/`warning`/`info`. `Default`'s border color was corrected from a derived `gray/200` guess to the confirmed `gray/100`, and the corner `icon_button`'s fill was corrected from transparent to the confirmed `gray/100`.

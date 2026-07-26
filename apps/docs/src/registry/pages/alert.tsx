@@ -5,7 +5,7 @@ const STATES: AlertState[] = ["Default", "danger", "success", "warning", "info"]
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
-    "Deep-audited at state=\"danger\" via get_design_context — the first composed component since List, and the clearest cross-component confirmation in the entire audit series: the primary action button's literal Figma instance path is button_danger/md/secondary/default, so Alert composes the real ButtonDanger rather than a re-drawn button. Unlike nearly every other audited component, Alert has no boolean for title, description, or actions — they render unconditionally, so its prop surface intentionally has just one boolean (leftIcon) rather than inventing toggles Figma doesn't expose.",
+    "Deep-audited across all 5 severities via get_design_context. The primary action button's construction genuinely differs by severity: danger composes the real ButtonDanger and success composes the real ButtonSuccess (both confirmed nested Figma instance paths, with severity-tinted text), while Default/warning/info render a plain neutral gray button instead. Both icon slots (the left severity icon and the corner close 'X') now render real default glyphs by default, downloaded directly from Figma's own SVG source and confirmed identical in shape across every severity — only the severity icon's fill color changes, matching that severity's own 500 token exactly.",
   variants: [
     {
       name: "state",
@@ -15,12 +15,10 @@ export const pageConfig: ComponentPageConfig = {
   ],
   states: [],
   gaps: [
-    "Only state=\"danger\" has confirmed layout/color data — whether Default/success/warning/info share this exact structure, or the fill/icon also change per severity, is explicitly out of scope in the audit. The one confirmed fill (white) is applied uniformly across all five severities.",
+    "Only danger and success compose a severity-tinted Button family member for the primary action (ButtonDanger/ButtonSuccess) — Default/warning/info are confirmed to use a plain neutral gray/gray-700 button instead, not tinted.",
     "warning/info border colors (outline/warning_alpha, outline/info_alpha) are confirmed exact hex values with no equivalent yet in @shikho/tokens, so they're used as cited literal constants rather than added to the tokens package.",
-    "Default's border color has no confirmed value anywhere (only danger was deep-audited) — it uses a neutral color.gray[200] as a documented derived baseline, not a fabricated severity color.",
-    "The second action button (\"Dismiss\") has an exact confirmed fill/text, but is not confirmed to be drawn from any named component set — implemented as its own inline <button>, not assumed into a ButtonDanger composition the citation doesn't support.",
+    "The second action button (\"Dismiss\") has an exact confirmed fill/text, identical across all 5 severities, but is not confirmed to be drawn from any named component set — implemented as its own inline <button>.",
     "Whether the visible \"Dismiss\" text button and the corner close button are two distinct intended controls or redundant was never determined — both are implemented as independent, separately-clickable controls rather than collapsing them into one.",
-    "No real icon glyph content exists yet for either icon slot — no @shikho/icons glyphs exist, so icon/closeIcon are empty ReactNode slots unless a consumer supplies one.",
   ],
   usageExample: `import { Alert } from "@shikho/ui";
 
@@ -39,13 +37,13 @@ function DangerBanner() {
   );
 }`,
   props: [
-    { name: "state", type: "Default | danger | success | warning | info", defaultValue: "danger", description: "Severity/theme axis. Only danger has confirmed layout and color data." },
+    { name: "state", type: "Default | danger | success | warning | info", defaultValue: "danger", description: "Severity/theme axis, confirmed across all 5 values." },
     { name: "leftIcon", type: "boolean", defaultValue: "true", description: "The one confirmed boolean property — no boolean exists for title, description, or actions." },
-    { name: "icon", type: "ReactNode", description: "Content for the 24×24 leading icon slot." },
+    { name: "icon", type: "ReactNode", description: "Overrides the confirmed default info-circle icon, tinted per state — rarely needed." },
     { name: "titleContent / descriptionContent", type: "ReactNode", description: "Title (15px/24px SemiBold) and description (13px/20px Regular) content." },
-    { name: "primaryActionContent / onPrimaryActionClick", type: "ReactNode / () => void", description: "Composes the real ButtonDanger (md/Secondary) — a confirmed nested instance path." },
-    { name: "dismissContent / onDismissClick", type: "ReactNode / () => void", description: "The second action button, confirmed structurally but not confirmed to be a named component set." },
-    { name: "closeIcon / onCloseClick / closeButtonLabel", type: "ReactNode / () => void / string", defaultValue: "\"Close\"", description: "The absolutely-positioned corner icon button." },
+    { name: "primaryActionContent / onPrimaryActionClick", type: "ReactNode / () => void", description: "Composes real ButtonDanger/ButtonSuccess for danger/success; a plain neutral button for Default/warning/info." },
+    { name: "dismissContent / onDismissClick", type: "ReactNode / () => void", description: "The second action button, confirmed structurally identical across all 5 severities but not confirmed to be a named component set." },
+    { name: "closeIcon / onCloseClick / closeButtonLabel", type: "ReactNode / () => void / string", defaultValue: "\"Close\"", description: "The absolutely-positioned corner icon button — renders a confirmed default 'X' icon unless overridden." },
   ],
   preview: () => (
     <Alert
@@ -78,7 +76,7 @@ function DangerBanner() {
   showcases: [
     {
       title: "All five severities",
-      description: "Only danger is deep-audited; the shared white fill is applied uniformly across the rest.",
+      description: "Every severity is now deep-audited: only danger/success get a tinted primary button; Default/warning/info stay neutral.",
       layout: "stack",
       render: () => (
         <>

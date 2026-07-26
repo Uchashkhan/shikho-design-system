@@ -1,6 +1,7 @@
 import { type HTMLAttributes, type ReactNode, forwardRef } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
 import { ButtonDanger } from "../button/button_danger";
+import { ButtonSuccess } from "../button/button_success";
 
 // docs/audit/alerts.md §2 — alert: exactly one property, `state`, functioning as a severity/
 // theme axis (not an interaction state, §4/§10). Casing preserved exactly: `Default` is
@@ -14,38 +15,80 @@ const shadowToCss = (layers: readonly { x: number; y: number; blur: number; spre
 const rootShadow = shadowToCss(elevation.e5); // confirmed exact, root — §11
 const cornerButtonShadow = shadowToCss(elevation.e3); // confirmed exact, icon_button — §11
 const iconShadow = shadowToCss(elevation.e2); // confirmed exact, both icon sizes — §11
+// docs/audit/alerts.md §14 — confirmed on the plain neutral button (Default/warning/info's first
+// action): an outer single-layer drop shadow (elevation/e2's smaller layer) PLUS the confirmed
+// system-wide "special_drop" 2-layer inset — the same construction already used by
+// Chip/Tags/DatePicker/Modal/Pagination/SidebarItem/TopNavItem/TableCell/Tooltip for this effect.
+const neutralButtonShadow = `${shadowToCss([elevation.e2[1]])}, inset 0px 1px 3px -2px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.07)`;
 
-// docs/audit/alerts.md §9 — outline/{severity}_alpha, all ≈24% alpha of the severity's own 500
-// step: outline/danger_alpha and outline/success_alpha are numerically identical to
-// @shikho/tokens' focusRingColor.danger/success, reused directly. outline/warning_alpha and
-// outline/info_alpha have no equivalent in @shikho/tokens yet, so their exact confirmed hex is
-// used as a literal, cited constant here rather than added to the tokens package (out of scope —
-// the alpha-convention consolidation is an explicitly deferred decision, docs/token-
-// normalization-decisions.md §10).
+// docs/audit/alerts.md §14 — confirmed via a fresh get_design_context on all 5 severities: the
+// border color, plus (§14) `Default`'s border is `outline/gray-100` (#f4f4f6), NOT gray-200 as
+// previously derived when only `danger` had been sampled.
 const borderColorByState: Record<AlertState, string> = {
   danger: `${color.danger[500]}3d`, // outline/danger_alpha = #f03d3d3d
   success: `${color.success[500]}3d`, // outline/success_alpha = #35c2203d
   warning: "#fcbf043d", // outline/warning_alpha — confirmed exact, no @shikho/tokens equivalent
   info: "#118be83d", // outline/info_alpha — confirmed exact, no @shikho/tokens equivalent
-  // "Default" has no confirmed border color anywhere in the audit (§11: only `danger` was deep-
-  // audited) — this is a derived neutral baseline, not a fabricated severity color.
-  Default: color.gray[200],
+  Default: color.gray[100], // outline/gray-100 — confirmed §14, corrects the prior gray[200] guess
 };
+
+// docs/audit/alerts.md §14 — confirmed via downloading the real SVG behind all 5 severities: the
+// left icon is the SAME info-circle glyph in every state (matching the literal, previously
+// unexplained "icon / info" layer name — it turns out not to be a mislabeling artifact, the icon
+// generally IS an info-circle regardless of severity), tinted with that severity's own 500 color.
+const ALERT_ICON_PATH =
+  "M9 0C4.03768 0 0 4.03674 0 9C0 13.9623 4.03768 18 9 18C13.9623 18 18 13.9623 18 9C18 4.03674 13.9623 0 9 0ZM10.25 5.75C10.25 6.44036 9.69034 7 8.99999 7C8.30963 7 7.74999 6.44036 7.74999 5.75C7.74999 5.05964 8.30963 4.5 8.99999 4.5C9.69034 4.5 10.25 5.05964 10.25 5.75ZM9.00001 7.99996C8.44773 7.99996 8.00001 8.44767 8.00001 8.99996V13C8.00001 13.5522 8.44773 14 9.00001 14C9.5523 14 10 13.5522 10 13V8.99996C10 8.44767 9.5523 7.99996 9.00001 7.99996Z";
+
+const iconColorByState: Record<AlertState, string> = {
+  Default: color.primary[500], // confirmed #5468FF — Default's icon is primary-tinted, not neutral
+  danger: color.danger[500],
+  success: color.success[500],
+  warning: color.warning[500],
+  info: color.info[500],
+};
+
+function AlertIcon({ fill }: { fill: string }) {
+  return (
+    <svg viewBox="0 0 18 18" width={18} height={18} fill="none" aria-hidden>
+      <path fillRule="evenodd" clipRule="evenodd" d={ALERT_ICON_PATH} fill={fill} />
+    </svg>
+  );
+}
+
+// docs/audit/alerts.md §14 — confirmed via downloading the real SVG behind 2 severities: the
+// corner close button's icon is the SAME "X" glyph in every state, fixed `text/gray-700` fill
+// regardless of severity (not tinted).
+const CLOSE_ICON_PATH =
+  "M6.31068 5.25015L10.2804 1.28044C10.5737 0.987188 10.5737 0.513188 10.2804 0.219938C9.98718 -0.0733125 9.51318 -0.0733125 9.21993 0.219938L5.25018 4.18965L1.28044 0.219938C0.987187 -0.0733125 0.513188 -0.0733125 0.219938 0.219938C-0.0733125 0.513188 -0.0733125 0.987188 0.219938 1.28044L4.18968 5.25015L0.219938 9.21998C-0.0733125 9.51315 -0.0733125 9.98715 0.219938 10.2804C0.366188 10.4267 0.558187 10.5002 0.750187 10.5002C0.942187 10.5002 1.13419 10.4267 1.28044 10.2804L5.25018 6.31073L9.21993 10.2804C9.36618 10.4267 9.55818 10.5002 9.75018 10.5002C9.94218 10.5002 10.1342 10.4267 10.2804 10.2804C10.5737 9.98715 10.5737 9.51315 10.2804 9.21998L6.31068 5.25015Z";
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 10.5004 10.5002" width={10.5} height={10.5} fill="none" aria-hidden>
+      <path fillRule="evenodd" clipRule="evenodd" d={CLOSE_ICON_PATH} fill={color.gray[700]} />
+    </svg>
+  );
+}
 
 export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   state?: AlertState;
   /** The one confirmed boolean property, default `true` (§11). */
   leftIcon?: boolean;
+  /** Overrides the confirmed default info-circle icon (§14). Rarely needed — the default already
+   * reproduces Figma's real glyph, tinted for `state`. */
   icon?: ReactNode;
   titleContent?: ReactNode;
   descriptionContent?: ReactNode;
-  /** Content for the confirmed nested `button_danger/md/secondary/default` action button (§11). */
+  /** Content for the primary action button. `danger`/`success` compose the real `ButtonDanger`/
+   * `ButtonSuccess` components (confirmed nested dependencies, §11/§14); `Default`/`warning`/
+   * `info` render a plain neutral gray button — confirmed NOT color-tinted for those 3 states,
+   * unlike `danger`/`success` (§14). */
   primaryActionContent?: ReactNode;
   onPrimaryActionClick?: () => void;
-  /** Content for the second, structurally-confirmed-but-not-path-named action button (§11). */
+  /** Content for the second action button — confirmed identical construction across all 5
+   * severities (`secondary/500` fill, white text, §11/§14). */
   dismissContent?: ReactNode;
   onDismissClick?: () => void;
-  /** Icon content for the absolutely-positioned corner `icon_button` (§11). */
+  /** Overrides the confirmed default "X" icon for the corner close button (§14). */
   closeIcon?: ReactNode;
   onCloseClick?: () => void;
   /** Accessible name for the icon-only corner button — a functional requirement, not decorative
@@ -56,18 +99,22 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, "childr
 }
 
 /**
- * `alert` (docs/audit/alerts.md, deep-audited at `state=danger`). Composes the real
- * `ButtonDanger` component for its confirmed nested action button (literal instance path
- * `button_danger/md/secondary/default`, §11 — "the clearest cross-component confirmation in
- * this entire audit series"). Unlike every other component in this library, `alert` has **no
- * boolean for title/description/actions** — they render unconditionally (§11) — so this
- * component's structural surface intentionally has just one boolean (`leftIcon`), matching that
- * confirmed rigidity rather than inventing toggles Figma doesn't expose.
+ * `alert` (docs/audit/alerts.md, ground-truth re-audited across all 5 severities, §14). Composes
+ * the real `ButtonDanger`/`ButtonSuccess` components for the confirmed nested action button on
+ * `danger`/`success` (literal instance paths `button_danger/md/secondary/default` and
+ * `button_success/md/secondary/default`) — `Default`/`warning`/`info` render a plain neutral
+ * button instead, confirmed NOT to compose a severity-specific Button family member. Renders the
+ * confirmed default info-circle severity icon and "X" close icon by default (both downloaded as
+ * real SVG source and confirmed identical in shape across every severity, differing only in the
+ * severity icon's tint color) — overridable via `icon`/`closeIcon` but no longer required just to
+ * see a complete alert. Unlike every other component in this library, `alert` has **no boolean
+ * for title/description/actions** — they render unconditionally (§11) — so this component's
+ * structural surface intentionally has just one boolean (`leftIcon`), matching that confirmed
+ * rigidity rather than inventing toggles Figma doesn't expose.
  *
- * Only `state="danger"` has confirmed layout/color data. See
- * packages/ui/src/components/alert/README.md for exactly what's confirmed vs. derived for the
- * other four severities, and why the second action button and the corner close button are
- * implemented inline rather than composed from another `ui` component.
+ * See packages/ui/src/components/alert/README.md for exactly what's confirmed vs. derived, and
+ * why the second action button and the corner close button are implemented inline rather than
+ * composed from another `ui` component.
  */
 export const Alert = forwardRef<HTMLDivElement, AlertProps>(
   (
@@ -88,108 +135,147 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
       ...props
     },
     ref,
-  ) => (
-    <div
-      ref={ref}
-      data-state={state}
-      style={{
-        position: "relative",
-        display: "flex",
-        alignItems: "flex-start", // items-start, confirmed — top-aligned, unlike most components
-        width: 424, // w-[424px] Fixed — §11
-        gap: "1rem", // gap-[spacing/16, 16px] — §11
-        padding: "1.5rem", // p-[spacing/24, 24px] uniform — §11
-        backgroundColor: color.white[950], // Color/smoke_base — §11
-        border: `1px solid ${borderColorByState[state]}`,
-        borderRadius: radius["2xl"], // radius/border_radius_xl (20) — §11, radius.ts
-        boxShadow: rootShadow,
-        ...style,
-      }}
-      {...props}
-    >
-      {leftIcon && (
-        <span style={{ width: 24, height: 24, flexShrink: 0, boxShadow: iconShadow }}>{icon}</span>
-      )}
+  ) => {
+    const primaryButton =
+      state === "danger" ? (
+        <ButtonDanger size="md" type="Secondary" state="default" onClick={onPrimaryActionClick}>
+          {primaryActionContent}
+        </ButtonDanger>
+      ) : state === "success" ? (
+        <ButtonSuccess size="md" type="Secondary" state="default" onClick={onPrimaryActionClick}>
+          {primaryActionContent}
+        </ButtonSuccess>
+      ) : (
+        // docs/audit/alerts.md §14 — confirmed: Default/warning/info's first action button is a
+        // plain neutral gray/100 fill + gray-700 text button, NOT drawn from a severity-tinted
+        // Button family member (unlike danger/success).
+        <button
+          type="button"
+          onClick={onPrimaryActionClick}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: 40,
+            padding: "0.5rem 0.75rem",
+            gap: "0.25rem",
+            borderRadius: radius.md,
+            border: "none",
+            backgroundColor: color.gray[100],
+            boxShadow: neutralButtonShadow,
+            color: color.gray[700],
+            fontSize: 13,
+            lineHeight: "20px",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          {primaryActionContent}
+        </button>
+      );
 
+    return (
       <div
+        ref={ref}
+        data-state={state}
         style={{
+          position: "relative",
           display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          flex: "1 0 0",
+          alignItems: "flex-start", // items-start, confirmed — top-aligned, unlike most components
+          width: 424, // w-[424px] Fixed — §11
           gap: "1rem", // gap-[spacing/16, 16px] — §11
+          padding: "1.5rem", // p-[spacing/24, 24px] uniform — §11
+          backgroundColor: color.white[950], // Color/smoke_base — §11
+          border: `1px solid ${borderColorByState[state]}`,
+          borderRadius: radius["2xl"], // radius/border_radius_xl (20) — §11, radius.ts
+          boxShadow: rootShadow,
+          ...style,
         }}
+        {...props}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" /* gap-[spacing/8] */ }}>
-          <div style={{ fontSize: 15, lineHeight: "24px", fontWeight: 600, color: color.gray[950] }}>
-            {titleContent}
+        {leftIcon && (
+          <span style={{ width: 24, height: 24, flexShrink: 0, boxShadow: iconShadow }}>
+            {icon ?? <AlertIcon fill={iconColorByState[state]} />}
+          </span>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            flex: "1 0 0",
+            gap: "1rem", // gap-[spacing/16, 16px] — §11
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" /* gap-[spacing/8] */ }}>
+            <div style={{ fontSize: 15, lineHeight: "24px", fontWeight: 600, color: color.gray[950] }}>
+              {titleContent}
+            </div>
+            <div style={{ fontSize: 13, lineHeight: "20px", fontWeight: 400, color: color.gray[700] }}>
+              {descriptionContent}
+            </div>
           </div>
-          <div style={{ fontSize: 13, lineHeight: "20px", fontWeight: 400, color: color.gray[700] }}>
-            {descriptionContent}
+
+          <div style={{ display: "flex", gap: "0.5rem" /* gap-[spacing/8] */ }}>
+            {primaryButton}
+            {/* Second action button — confirmed structurally identical across all 5 severities,
+                but not confirmed to be drawn from a named component set (§11), so it is
+                implemented inline with its own exactly confirmed fill/text. */}
+            <button
+              type="button"
+              onClick={onDismissClick}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "0.5rem 0.75rem", // py-[spacing/8] px-[spacing/12] — §11
+                gap: "0.25rem", // gap-[spacing/4] — §11
+                borderRadius: radius.md, // radius/custom/md (10) — §11
+                border: "none",
+                backgroundColor: color.secondary[500], // confirmed — §11
+                color: color.white[950], // text/white-950 — §11
+                fontSize: 13,
+                lineHeight: "20px",
+                fontWeight: 600, // web/Body/13 Semibold — §11
+                cursor: "pointer",
+              }}
+            >
+              {dismissContent}
+            </button>
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "0.5rem" /* gap-[spacing/8] */ }}>
-          <ButtonDanger size="md" type="Secondary" state="default" onClick={onPrimaryActionClick}>
-            {primaryActionContent}
-          </ButtonDanger>
-          {/* Second action button — confirmed structurally, but NOT confirmed to be drawn from
-              button_danger or any other named component set (§11: "not confirmed"), so it is
-              implemented inline with its own exactly confirmed fill/text rather than assumed
-              into a Button composition. */}
-          <button
-            type="button"
-            onClick={onDismissClick}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "0.5rem 0.75rem", // py-[spacing/8] px-[spacing/12] — §11
-              gap: "0.25rem", // gap-[spacing/4] — §11
-              borderRadius: radius.md, // radius/custom/md (10) — §11
-              border: "none",
-              backgroundColor: color.secondary[500], // confirmed — §11
-              color: color.white[950], // text/white-950 — §11
-              fontSize: 13,
-              lineHeight: "20px",
-              fontWeight: 600, // web/Body/13 Semibold — §11
-              cursor: "pointer",
-            }}
-          >
-            {dismissContent}
-          </button>
-        </div>
+        {/* Absolutely-positioned corner icon_button — confirmed outside the main flex flow,
+            §11. Not confirmed to map to any specific icon_button type/size, so implemented with
+            its own confirmed geometry rather than composed from the IconButton component. */}
+        <button
+          type="button"
+          onClick={onCloseClick}
+          aria-label={closeButtonLabel}
+          style={{
+            position: "absolute",
+            top: 11,
+            right: 11,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 32,
+            height: 32,
+            padding: "0.5rem", // p-[spacing/8] — §11
+            gap: "0.375rem", // gap-[spacing/6] — §11
+            border: "none",
+            borderRadius: radius.full,
+            backgroundColor: color.gray[100],
+            boxShadow: cornerButtonShadow,
+            cursor: "pointer",
+          }}
+        >
+          <span style={{ width: 18, height: 18, boxShadow: iconShadow }}>{closeIcon ?? <CloseIcon />}</span>
+        </button>
       </div>
-
-      {/* Absolutely-positioned corner icon_button — confirmed outside the main flex flow,
-          §11. Not confirmed to map to any specific icon_button type/size, so implemented with
-          its own confirmed geometry rather than composed from the IconButton component. */}
-      <button
-        type="button"
-        onClick={onCloseClick}
-        aria-label={closeButtonLabel}
-        style={{
-          position: "absolute",
-          top: 11,
-          right: 11,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 32,
-          height: 32,
-          padding: "0.5rem", // p-[spacing/8] — §11
-          gap: "0.375rem", // gap-[spacing/6] — §11
-          border: "none",
-          borderRadius: radius.full,
-          backgroundColor: "transparent",
-          boxShadow: cornerButtonShadow,
-          cursor: "pointer",
-        }}
-      >
-        <span style={{ width: 18, height: 18, boxShadow: iconShadow }}>{closeIcon}</span>
-      </button>
-    </div>
-  ),
+    );
+  },
 );
 
 Alert.displayName = "Alert";

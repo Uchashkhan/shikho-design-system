@@ -4,7 +4,7 @@ export const meta: ComponentDocsMeta = {
   name: "Alert",
   slug: "alert",
   category: "Feedback",
-  description: "Deep-audited composed banner with a confirmed nested ButtonDanger action and a rigid, boolean-light prop surface.",
+  description: "Deep-audited composed banner with real default severity/close icons, per-severity ButtonDanger/ButtonSuccess composition, and a rigid, boolean-light prop surface.",
   status: "deep-audited",
   packageImport: `import { Alert } from "@shikho/ui";`,
   storybookTitle: "Alert/alert",

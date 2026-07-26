@@ -2,6 +2,14 @@
 
 Implements the `alert` component set audited in `docs/audit/alerts.md` — deep-audited at `state="danger"` via `get_design_context` (§11), giving real confirmed structure. This is the first **composed** component since `List`, and it produced a genuine correction to an already-shipped component: see "Correction to ButtonDanger" below.
 
+## Fresh re-audit corrections (docs/audit/alerts.md §14)
+
+§11 only deep-audited the `danger` severity. A fresh re-check across all 5 (`Default`/`danger`/`success`/`warning`/`info`), plus downloading the real icon SVG assets behind them, found:
+- **Both icon glyphs (severity icon + close "X") are real, confirmed, and identical in shape across every severity** — only the severity icon's fill color changes (matching that severity's own `500` step exactly). The previous implementation rendered blank icon slots unless a consumer supplied content; both now render these confirmed defaults out of the box, still overridable via `icon`/`closeIcon`.
+- **The primary action button's construction genuinely differs by severity**: `danger` composes `ButtonDanger`, `success` composes `ButtonSuccess` (a newly confirmed dependency), but `Default`/`warning`/`info` render a plain neutral gray button — confirmed NOT color-tinted, unlike the other two.
+- **`Default`'s border is `gray/100`**, correcting a prior derived `gray/200` guess (there was no `Default` data to check it against before this pass).
+- **The corner `icon_button` has a `gray/100` fill**, correcting a prior assumption of `transparent`.
+
 ## Confirmed vs. derived
 
 **Exactly confirmed** (`docs/audit/alerts.md` §11, the `state="danger"` instance):
@@ -15,14 +23,15 @@ Implements the `alert` component set audited in `docs/audit/alerts.md` — deep-
 - The second action button ("Dismiss"): fill `Color/secondary/500`, text `text/white-950` — both exact values, though **not confirmed to be drawn from any named component set** (§11: "whether the second button... is drawn from a specific named component set... is not confirmed"). Implemented as its own inline `<button>` with these exact values, rather than assumed into a `ButtonDanger`/other Button composition that isn't supported by the citation.
 - The corner `icon_button`: absolutely positioned (`top: 11px, right: 11px`, confirmed literal pixel offsets, outside the normal flex flow), 32×32, circular, containing an 18×18 icon — confirmed different from the 24×24 severity icon. Not confirmed to map to any specific `icon_button` type/size from the Button family, so implemented inline with its own confirmed geometry rather than composed from `IconButton`.
 
-**Derived — grounded in the audit's own confirmed alpha-naming pattern, not independently confirmed per severity:**
-- Border colors for `success`/`warning`/`info` reuse the audit's own confirmed exact hex values (`outline/success_alpha` = `#35c2203d`, `outline/warning_alpha` = `#fcbf043d`, `outline/info_alpha` = `#118be83d`, §9) — `danger` and `success` are numerically identical to `@shikho/tokens`' existing `focusRingColor.danger`/`.success` and reused directly; `warning`/`info` have no equivalent in `@shikho/tokens` yet, so their exact confirmed hex is used as a cited literal rather than added to the tokens package (the alpha-convention consolidation remains an explicitly deferred decision).
-- `Default`'s border color has no confirmed value anywhere (only `danger` was deep-audited, §11) — this uses a neutral `color.gray[200]` as a documented derived baseline, not a fabricated severity color.
-- Whether `Default`/`success`/`warning`/`info` share `danger`'s exact structure, or the fill/icon also change per severity, is explicitly out of scope in the audit (§11 "Not confirmed"). This implementation applies the one confirmed fill (`Color/smoke_base`, white) uniformly across all five severities, since nothing suggests otherwise.
+**Now exactly confirmed** (`docs/audit/alerts.md` §14 — resolving what §11 above left as "Derived"/"Not confirmed"):
+- All 5 severities' border colors: `Default`=`gray/100` (`#f4f4f6`), `danger`=`outline/danger_alpha` (`#f03d3d3d`), `success`=`outline/success_alpha` (`#35c2203d`), `warning`=`outline/warning_alpha` (`#fcbf043d`), `info`=`outline/info_alpha` (`#118be83d`). `warning`/`info` have no `@shikho/tokens` equivalent yet, so their exact confirmed hex is used as a cited literal (the alpha-convention consolidation remains an explicitly deferred decision).
+- The severity icon's real glyph (an info-circle, downloaded as SVG source) and fill color per severity (each severity's own `500` step exactly) — byte-identical shape across all 5, confirming the literal "icon / info" layer name isn't a naming mistake.
+- The corner close button's real glyph (an "X", downloaded as SVG source), fixed `gray/700` fill regardless of severity, and its `gray/100` background fill.
+- The primary action button's per-severity construction: `ButtonDanger` for `danger`, `ButtonSuccess` for `success` (both real nested dependencies with tinted text), a plain neutral `gray/100`/`gray/700` button for `Default`/`warning`/`info`.
+- The Fill (`Color/smoke_base`, white) and overall structure ARE confirmed uniform across all 5 severities — no structural differences beyond the items above were found in any of the 5 samples.
 
 **Explicitly not resolved, and not approximated:**
 - Whether the "Dismiss" text button and the corner close button are two distinct intended controls or redundant — the audit explicitly could not determine this (§11, §13). Both are implemented as independent, separately-clickable controls with separate handlers (`onDismissClick`/`onCloseClick`), since collapsing them into one would assume an answer the audit doesn't give.
-- The real icon glyph content for either icon slot — no `@shikho/icons` glyphs exist yet; both `icon`/`closeIcon` are empty `ReactNode` slots unless a consumer supplies one.
 - No default title/description/action text is supplied — the confirmed instance's own placeholder strings ("Notification text", "Learn more", "Dismiss") are demo content in Storybook only, not hardcoded component defaults.
 
 ## Correction to `ButtonDanger`
@@ -35,9 +44,8 @@ See `packages/ui/src/components/button/README.md` for the full note.
 
 ## Not implemented
 
-- Whether `Default`/`success`/`warning`/`info` differ structurally (not just by color) from `danger` — never inspected (§11, §13).
-- Any severity-specific icon glyph — no icon system exists yet.
+- Whether the "Dismiss" button and the corner close button are intentionally redundant — unconfirmed, both remain independent controls.
 
 ## Token dependencies
 
-Only `@shikho/tokens`: `color.white[950]`, `color.gray[200/700/950]`, `color.danger[500]`, `color.success[500]`, `color.secondary[500]`, `radius.md`, `radius["2xl"]`, `radius.full`, and `elevation.e2`/`e3`/`e5` (converted to CSS `box-shadow` strings). Plus two literal, cited hex constants (`outline/warning_alpha`, `outline/info_alpha`) not yet represented in `@shikho/tokens`.
+`@shikho/tokens`: `color.white[950]`, `color.gray[100/700/950]`, `color.primary[500]`, `color.danger[500]`, `color.success[500]`, `color.warning[500]`, `color.info[500]`, `color.secondary[500]`, `radius.md`, `radius["2xl"]`, `radius.full`, and `elevation.e2`/`e3`/`e5` (converted to CSS `box-shadow` strings). Plus two literal, cited hex constants (`outline/warning_alpha`, `outline/info_alpha`) not yet represented in `@shikho/tokens`.

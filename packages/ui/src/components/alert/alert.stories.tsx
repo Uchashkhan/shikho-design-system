@@ -27,9 +27,9 @@ export const ConfirmedBinding: Story = {};
 
 export const Playground: Story = {};
 
-/** Every confirmed severity. Only `danger` has confirmed color/layout data — the border color
- * for the other three severities reuses the audit's own confirmed `outline/{severity}_alpha`
- * hex values (§9), and `Default` falls back to a derived neutral gray border. */
+/** Every confirmed severity — a fresh re-audit (docs/audit/alerts.md §14) confirmed the border,
+ * icon tint, and primary-button composition for all 5, not just `danger`. `Default`'s border is
+ * confirmed `gray/100` (not a derived guess), and its icon is confirmed primary-tinted. */
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -53,6 +53,29 @@ export const AllVariants: Story = {
  * button — inspect the rendered button's class names/data attributes to confirm.
  */
 export const ComposedButtonDependency: Story = {};
+
+/**
+ * Confirmed via a fresh get_design_context re-audit (docs/audit/alerts.md §14): only `danger` and
+ * `success` compose a severity-tinted Button family member (`ButtonDanger`/`ButtonSuccess`) for
+ * the first action, with matching tinted text. `Default`/`warning`/`info` render a plain neutral
+ * gray button instead — NOT color-tinted, despite the alert itself being colored by severity.
+ */
+export const PrimaryButtonBySeverity: Story = {
+  render: () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {states.map((state) => (
+        <Alert
+          key={state}
+          state={state}
+          titleContent={state}
+          descriptionContent="danger/success get a tinted button; Default/warning/info stay neutral gray."
+          primaryActionContent="Learn more"
+          dismissContent="Dismiss"
+        />
+      ))}
+    </div>
+  ),
+};
 
 /**
  * The two confirmed leading-icon booleans this component actually has: `leftIcon` toggles the
