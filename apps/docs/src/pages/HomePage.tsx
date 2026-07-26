@@ -17,6 +17,7 @@ export function HomePage() {
 
   return (
     <div className="lp">
+      <div className="lp__grid" aria-hidden />
       <div className="lp__glow lp__glow--a" aria-hidden />
       <div className="lp__glow lp__glow--b" aria-hidden />
 

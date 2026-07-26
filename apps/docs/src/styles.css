@@ -770,6 +770,120 @@ a.sk-card:hover {
 
 /* ============================================================ landing / hero */
 
+/* -------------------------------------------------------- floating pill nav (landing only) */
+
+.lp-nav-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 20px 24px 0;
+}
+
+.lp-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 8px 8px 8px 20px;
+  background: #ffffff;
+  border: 1px solid rgba(10, 12, 17, 0.06);
+  border-radius: var(--sk-radius-full);
+  box-shadow:
+    0 1px 2px rgba(10, 12, 17, 0.04),
+    0 12px 24px -8px rgba(10, 12, 17, 0.1);
+}
+
+.lp-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: var(--sk-text);
+}
+
+.lp-nav__brand-sub {
+  color: var(--sk-text-subtle);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.lp-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--sk-surface-muted);
+  border-radius: var(--sk-radius-full);
+  padding: 4px;
+}
+
+.lp-nav__link {
+  padding: 8px 16px;
+  border-radius: var(--sk-radius-full);
+  color: var(--sk-text-muted);
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.lp-nav__link:hover {
+  color: var(--sk-text);
+}
+
+.lp-nav__link[aria-current="page"] {
+  background: var(--sk-surface);
+  color: var(--sk-text);
+  box-shadow: 0 1px 2px rgba(10, 12, 17, 0.06);
+}
+
+.lp-nav__spacer {
+  flex: 1;
+}
+
+.lp-nav__github {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--sk-radius-full);
+  color: var(--sk-text-muted);
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.lp-nav__github:hover {
+  background: var(--sk-surface-muted);
+  color: var(--sk-text);
+}
+
+.lp-nav__meta {
+  padding-right: 12px;
+  color: var(--sk-text-subtle);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+  .lp-nav__meta {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .lp-nav__links,
+  .lp-nav__brand-sub {
+    display: none;
+  }
+}
+
 .sk-landing {
   flex: 1;
   min-width: 0;
@@ -784,12 +898,48 @@ a.sk-card:hover {
   place-items: center;
   overflow: hidden;
   padding: 0 24px;
-  min-height: calc(100vh - 60px);
-  background:
-    radial-gradient(120% 90% at 50% -20%, var(--sk-brand-soft), transparent 60%),
-    var(--sk-bg);
+  min-height: calc(100vh - 92px);
 }
 
+/* Shared background for the whole landing shell (nav + hero) — kept on one common ancestor, not
+   scoped to `.lp` alone, so the floating nav visually sits ON TOP of one continuous backdrop
+   rather than a separate solid strip above it. This symmetric, centered radial wash is what makes
+   it safe to layer the asymmetric corner glow blobs back on top, scoped to `.lp` only below —
+   the shared wash means the area behind the nav is never bare, so the off-center blobs (which
+   don't reach that far) no longer create a seam. */
+.lp-page {
+  position: relative;
+  background: var(--sk-bg);
+}
+
+.lp-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(65% 55% at 50% 0%, var(--sk-brand-soft), transparent 70%);
+}
+
+/* Subtle dot-grid texture across the same shared backdrop, fading out toward the edges. */
+.lp__grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(color-mix(in srgb, var(--sk-text) 14%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(80% 70% at 50% 30%, black, transparent 100%);
+  -webkit-mask-image: radial-gradient(80% 70% at 50% 30%, black, transparent 100%);
+}
+
+/* Extra corner accent glows, layered on top of the shared symmetric wash above — scoped to `.lp`
+   (the hero only). `.lp` has `overflow: hidden`, which was hard-clipping the old negative `top`
+   offset here — the blur's soft falloff got truncated into an abrupt straight edge exactly at
+   `.lp`'s own top boundary (i.e. right behind the nav, reintroducing the seam). Reconstructed so
+   neither blob's vertical extent crosses `.lp`'s top/bottom edges — only their horizontal bleed
+   (left/right, off the sides) is clipped, which reads as an intentional soft fade-to-edge rather
+   than a hard line, since there's nothing else adjacent on those sides to seam against. */
 .lp__glow {
   position: absolute;
   border-radius: 50%;
@@ -802,7 +952,7 @@ a.sk-card:hover {
 .lp__glow--a {
   width: 440px;
   height: 440px;
-  top: -120px;
+  top: 40px;
   left: -60px;
   background: color-mix(in srgb, var(--sk-brand) 32%, transparent);
 }
@@ -811,7 +961,7 @@ a.sk-card:hover {
   width: 380px;
   height: 380px;
   right: -70px;
-  bottom: -140px;
+  bottom: 40px;
   background: color-mix(in srgb, var(--sk-brand) 20%, transparent);
 }
 
