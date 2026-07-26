@@ -3,17 +3,16 @@ import type { ComponentPageConfig } from "./types";
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
-    "Renders a real `<input type=\"radio\">`, so grouping by `name` gives true mutually-exclusive behaviour. Figma names this control's selection concept `active`/`inactive` — the clearest cross-component naming divergence in the audit series, since Checkbox calls the same idea `checked`/`unchecked`.",
+    "A real `<input type=\"radio\">` is kept for semantics/keyboard/AX and grouping by `name` still gives true mutually-exclusive behaviour, but its visual is now custom-rendered from a deep Figma re-audit (docs/audit/radio-buttons.md §14) rather than left to the browser's native indicator. Figma names this control's selection concept `active`/`inactive` — the clearest cross-component naming divergence in the audit series, since Checkbox calls the same idea `checked`/`unchecked`.",
   variants: [
     { name: "size", values: ["md", "sm"], note: "24×24 and 20×20 — identical dimensions to Checkbox at both steps." },
   ],
   states: ["inactive", "active", "indeterminate", "hover", "focused", "disabled"],
   gaps: [
-    "Less confirmed data exists for Radio than for Checkbox: no deep audit was run on this family, and no sibling audit nests a `radio` instance the way the List audit nests a `checkbox`.",
-    "The resting border and fill are explicitly reused from Checkbox's confirmed values, justified by the audit's own finding that the two families share a token-for-token identical colour export and identical dimensions.",
+    "Every sampled `radio` Figma instance renders as a single flattened image asset, so exact fill/border colors are reused from Checkbox's own independently-confirmed values rather than independently decomposed for Radio — justified by the audit's own finding that the two families share a token-for-token identical colour export and identical dimensions (§9, §14).",
     "No radius token was found bound anywhere in this component's subtree — a confirmed gap in the Figma data. `radius.full` is used, since a radio button is unambiguously circular regardless of the mechanism.",
-    "Figma exposes an `indeterminate` state, which the audit itself flags as conventionally unusual for a single-choice control. HTML has no native indeterminate property for radios and no visual was ever confirmed, so it is surfaced only as a `data-indeterminate` attribute with no styling attached.",
-    "`radio_label` is a second confirmed component set, not yet implemented.",
+    "Figma exposes an `indeterminate` state, which the audit itself flags as conventionally unusual for a single-choice control. HTML has no native indeterminate property for radios, so it drives a custom-rendered tint fill + center dot rather than a native property.",
+    "`radio_label` is now implemented (§14) — composes a real nested `Radio` plus a label/caption text column, structurally identical to `checkbox_label`.",
   ],
   usageExample: `import { Radio } from "@shikho/ui";
 

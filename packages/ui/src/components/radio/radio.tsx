@@ -1,127 +1,213 @@
 import {
+  type CSSProperties,
   type InputHTMLAttributes,
   forwardRef,
-  useEffect,
   useImperativeHandle,
   useRef,
+  useState,
 } from "react";
 import { color, radius } from "@shikho/tokens";
-import { tv } from "tailwind-variants";
 
-// docs/audit/radio-buttons.md §2, §4 — radio: size (md=24×24, sm=20×20). No `shape`/`type`
-// property exists at all — radio is always circular, unlike checkbox's sphere/square choice.
+// docs/audit/radio-buttons.md §4, §15 — radio: size (md=24×24, sm=20×20), inner circle 18/16.
+// No `shape`/`type` property exists at all — radio is always circular.
 export type RadioSize = "md" | "sm";
 
-const sizePx: Record<RadioSize, number> = { md: 24, sm: 20 };
+const outerSizePx: Record<RadioSize, number> = { md: 24, sm: 20 };
+const innerSizePx: Record<RadioSize, number> = { md: 18, sm: 16 };
+// docs/audit/radio-buttons.md §15 — the "active" (selected) dot is a punched-out white circle
+// inside the primary-filled disc: r=3 of an 8-radius sm disc, r=4 of a 9-radius md disc,
+// downloaded directly from the confirmed SVG source (not derived by analogy).
+const dotSizePx: Record<RadioSize, number> = { md: 8, sm: 6 };
+// docs/audit/radio-buttons.md §15 — the indeterminate/disabled "dash" mark is a fixed 8×2px
+// rounded pill at BOTH confirmed sizes (not scaled with the box) — confirmed via the raw SVG.
+const DASH_WIDTH = 8;
+const DASH_HEIGHT = 2;
 
-// docs/audit/radio-buttons.md §8 confirms NO radius/border_radius_round and NO radius/custom/*
-// token was found bound anywhere in this component's subtree — a confirmed gap in the audit
-// data (radio's circularity may be achieved via a hardcoded, non-tokenized value in Figma), not
-// a design ambiguity: "radio button" is unambiguously circular regardless of which mechanism
-// Figma uses. `radius.full` is the only sensible implementation of that, using an
-// already-confirmed general-purpose token rather than a new literal.
-const radioRadius = radius.full;
+const focusRingPrimary = `0 0 0 3px ${color.primary[500]}3d`; // outline/focus_primary, confirmed §15
+const focusRingGray = `0 0 0 3px ${color.gray[300]}`; // outline/focus_gray, confirmed §15
 
-// docs/audit/radio-buttons.md §6/§9 explicitly states this family's color/token export is
-// "token-for-token identical to the Checkboxes overview's color export," and §11/§12 confirm
-// radio and checkbox share identical size dimensions and draw from the same token pool. Unlike
-// checkbox, no `get_design_context` deep audit exists for radio at all (§6), and no sibling
-// audit (e.g. list.md) nests a `radio` instance the way it nests `checkbox` (§11: "no evidence
-// ... that radio is nested inside list") — so there is no cross-reference pinning down radio's
-// actual applied border/fill. This reuses checkbox's own confirmed resting values (white fill,
-// 2px Text/gray-400 border) as the least-invented available baseline, documented here rather
-// than presented as an independent confirmation.
-const restingFill = color.white[950]; // Color/White 100 / Color/white/950 = #ffffff
-const restingBorder = color.gray[400]; // Text/gray-400 (reused from Checkbox's confirmed value)
+type Mark = "dot" | "dash" | null;
 
-// docs/audit/radio-buttons.md §8 — outline/focus_gray = Effect(DROP_SHADOW, outline/Gray 300,
-// 0,0,0,3), identical definition to checkboxes.md. §8/§13 flag that both outline/focus_primary
-// and outline/focus_gray are "plausible candidates" for active_focused/inactive_focused, with
-// the actual assignment unconfirmed — same situation as Checkbox, resolved the same way: apply
-// the neutral gray candidate uniformly rather than presume an unconfirmed primary/gray split.
-const focusRingColor = color.gray[300]; // outline/Gray 300
+interface StateVisual {
+  background: string;
+  border: string;
+  ring?: string;
+  mark: Mark;
+  markColor: string;
+}
 
-const radioStyles = tv({
-  base:
-    "cursor-pointer transition-colors outline-none " +
-    "disabled:cursor-not-allowed disabled:opacity-50 " +
-    "focus-visible:shadow-[var(--radio-focus-ring)]",
-  variants: {
-    size: { md: "", sm: "" },
-  },
-  defaultVariants: { size: "sm" },
-});
+// docs/audit/radio-buttons.md §15 — every value below is read directly off the real SVG source
+// behind each of the 7 confirmed Figma `radio` states (downloaded via the get_design_context
+// asset URLs), not derived by analogy to Checkbox. `disabled` always shows the gray dash mark
+// regardless of `checked`/`indeterminate`, because Figma confirms exactly ONE `disabled` variant
+// (no disabled+checked / disabled+indeterminate matrix exists).
+function resolveVisual(checked: boolean, indeterminate: boolean, disabled: boolean, hover: boolean, focused: boolean): StateVisual {
+  if (disabled) {
+    return { background: color.gray[400], border: "none", mark: "dash", markColor: color.gray[600] };
+  }
+  if (indeterminate) {
+    return { background: color.primary[100], border: "none", mark: "dash", markColor: color.primary[500] };
+  }
+  if (checked) {
+    return {
+      background: color.primary[500],
+      border: "none",
+      ring: focused ? focusRingPrimary : undefined,
+      mark: "dot",
+      markColor: color.white[950],
+    };
+  }
+  if (focused) {
+    return {
+      background: color.white[950],
+      border: `2px solid ${color.gray[600]}`,
+      ring: focusRingGray,
+      mark: null,
+      markColor: "",
+    };
+  }
+  if (hover) {
+    // docs/audit/radio-buttons.md §15 — confirmed transparent fill on hover, not white.
+    return { background: "transparent", border: `2px solid ${color.primary[500]}`, mark: null, markColor: "" };
+  }
+  return { background: color.white[950], border: `2px solid ${color.gray[400]}`, mark: null, markColor: "" };
+}
 
 export interface RadioProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "size" | "type" | "checked"> {
   size?: RadioSize;
   /**
    * Selected/unselected state. Figma's own `state` enum uses `active`/`inactive` for this
-   * concept (docs/audit/radio-buttons.md §2, §10 — "the clearest cross-component naming
-   * divergence" vs. checkbox's `checked`/`unchecked`). This component uses the standard native
+   * concept (docs/audit/radio-buttons.md §2, §10). This component uses the standard native
    * `checked`/`defaultChecked` props instead of inventing a parallel `active` prop name, since
-   * `<input type="radio">` has a real native `checked` semantic and there's no reason to diverge
-   * from what the browser and assistive tech already expect — the same principle applied to
-   * Checkbox (requirement to use native semantics where possible).
+   * `<input type="radio">` has a real native `checked` semantic.
    */
   checked?: boolean;
   defaultChecked?: boolean;
   /**
-   * Maps to the confirmed (if conventionally unusual) `indeterminate` state value (§2, §10 —
-   * flagged by the audit itself as "unusual for a mutually-exclusive radio control," not
-   * explained). Unlike Checkbox, `<input type="radio">` has **no native `indeterminate` DOM
-   * property** in any browser — HTML only defines that for checkboxes. There is also no
-   * confirmed visual for it anywhere in this audit (no `get_design_context` was run at all, §6).
-   * This prop is therefore exposed only as a `data-indeterminate` attribute for structural
-   * fidelity to the confirmed Figma enum — it has no native behavior and no styling attached,
-   * rather than inventing either.
+   * Maps to the confirmed `indeterminate` state value (§2, §10). `<input type="radio">` has no
+   * native `indeterminate` DOM property in any browser, so this drives a custom-rendered visual
+   * (a confirmed pill-shaped dash mark, §15) rather than a native property.
    */
   indeterminate?: boolean;
 }
 
 /**
- * `radio` (docs/audit/radio-buttons.md). Renders a real `<input type="radio">` — native
- * semantics are used deliberately, same rationale as `Checkbox`: there is no confirmed
- * selected-state artwork anywhere in this audit (no `get_design_context` deep audit exists for
- * this family at all, §6), so the browser's own native selected-dot rendering is used rather
- * than invented. The one applied visual (resting border/fill) is reused from `Checkbox`'s own
- * confirmed value, not independently confirmed for `radio` — see
- * packages/ui/src/components/radio/README.md for the full confirmed-vs-derived breakdown.
+ * `radio` (docs/audit/radio-buttons.md, ground-truth re-audited from the real SVG source behind
+ * every confirmed state, §15). A real `<input type="radio">` is kept for semantics/keyboard/AX,
+ * visually hidden — its checked/indeterminate/disabled/focus/hover state drives a custom-rendered
+ * visual (ring, disc, dot, or dash), matching the exact geometry and colors confirmed for each of
+ * the 7 Figma states, since the browser's native indicator cannot reproduce any of it.
  */
 export const Radio = forwardRef<HTMLInputElement, RadioProps>(
-  ({ size = "sm", indeterminate = false, disabled, className, style, ...props }, ref) => {
+  (
+    {
+      size = "sm",
+      checked,
+      defaultChecked,
+      indeterminate = false,
+      disabled,
+      className,
+      style,
+      onFocus,
+      onBlur,
+      onMouseEnter,
+      onMouseLeave,
+      onChange,
+      ...props
+    },
+    ref,
+  ) => {
     const internalRef = useRef<HTMLInputElement>(null);
     useImperativeHandle(ref, () => internalRef.current as HTMLInputElement);
 
-    // No-op on real radio semantics (see the `indeterminate` prop doc above) — kept only so a
-    // future consumer/CSS hook has a stable attribute to target once this is resolved further.
-    useEffect(() => {
-      if (internalRef.current) {
-        internalRef.current.dataset.indeterminate = indeterminate ? "true" : undefined;
-      }
-    }, [indeterminate]);
+    const [uncontrolledChecked, setUncontrolledChecked] = useState(defaultChecked ?? false);
+    const [focused, setFocused] = useState(false);
+    const [hovered, setHovered] = useState(false);
+    const isControlled = checked !== undefined;
+    const resolvedChecked = isControlled ? !!checked : uncontrolledChecked;
 
-    const boxSize = sizePx[size];
+    const outerSize = outerSizePx[size];
+    const innerSize = innerSizePx[size];
+    const visual = resolveVisual(resolvedChecked, indeterminate, !!disabled, hovered, focused);
+
+    const circleStyle: CSSProperties = {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      boxSizing: "border-box",
+      width: innerSize,
+      height: innerSize,
+      background: visual.background,
+      border: visual.border,
+      borderRadius: radius.full,
+      boxShadow: visual.ring,
+      pointerEvents: "none",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    };
 
     return (
-      <input
-        ref={internalRef}
-        type="radio"
-        disabled={disabled}
-        data-size={size}
-        className={radioStyles({ size, className })}
-        style={{
-          width: boxSize,
-          height: boxSize,
-          margin: 0,
-          backgroundColor: restingFill,
-          border: `2px solid ${restingBorder}`,
-          borderRadius: radioRadius,
-          ["--radio-focus-ring" as string]: `0 0 0 3px ${focusRingColor}`,
-          ...style,
-        }}
-        {...props}
-      />
+      <span
+        className={"relative inline-flex shrink-0" + (className ? ` ${className}` : "")}
+        style={{ width: outerSize, height: outerSize, ...style }}
+      >
+        <input
+          ref={internalRef}
+          type="radio"
+          {...(isControlled ? { checked: resolvedChecked } : { defaultChecked })}
+          disabled={disabled}
+          data-size={size}
+          data-indeterminate={indeterminate || undefined}
+          className="absolute inset-0 m-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+          style={{ width: outerSize, height: outerSize }}
+          onChange={(e) => {
+            if (!isControlled) setUncontrolledChecked(e.target.checked);
+            onChange?.(e);
+          }}
+          onFocus={(e) => {
+            setFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            onBlur?.(e);
+          }}
+          onMouseEnter={(e) => {
+            setHovered(true);
+            onMouseEnter?.(e);
+          }}
+          onMouseLeave={(e) => {
+            setHovered(false);
+            onMouseLeave?.(e);
+          }}
+          {...props}
+        />
+        <span aria-hidden style={circleStyle}>
+          {visual.mark === "dot" && (
+            <span
+              style={{
+                width: dotSizePx[size],
+                height: dotSizePx[size],
+                borderRadius: radius.full,
+                background: visual.markColor,
+              }}
+            />
+          )}
+          {visual.mark === "dash" && (
+            <span
+              style={{
+                width: DASH_WIDTH,
+                height: DASH_HEIGHT,
+                borderRadius: radius.full,
+                background: visual.markColor,
+              }}
+            />
+          )}
+        </span>
+      </span>
     );
   },
 );
