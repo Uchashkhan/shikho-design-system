@@ -46,18 +46,22 @@ a {
 
 /* ------------------------------------------------------------------ sidebar */
 
+/* Full viewport height, independent of the floating nav's own reserved flow space — the nav
+   (`.sk-topnav-wrap`, position: sticky, z-index 20) floats visually ON TOP of the sidebar's own
+   background rather than pushing it down by a height that has to be kept in sync with the nav's.
+   `padding-top` (not a `top`/`height` offset matched to the nav) is what keeps the sidebar's own
+   content (search box, links) clear of the nav visually. */
 .sk-sidebar {
-  position: sticky;
-  /* 88px = the shared pill TopNav's total rendered height (16px top padding + 56px pill +
-     16px bottom padding) — see `.sk-topnav-wrap`/`.sk-topnav` below. */
-  top: 88px;
-  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
   width: 260px;
-  height: calc(100vh - 88px);
-  padding: 20px 12px 40px;
+  padding: 104px 12px 40px;
   overflow-y: auto;
   border-right: 1px solid var(--sk-border);
   background: var(--sk-surface);
+  z-index: 10;
 }
 
 .sk-search {
@@ -136,7 +140,10 @@ a {
 .sk-main {
   flex: 1;
   min-width: 0;
-  padding: 40px 48px 96px;
+  /* Clears the now-fixed `.sk-sidebar` (which no longer occupies flex layout space) — kept in
+     sync with `.sk-sidebar`'s own `width` at each breakpoint below. */
+  margin-left: 260px;
+  padding: 104px 48px 96px;
 }
 
 .sk-container {
@@ -654,7 +661,8 @@ a.sk-card:hover {
 
 @media (max-width: 1024px) {
   .sk-main {
-    padding: 28px 24px 72px;
+    margin-left: 224px;
+    padding: 104px 24px 72px;
   }
 
   .sk-sidebar {
@@ -671,8 +679,14 @@ a.sk-card:hover {
     position: static;
     width: 100%;
     height: auto;
+    padding: 20px 12px 40px;
     border-right: none;
     border-bottom: 1px solid var(--sk-border);
+  }
+
+  .sk-main {
+    margin-left: 0;
+    padding-top: 28px;
   }
 }
 

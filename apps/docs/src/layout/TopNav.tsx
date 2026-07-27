@@ -5,8 +5,10 @@ import { ShikhoLogo } from "../ui/ShikhoLogo";
 /** Repository the design system is published from — surfaced as a nav action per the homepage brief. */
 const REPO_URL = "https://github.com/Uchashkhan/shikho-design-system";
 
+// No "Docs"/"Home" entry here — the logo already links to "/", so a separate nav item pointing
+// at the same route would just be a confusing duplicate. These three are the only distinct
+// destinations.
 const NAV_LINKS = [
-  { label: "Docs", to: "/" },
   { label: "Components", to: "/components" },
   { label: "Foundations", to: "/foundations/colors" },
   { label: "Playground", to: "/playground" },
@@ -22,8 +24,8 @@ function GithubMark() {
 
 /**
  * Shared site header — the floating pill-shaped nav used on every route (both the docs shell
- * with its sidebar, and the full-width landing shell). Brand + logo, the four top-level nav
- * links grouped in a rounded pill, a GitHub link, and the version/component count.
+ * with its sidebar, and the full-width landing shell). Brand + logo (links to "/"), the three
+ * distinct destinations grouped in a rounded pill, a GitHub link, and the version/component count.
  */
 export function TopNav() {
   return (
@@ -40,7 +42,7 @@ export function TopNav() {
 
         <nav className="sk-topnav__links">
           {NAV_LINKS.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.to === "/"} className="sk-topnav__link">
+            <NavLink key={item.to} to={item.to} className="sk-topnav__link">
               {item.label}
             </NavLink>
           ))}
