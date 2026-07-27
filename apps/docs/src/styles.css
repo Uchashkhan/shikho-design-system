@@ -38,70 +38,6 @@ a {
   min-height: 100%;
 }
 
-.sk-topnav {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  height: 60px;
-  padding: 0 24px;
-  background: var(--sk-surface);
-  border-bottom: 1px solid var(--sk-border);
-}
-
-.sk-brandmark {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-.sk-brandmark__sub {
-  color: var(--sk-text-subtle);
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 1.2;
-}
-
-.sk-topnav__links {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.sk-topnav__link {
-  padding: 7px 12px;
-  border-radius: var(--sk-radius-sm);
-  color: var(--sk-text-muted);
-  font-weight: 500;
-  transition: background 120ms ease, color 120ms ease;
-}
-
-.sk-topnav__link:hover {
-  background: var(--sk-surface-muted);
-  color: var(--sk-text);
-}
-
-.sk-topnav__link[aria-current="page"] {
-  background: var(--sk-brand-soft);
-  color: var(--sk-brand);
-}
-
-.sk-topnav__spacer {
-  flex: 1;
-}
-
-.sk-topnav__meta {
-  color: var(--sk-text-subtle);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
 .sk-body {
   display: flex;
   flex: 1;
@@ -112,10 +48,12 @@ a {
 
 .sk-sidebar {
   position: sticky;
-  top: 60px;
+  /* 88px = the shared pill TopNav's total rendered height (16px top padding + 56px pill +
+     16px bottom padding) — see `.sk-topnav-wrap`/`.sk-topnav` below. */
+  top: 88px;
   flex-shrink: 0;
   width: 260px;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 88px);
   padding: 20px 12px 40px;
   overflow-y: auto;
   border-right: 1px solid var(--sk-border);
@@ -736,53 +674,24 @@ a.sk-card:hover {
     border-right: none;
     border-bottom: 1px solid var(--sk-border);
   }
-
-  .sk-topnav {
-    gap: 16px;
-    padding: 0 16px;
-  }
-
-  .sk-topnav__meta {
-    display: none;
-  }
-}
-
-/* ---------------------------------------------------- topnav github action */
-
-.sk-topnav__github {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
-  border-radius: var(--sk-radius-sm);
-  color: var(--sk-text-muted);
-  font-weight: 600;
-  font-size: 13px;
-  border: 1px solid var(--sk-border);
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
-}
-
-.sk-topnav__github:hover {
-  background: var(--sk-surface-muted);
-  color: var(--sk-text);
-  border-color: var(--sk-border-strong);
 }
 
 /* ============================================================ landing / hero */
 
-/* -------------------------------------------------------- floating pill nav (landing only) */
+/* ---------------------------------------------------- shared floating pill nav (every route) */
 
-.lp-nav-wrap {
+.sk-topnav-wrap {
   position: sticky;
   top: 0;
   z-index: 20;
-  padding: 20px 24px 0;
+  padding: 16px 24px;
 }
 
-.lp-nav {
+.sk-topnav {
   display: flex;
   align-items: center;
   gap: 16px;
+  height: 56px;
   max-width: 1080px;
   margin: 0 auto;
   padding: 8px 8px 8px 20px;
@@ -794,7 +703,7 @@ a.sk-card:hover {
     0 12px 24px -8px rgba(10, 12, 17, 0.1);
 }
 
-.lp-nav__brand {
+.sk-topnav__brand {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -805,14 +714,14 @@ a.sk-card:hover {
   color: var(--sk-text);
 }
 
-.lp-nav__brand-sub {
+.sk-topnav__brand-sub {
   color: var(--sk-text-subtle);
   font-weight: 500;
   font-size: 13px;
   line-height: 1.2;
 }
 
-.lp-nav__links {
+.sk-topnav__links {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -821,7 +730,7 @@ a.sk-card:hover {
   padding: 4px;
 }
 
-.lp-nav__link {
+.sk-topnav__link {
   padding: 8px 16px;
   border-radius: var(--sk-radius-full);
   color: var(--sk-text-muted);
@@ -831,21 +740,21 @@ a.sk-card:hover {
   transition: background 120ms ease, color 120ms ease;
 }
 
-.lp-nav__link:hover {
+.sk-topnav__link:hover {
   color: var(--sk-text);
 }
 
-.lp-nav__link[aria-current="page"] {
+.sk-topnav__link[aria-current="page"] {
   background: var(--sk-surface);
   color: var(--sk-text);
   box-shadow: 0 1px 2px rgba(10, 12, 17, 0.06);
 }
 
-.lp-nav__spacer {
+.sk-topnav__spacer {
   flex: 1;
 }
 
-.lp-nav__github {
+.sk-topnav__github {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -858,12 +767,12 @@ a.sk-card:hover {
   transition: background 120ms ease, color 120ms ease;
 }
 
-.lp-nav__github:hover {
+.sk-topnav__github:hover {
   background: var(--sk-surface-muted);
   color: var(--sk-text);
 }
 
-.lp-nav__meta {
+.sk-topnav__meta {
   padding-right: 12px;
   color: var(--sk-text-subtle);
   font-size: 12px;
@@ -872,14 +781,14 @@ a.sk-card:hover {
 }
 
 @media (max-width: 860px) {
-  .lp-nav__meta {
+  .sk-topnav__meta {
     display: none;
   }
 }
 
 @media (max-width: 720px) {
-  .lp-nav__links,
-  .lp-nav__brand-sub {
+  .sk-topnav__links,
+  .sk-topnav__brand-sub {
     display: none;
   }
 }
@@ -896,63 +805,67 @@ a.sk-card:hover {
   flex: 1;
   display: grid;
   place-items: center;
-  overflow: hidden;
   padding: 0 24px;
-  min-height: calc(100vh - 92px);
+  min-height: calc(100vh - 88px);
 }
 
-/* Shared background for the whole landing shell (nav + hero) — kept on one common ancestor, not
-   scoped to `.lp` alone, so the floating nav visually sits ON TOP of one continuous backdrop
-   rather than a separate solid strip above it. This symmetric, centered radial wash is what makes
-   it safe to layer the asymmetric corner glow blobs back on top, scoped to `.lp` only below —
-   the shared wash means the area behind the nav is never bare, so the off-center blobs (which
-   don't reach that far) no longer create a seam. */
+/* Shared background for the whole landing shell (nav + hero), kept on one common ancestor rather
+   than scoped inside `.lp` — so the floating nav visually sits ON TOP of one continuous backdrop
+   instead of a separate strip above it. */
 .lp-page {
   position: relative;
-  background: var(--sk-bg);
 }
 
-.lp-page::before {
-  content: "";
+/* One full-page decorative layer (wash + dot-grid + glow blobs), rendered as a SIBLING of the
+   sticky nav rather than an ancestor or a descendant of `.lp`. This is what actually fixes the
+   seam: the blobs need their own `overflow: hidden` to contain their bleed, but putting that on
+   any ANCESTOR of the sticky nav breaks `position: sticky`, and putting it on `.lp` alone (a
+   descendant that starts below the nav) reintroduces a hard edge exactly at `.lp`'s own top
+   boundary — visible in the corner the wash's own centered falloff doesn't reach. As a sibling,
+   this layer can clip freely without touching the nav's containing-block chain, and spans the
+   nav+hero as one uninterrupted backdrop with no internal edge to seam against. z-index 0, so it
+   sits behind both the sticky nav (`.sk-topnav-wrap`, z-index 20) and the hero content (`.lp__inner`,
+   z-index 1). */
+.lp-page__bg {
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
+  background: var(--sk-bg);
+}
+
+.lp-page__bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: radial-gradient(65% 55% at 50% 0%, var(--sk-brand-soft), transparent 70%);
 }
 
 /* Subtle dot-grid texture across the same shared backdrop, fading out toward the edges. */
-.lp__grid {
+.lp-page__grid {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  pointer-events: none;
   background-image: radial-gradient(color-mix(in srgb, var(--sk-text) 14%, transparent) 1px, transparent 1px);
   background-size: 24px 24px;
   mask-image: radial-gradient(80% 70% at 50% 30%, black, transparent 100%);
   -webkit-mask-image: radial-gradient(80% 70% at 50% 30%, black, transparent 100%);
 }
 
-/* Extra corner accent glows, layered on top of the shared symmetric wash above — scoped to `.lp`
-   (the hero only). `.lp` has `overflow: hidden`, which was hard-clipping the old negative `top`
-   offset here — the blur's soft falloff got truncated into an abrupt straight edge exactly at
-   `.lp`'s own top boundary (i.e. right behind the nav, reintroducing the seam). Reconstructed so
-   neither blob's vertical extent crosses `.lp`'s top/bottom edges — only their horizontal bleed
-   (left/right, off the sides) is clipped, which reads as an intentional soft fade-to-edge rather
-   than a hard line, since there's nothing else adjacent on those sides to seam against. */
+/* Extra corner accent glows, layered on top of the shared wash/grid above — now positioned
+   relative to the full-page `.lp-page__bg` layer (not `.lp`), so their vertical extent can safely
+   sit anywhere across the whole nav+hero height with no internal boundary to clip against. */
 .lp__glow {
   position: absolute;
   border-radius: 50%;
   filter: blur(70px);
   opacity: 0.6;
-  pointer-events: none;
-  z-index: 0;
 }
 
 .lp__glow--a {
   width: 440px;
   height: 440px;
-  top: 40px;
+  top: -60px;
   left: -60px;
   background: color-mix(in srgb, var(--sk-brand) 32%, transparent);
 }
@@ -961,7 +874,7 @@ a.sk-card:hover {
   width: 380px;
   height: 380px;
   right: -70px;
-  bottom: 40px;
+  bottom: -140px;
   background: color-mix(in srgb, var(--sk-brand) 20%, transparent);
 }
 

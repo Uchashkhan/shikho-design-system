@@ -17,10 +17,6 @@ export function HomePage() {
 
   return (
     <div className="lp">
-      <div className="lp__grid" aria-hidden />
-      <div className="lp__glow lp__glow--a" aria-hidden />
-      <div className="lp__glow lp__glow--b" aria-hidden />
-
       <div className="lp__inner">
         <div className="lp__logo lp-fade" style={{ ["--lp-delay" as string]: "0ms" }}>
           <ShikhoLogo height={56} />

@@ -5,7 +5,7 @@ import { ShikhoLogo } from "../ui/ShikhoLogo";
 /** Repository the design system is published from — surfaced as a nav action per the homepage brief. */
 const REPO_URL = "https://github.com/Uchashkhan/shikho-design-system";
 
-const TOP_NAV = [
+const NAV_LINKS = [
   { label: "Docs", to: "/" },
   { label: "Components", to: "/components" },
   { label: "Foundations", to: "/foundations/colors" },
@@ -21,44 +21,46 @@ function GithubMark() {
 }
 
 /**
- * Shared site header — used by both the documentation shell (with sidebar) and the landing shell
- * (full width). Nothing here restyles a design-system component; it is pure docs chrome themed
- * from `@shikho/tokens` via CSS custom properties.
+ * Shared site header — the floating pill-shaped nav used on every route (both the docs shell
+ * with its sidebar, and the full-width landing shell). Brand + logo, the four top-level nav
+ * links grouped in a rounded pill, a GitHub link, and the version/component count.
  */
 export function TopNav() {
   return (
-    <header className="sk-topnav">
-      <NavLink to="/" className="sk-brandmark">
-        <ShikhoLogo height={40} />
-        <span className="sk-brandmark__sub">
-          Design
-          <br />
-          System
-        </span>
-      </NavLink>
+    <div className="sk-topnav-wrap">
+      <header className="sk-topnav">
+        <NavLink to="/" className="sk-topnav__brand">
+          <ShikhoLogo height={32} />
+          <span className="sk-topnav__brand-sub">
+            Design
+            <br />
+            System
+          </span>
+        </NavLink>
 
-      <nav className="sk-topnav__links">
-        {TOP_NAV.map((item) => (
-          <NavLink key={item.to} to={item.to} end={item.to === "/"} className="sk-topnav__link">
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+        <nav className="sk-topnav__links">
+          {NAV_LINKS.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.to === "/"} className="sk-topnav__link">
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
 
-      <div className="sk-topnav__spacer" />
+        <div className="sk-topnav__spacer" />
 
-      <a
-        className="sk-topnav__github"
-        href={REPO_URL}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="View the repository on GitHub"
-      >
-        <GithubMark />
-        <span>GitHub</span>
-      </a>
+        <a
+          className="sk-topnav__github"
+          href={REPO_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="View the repository on GitHub"
+        >
+          <GithubMark />
+          <span>GitHub</span>
+        </a>
 
-      <div className="sk-topnav__meta">v0.1 · {componentRegistry.length} components</div>
-    </header>
+        <div className="sk-topnav__meta">v0.1 · {componentRegistry.length} components</div>
+      </header>
+    </div>
   );
 }
