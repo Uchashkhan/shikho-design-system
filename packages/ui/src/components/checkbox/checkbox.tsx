@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { color, radius } from "@shikho/tokens";
+import { CheckIcon } from "@shikho/icons";
 
 // docs/audit/checkboxes.md §2, §4, §14 — checkbox: size (md=24×24, sm=20×20), shape (sphere,
 // square). The visible "base" box is confirmed smaller than the component's own bounding box —
@@ -189,15 +190,8 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             />
           )}
           {!indeterminate && resolvedChecked && !disabled && (
-            <svg width="70%" height="70%" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M3 8.5L6.5 12L13 4.5"
-                stroke={color.white[950]}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            /* P2: was a hand-drawn stroke approximation; now the real shared checkmark. */
+            <CheckIcon size={16} style={{ width: "100%", height: "100%", color: color.white[950] }} />
           )}
         </span>
       </span>

@@ -8,6 +8,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { color, elevation, radius } from "@shikho/tokens";
+import { CloseIcon } from "@shikho/icons";
 
 // docs/audit/modal-deep-audit.md §1 — modal: exactly one property, `type` (default,
 // confirmation). No `size` or `state` property exists.
@@ -58,22 +59,10 @@ function CloseButton({ onClick, label }: { onClick?: () => void; label: string }
       }}
     >
       <span style={{ width: 18, height: 18, filter: iconShadowFilter }}>
-        <CloseIcon />
+        {/* P2: was a hand-drawn stroke approximation of the same "X"; now the real shared glyph. */}
+        <CloseIcon size={18} />
       </span>
     </button>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg viewBox="0 0 18 18" width={18} height={18} fill="none" aria-hidden>
-      <path
-        d="M4.5 4.5 13.5 13.5M13.5 4.5 4.5 13.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }
 

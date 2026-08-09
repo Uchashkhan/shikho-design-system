@@ -92,16 +92,19 @@ describe("confirmed default icons — previously missing entirely (docs/audit/al
 
   it("confirmed: the same info-circle glyph is tinted per severity's own 500 color", () => {
     const { container, rerender } = render(<Alert state="danger" />);
-    let path = container.querySelector('svg path') as SVGPathElement;
-    expect(path.getAttribute("fill")).toBe("#f03d3d");
+    // P2: the glyph now comes from `@shikho/icons` and paints with currentColor, so the tint is
+    // asserted on the svg's colour rather than a hard-coded fill attribute.
+    let svg = container.querySelector("svg[data-icon='info-circle']") as SVGSVGElement;
+    expect(svg.querySelector("path")?.getAttribute("fill")).toBe("currentColor");
+    expect(svg.style.color).toBe("rgb(240, 61, 61)");
 
     rerender(<Alert state="success" />);
-    path = container.querySelector('svg path') as SVGPathElement;
-    expect(path.getAttribute("fill")).toBe("#35c220");
+    svg = container.querySelector("svg[data-icon='info-circle']") as SVGSVGElement;
+    expect(svg.style.color).toBe("rgb(53, 194, 32)");
 
     rerender(<Alert state="Default" />);
-    path = container.querySelector('svg path') as SVGPathElement;
-    expect(path.getAttribute("fill")).toBe("#5468ff"); // confirmed: Default's icon is primary-tinted
+    svg = container.querySelector("svg[data-icon='info-circle']") as SVGSVGElement;
+    expect(svg.style.color).toBe("rgb(84, 104, 255)"); // Default's icon is primary-tinted
   });
 
   it("still allows overriding the default icon via the icon prop", () => {

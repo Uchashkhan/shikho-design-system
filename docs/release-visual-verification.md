@@ -251,6 +251,113 @@ Added only the confirmed 1px `outline/black-50` border. The button's outer drop-
 
 ---
 
+## 🔧 Repair status — P2 batch 1 (deterministic items)
+
+### 1. ButtonGroup icon shadow — ✅ FIXED
+
+`elevation/e2` is now applied as a CSS `filter: drop-shadow()` chain instead of a `boxShadow`,
+so the shadow follows the glyph silhouette rather than drawing a rectangle around the slot's
+bounding box. This was the last surviving instance of the bug Chip's re-audit fixed and that
+Link, Tags, Switcher, Pagination and Modal already had right. All other ButtonGroup visuals and
+its public API are untouched.
+
+### 2. Button per-family size narrowing — ✅ ALREADY CORRECT (verified, no change needed)
+
+Both scales were re-confirmed directly via `get_metadata`, not taken from the audit doc:
+
+| Scale | Sizes | Verified on | Families |
+|---|---|---|---|
+| A | xs, sm, md, lg, **xl** | `button_danger` (`66050:6995`) | button_danger, button_success, Greyscale, icon_button |
+| B | xs, sm, md, lg, **xxl** | `new_blue` (`66050:8479`) | new_blue, new_pink, ai_rounded, ai_regular |
+
+| Family | Figma sizes | Public type | Accepts | Invalid removed |
+|---|---|---|---|---|
+| new_blue | xs sm md lg xxl | `ButtonSizeScaleB` | ✅ exact | none — already correct |
+| new_pink | xs sm md lg xxl | `ButtonSizeScaleB` | ✅ exact | none |
+| ai_rounded | xs sm md lg xxl | `ButtonSizeScaleB` | ✅ exact | none |
+| ai_regular | xs sm md lg xxl | `ButtonSizeScaleB` | ✅ exact | none |
+| button_success | xs sm md lg xl | `ButtonSizeScaleA` | ✅ exact | none |
+| button_danger | xs sm md lg xl | `ButtonSizeScaleA` | ✅ exact | none |
+| Greyscale | xs sm md lg xl | `ButtonSizeScaleA` | ✅ exact | none |
+| icon_button | xs sm md lg xl | `ButtonSizeScaleA` | ✅ exact | none |
+
+**Correction to the earlier P2 note.** The backlog recorded *"`new_pink` has no `xl`, but the
+shared `SIZE_METRICS` currently also allows `xl`"* — implying a public API leak. There is none.
+`SIZE_METRICS` is a module-private record spanning both scales purely so one metrics table can
+serve every family; the wide `ButtonSize` union is **not exported** from `components/button/index.ts`,
+which exposes only the eight per-family `…Size` aliases. Each already resolves to the correct
+scale, so `<NewBlueButton size="xl">` has always been a type error.
+
+This is now locked in by compile-time assertions (`button_sizes.test.tsx`): every invalid
+family/size pair carries an `@ts-expect-error`. Because an *unused* `@ts-expect-error` is itself a
+compile error, `pnpm typecheck` fails if any union is ever widened to accept a size Figma does not
+define.
+
+---
+
+## 🔧 Repair status — P2 batch 2: icon architecture — P2 COMPLETE
+
+### Scope correction
+
+The backlog said "12-family SVG sweep". Only **8** families carry inline SVG in component
+source; `chip`, `input`, `table` and `tags` matched the original grep **only in their stories and
+tests**, where inline SVG is legitimate placeholder content for consumer-supplied icon slots.
+
+### Classification
+
+| Family | Vector | Category | Outcome |
+|---|---|---|---|
+| alert | info-circle (real, downloaded) | 1 reusable | → `@shikho/icons` |
+| alert | close "X" (real, downloaded) | 1 reusable | → `@shikho/icons` |
+| toast | info-circle | 1 reusable | **byte-identical to Alert's** → shared |
+| toast | dismiss "X" | 1 reusable | **byte-identical to Alert's** → shared |
+| modal | close "X" (hand-drawn stroke) | 1 reusable | → shared; **approximation removed** |
+| pagination | chevron-left / right (hand-drawn) | 1 reusable | → shared; **approximation removed** |
+| date-picker | chevron-left / right (hand-drawn) | 1 reusable | **duplicated with pagination** → shared |
+| checkbox | checkmark (hand-drawn stroke) | 1 reusable | → shared; **approximation removed** |
+| toggle | checkmark (real bezier) | 1 reusable | → shared (was already exact) |
+| pagination | chevron-down (hand-drawn) | 4 keep local | no confirmed asset downloaded — stays inline |
+| tooltip | pointer arrow (real bezier) | **2 structural** | stays local — not an icon |
+| checkbox | indeterminate dash | **4 exact as CSS** | an 8×2 rounded span; simpler and exact |
+| progress | handle | **4 exact as CSS** | circle + e2 filter, proven equivalent in P1 |
+| radio | states | 2 structural | flattened component-specific artwork |
+| avatar | `avatar_face` | **3 illustration** | excluded — assets, not icons |
+
+### Icons promoted (5)
+
+`ChevronLeftIcon` · `ChevronRightIcon` · `CloseIcon` · `InfoCircleIcon` · `CheckIcon`
+
+Each keeps its **original viewBox verbatim** — deliberately non-square where Figma's is
+(chevrons are `0 0 6.18747 10.6875`). Normalising them to a square canvas would silently rescale
+the glyph, so SVG's default `preserveAspectRatio` centres them instead.
+
+**Verified, not assumed:** `chevron-right` was downloaded and compared against `chevron-left` — it
+is its own authored path, **not** a mirror transform, so it ships as a separate glyph.
+
+### Package structure
+
+```
+packages/icons/src/
+├── types.ts          IconProps / IconSize (unchanged)
+├── create_icon.tsx   factory: size prop, currentColor, aria-hidden default,
+│                     attaches `.definition` so geometry is assertable without a DOM
+├── icons/            one file per glyph, each citing its Figma node
+└── index.ts          named exports only — tree-shakeable
+```
+
+No dependency on `@shikho/ui`; the direction stays `tokens → icons → ui`.
+
+### Remaining approximation debt
+
+1. **`chevron-down`** (pagination dropdown caret) — still hand-drawn. Kept local and labelled
+   rather than promoted, because promoting an unverified path into the shared package would
+   launder a guess into something that looks confirmed.
+2. **Icon coverage is 5 glyphs, not a full library.** `@shikho/icons` is now a real package rather
+   than a scaffold, but it holds only the glyphs this sweep could confirm. A complete icon set
+   still needs the Figma icon-library audit that has never been run.
+
+---
+
 ## Status legend
 
 | Symbol | Meaning |

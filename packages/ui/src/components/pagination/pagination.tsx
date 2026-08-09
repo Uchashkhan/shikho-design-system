@@ -1,5 +1,6 @@
 import { type HTMLAttributes, type ReactNode, forwardRef, useState } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
+import { ChevronLeftIcon, ChevronRightIcon } from "@shikho/icons";
 import { getPageWindow } from "./pagination-utils";
 
 // docs/audit/pagination-deep-audit.md §1 — `pagination`'s single `page` property actually
@@ -13,20 +14,12 @@ const restingInsetShadow = `inset 0px 1px 3px -2px ${color.white[50]}, inset 0px
 const primaryInsetShadow = `inset 0px 3px 4px -3px ${color.white[600]}, inset 0px 0px 8px -2px ${color.white[500]}`;
 const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[0].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
 
-function ChevronLeftIcon() {
-  return (
-    <svg viewBox="0 0 18 18" width={18} height={18} fill="none" aria-hidden>
-      <path d="M11 3.5 5.5 9l5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-function ChevronRightIcon() {
-  return (
-    <svg viewBox="0 0 18 18" width={18} height={18} fill="none" aria-hidden>
-      <path d="m7 3.5 5.5 5.5L7 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+/**
+ * Kept LOCAL by design (P2 classification, category 4). This is pagination's results-per-page
+ * dropdown caret. No exact Figma vector was downloaded for it in this pass, so promoting it to
+ * `@shikho/icons` would mean shipping a hand-drawn path as if it were a confirmed shared glyph.
+ * It stays inline, and is recorded as the remaining approximation debt.
+ */
 function ChevronDownIcon() {
   return (
     <svg viewBox="0 0 16 16" width={16} height={16} fill="none" aria-hidden>

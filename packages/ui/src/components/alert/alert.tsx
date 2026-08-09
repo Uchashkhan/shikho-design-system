@@ -1,5 +1,6 @@
 import { type HTMLAttributes, type ReactNode, forwardRef } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
+import { InfoCircleIcon, CloseIcon } from "@shikho/icons";
 import { ButtonDanger } from "../button/button_danger";
 import { ButtonSuccess } from "../button/button_success";
 
@@ -36,8 +37,8 @@ const borderColorByState: Record<AlertState, string> = {
 // left icon is the SAME info-circle glyph in every state (matching the literal, previously
 // unexplained "icon / info" layer name — it turns out not to be a mislabeling artifact, the icon
 // generally IS an info-circle regardless of severity), tinted with that severity's own 500 color.
-const ALERT_ICON_PATH =
-  "M9 0C4.03768 0 0 4.03674 0 9C0 13.9623 4.03768 18 9 18C13.9623 18 18 13.9623 18 9C18 4.03674 13.9623 0 9 0ZM10.25 5.75C10.25 6.44036 9.69034 7 8.99999 7C8.30963 7 7.74999 6.44036 7.74999 5.75C7.74999 5.05964 8.30963 4.5 8.99999 4.5C9.69034 4.5 10.25 5.05964 10.25 5.75ZM9.00001 7.99996C8.44773 7.99996 8.00001 8.44767 8.00001 8.99996V13C8.00001 13.5522 8.44773 14 9.00001 14C9.5523 14 10 13.5522 10 13V8.99996C10 8.44767 9.5523 7.99996 9.00001 7.99996Z";
+// P2: the glyph itself now lives in `@shikho/icons` as `InfoCircleIcon` — Toast used a
+// byte-identical copy, so it is a genuine shared glyph rather than two look-alikes.
 
 const iconColorByState: Record<AlertState, string> = {
   Default: color.primary[500], // confirmed #5468FF — Default's icon is primary-tinted, not neutral
@@ -47,27 +48,9 @@ const iconColorByState: Record<AlertState, string> = {
   info: color.info[500],
 };
 
-function AlertIcon({ fill }: { fill: string }) {
-  return (
-    <svg viewBox="0 0 18 18" width={18} height={18} fill="none" aria-hidden>
-      <path fillRule="evenodd" clipRule="evenodd" d={ALERT_ICON_PATH} fill={fill} />
-    </svg>
-  );
-}
-
 // docs/audit/alerts.md §14 — confirmed via downloading the real SVG behind 2 severities: the
 // corner close button's icon is the SAME "X" glyph in every state, fixed `text/gray-700` fill
-// regardless of severity (not tinted).
-const CLOSE_ICON_PATH =
-  "M6.31068 5.25015L10.2804 1.28044C10.5737 0.987188 10.5737 0.513188 10.2804 0.219938C9.98718 -0.0733125 9.51318 -0.0733125 9.21993 0.219938L5.25018 4.18965L1.28044 0.219938C0.987187 -0.0733125 0.513188 -0.0733125 0.219938 0.219938C-0.0733125 0.513188 -0.0733125 0.987188 0.219938 1.28044L4.18968 5.25015L0.219938 9.21998C-0.0733125 9.51315 -0.0733125 9.98715 0.219938 10.2804C0.366188 10.4267 0.558187 10.5002 0.750187 10.5002C0.942187 10.5002 1.13419 10.4267 1.28044 10.2804L5.25018 6.31073L9.21993 10.2804C9.36618 10.4267 9.55818 10.5002 9.75018 10.5002C9.94218 10.5002 10.1342 10.4267 10.2804 10.2804C10.5737 9.98715 10.5737 9.51315 10.2804 9.21998L6.31068 5.25015Z";
-
-function CloseIcon() {
-  return (
-    <svg viewBox="0 0 10.5004 10.5002" width={10.5} height={10.5} fill="none" aria-hidden>
-      <path fillRule="evenodd" clipRule="evenodd" d={CLOSE_ICON_PATH} fill={color.gray[700]} />
-    </svg>
-  );
-}
+// regardless of severity (not tinted). P2: shared as `@shikho/icons`' `CloseIcon`.
 
 export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   state?: AlertState;
@@ -195,7 +178,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
       >
         {leftIcon && (
           <span style={{ width: 24, height: 24, flexShrink: 0, boxShadow: iconShadow }}>
-            {icon ?? <AlertIcon fill={iconColorByState[state]} />}
+            {icon ?? <InfoCircleIcon style={{ color: iconColorByState[state] }} />}
           </span>
         )}
 
@@ -273,7 +256,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
             cursor: "pointer",
           }}
         >
-          <span style={{ width: 18, height: 18, boxShadow: iconShadow }}>{closeIcon ?? <CloseIcon />}</span>
+          <span style={{ width: 18, height: 18, boxShadow: iconShadow }}>{closeIcon ?? <CloseIcon size={18} style={{ color: color.gray[700] }} />}</span>
         </button>
       </div>
     );

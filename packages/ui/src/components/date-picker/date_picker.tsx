@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
+import { ChevronLeftIcon, ChevronRightIcon } from "@shikho/icons";
 import { Field } from "../input";
 import { GreyscaleButton, NewBlueButton } from "../button";
 import {
@@ -153,21 +154,6 @@ interface CalendarPanelProps {
   onSelectDate: (date: Date) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg viewBox="0 0 18 18" width={18} height={18} fill="none" aria-hidden>
-      <path d="M11 3.5 5.5 9l5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-function ChevronRightIcon() {
-  return (
-    <svg viewBox="0 0 18 18" width={18} height={18} fill="none" aria-hidden>
-      <path d="m7 3.5 5.5 5.5L7 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 function NavButton({ onClick, label, children }: { onClick: () => void; label: string; children: ReactNode }) {

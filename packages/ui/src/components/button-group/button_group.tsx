@@ -40,9 +40,19 @@ const typography = {
 } as const;
 
 const ICON_SIZE = 14; // confirmed — sizing/icon/14, §9/§14
-const iconShadow = elevation.e2
-  .map((l) => `${l.x}px ${l.y}px ${l.blur}px ${l.spread}px ${l.color}`)
-  .join(", ");
+
+/**
+ * P2 repair — the icon slot's `elevation/e2` must be a CSS `filter: drop-shadow()` chain, not a
+ * `boxShadow`. Figma exports icon-only vector layers with a filter so the shadow follows the
+ * glyph's silhouette; a box-shadow draws a rectangle around the slot's bounding box instead.
+ *
+ * This is the same bug Chip's re-audit fixed, which was never propagated here. The blur values
+ * are e2's blur collapsed with its spread (`blur + spread`), matching `iconShadowFilter` as used
+ * by Link, Tags, Switcher, Pagination, Modal and every other icon slot in this library.
+ */
+const iconShadowFilter = elevation.e2
+  .map((l) => `drop-shadow(${l.x}px ${l.y}px ${Math.max(l.blur + l.spread, 0)}px ${l.color})`)
+  .join(" ");
 
 // docs/audit/button-group.md §14 — outline/Black 50, confirmed applied border color on every
 // segment. Matches @shikho/tokens' color.black[50] exactly.
@@ -124,7 +134,7 @@ export const ButtonGroup = forwardRef<HTMLDivElement, ButtonGroupProps>(
                   width: ICON_SIZE,
                   height: ICON_SIZE,
                   flexShrink: 0,
-                  boxShadow: iconShadow,
+                  filter: iconShadowFilter,
                 }}
               >
                 {item.leftIcon}
@@ -139,7 +149,7 @@ export const ButtonGroup = forwardRef<HTMLDivElement, ButtonGroupProps>(
                   width: ICON_SIZE,
                   height: ICON_SIZE,
                   flexShrink: 0,
-                  boxShadow: iconShadow,
+                  filter: iconShadowFilter,
                 }}
               >
                 {item.rightIcon}

@@ -1,5 +1,6 @@
 import { type CSSProperties, type InputHTMLAttributes, forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
+import { CheckIcon } from "@shikho/icons";
 
 // docs/audit/toggle.md §4, §14 — toggle: size (lg=40×24, md=40×24 — confirmed SAME bounding box
 // as lg, not a typo, reproduced faithfully — sm=32×20). No `shape`/`type` property (always a
@@ -180,12 +181,9 @@ export const Toggle = forwardRef<HTMLInputElement, ToggleProps>(
         <span aria-hidden style={trackStyle}>
           <span style={knobStyle}>
             {visual.showCheck && (
-              <svg width="60%" height="60%" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M13.6061 5.70708C13.9965 6.09751 13.9965 6.73052 13.6062 7.12099L9.95011 10.7778C9.55959 11.1683 8.92637 11.1684 8.53582 10.7778L6.707 8.949C6.31653 8.55853 6.31653 7.92547 6.707 7.535C7.09747 7.14453 7.73053 7.14454 8.121 7.535L9.243 8.657L12.192 5.70718C12.5825 5.31663 13.2156 5.31659 13.6061 5.70708Z"
-                  fill={visual.checkColor}
-                />
-              </svg>
+              /* P2: this glyph WAS already the real export — it is now the single shared
+                 source in `@shikho/icons`, which Checkbox also consumes. */
+              <CheckIcon style={{ width: "60%", height: "60%", color: visual.checkColor }} />
             )}
           </span>
         </span>

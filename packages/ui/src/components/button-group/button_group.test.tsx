@@ -107,3 +107,27 @@ describe("confirmed zero gap (§7)", () => {
     expect(root.style.gap).toBe("");
   });
 });
+
+// P2 repair — the icon slot must use a drop-shadow FILTER (follows the glyph silhouette), not a
+// boxShadow (which draws a rectangle around the slot's bounding box). Same bug Chip already fixed.
+describe("icon shadow technique (P2 repair)", () => {
+  it("applies elevation/e2 as a drop-shadow filter, never as a box-shadow", () => {
+    const { container } = render(
+      <ButtonGroup
+        size="xs"
+        items={[
+          { label: "One", leftIcon: <i data-testid="l" />, rightIcon: <i data-testid="r" /> },
+          { label: "Two" },
+        ]}
+      />,
+    );
+    const iconSlots = Array.from(container.querySelectorAll("span")).filter(
+      (el) => el.style.width === "14px",
+    );
+    expect(iconSlots.length).toBeGreaterThan(0);
+    for (const slot of iconSlots) {
+      expect(slot.style.filter).toContain("drop-shadow");
+      expect(slot.style.boxShadow).toBe("");
+    }
+  });
+});

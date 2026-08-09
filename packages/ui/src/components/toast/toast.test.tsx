@@ -111,15 +111,19 @@ describe("confirmed default icons — previously missing entirely (docs/audit/to
 
   it("confirmed: default's icon is gray-950, NOT primary-tinted like Alert's Default", () => {
     const { container } = render(<Toast state="default" />);
-    const path = container.querySelector("svg path") as SVGPathElement;
-    expect(path.getAttribute("fill")).toBe("#0a0c11");
+    // P2: the glyph now comes from `@shikho/icons` and paints with currentColor.
+    const svg = container.querySelector("svg[data-icon='info-circle']") as SVGSVGElement;
+    expect(svg.querySelector("path")?.getAttribute("fill")).toBe("currentColor");
+    expect(svg.style.color).toBe("rgb(10, 12, 17)");
   });
 
   it("confirmed: danger/success/warning/info icons tint to that severity's own 500 color", () => {
+    const tint = (c: HTMLElement) =>
+      (c.querySelector("svg[data-icon='info-circle']") as SVGSVGElement).style.color;
     const { container, rerender } = render(<Toast state="danger" />);
-    expect((container.querySelector("svg path") as SVGPathElement).getAttribute("fill")).toBe("#f03d3d");
+    expect(tint(container)).toBe("rgb(240, 61, 61)");
     rerender(<Toast state="success" />);
-    expect((container.querySelector("svg path") as SVGPathElement).getAttribute("fill")).toBe("#35c220");
+    expect(tint(container)).toBe("rgb(53, 194, 32)");
   });
 
   it("still allows overriding the default icon via the icon prop", () => {
