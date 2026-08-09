@@ -1,6 +1,7 @@
 import { type HTMLAttributes, type ReactNode, forwardRef } from "react";
 import { color, radius } from "@shikho/tokens";
 import { NewPinkButton } from "../button/new_pink";
+import type { ButtonSizeScaleB } from "../button/shared";
 import {
   FIELD_SIZE_METRICS,
   fieldSupportTextColor,
@@ -56,6 +57,74 @@ const IconSlot = ({ size, children }: { size: number; children?: ReactNode }) =>
  * version. `type="textarea"`/`"advanced_with_buttons"` now render their own confirmed distinct
  * structure instead of silently falling back to `type="default"`.
  */
+/**
+ * `type="advanced_with_buttons"` per-size metrics. Every row confirmed by an independent
+ * `get_design_context` sample (sm/md/lg/xl) during the P1 repair pass — nothing extrapolated.
+ *
+ * `height`, `radius`, `iconSize` and typography already come from `FIELD_SIZE_METRICS` and were
+ * re-verified to match; only the values below are specific to this type.
+ *
+ * Confirmed identical at all four sizes (kept out of the table): root `pr-4`, lead border
+ * `outline/gray-100`, lead fill `smoke_base`, trail gap `spacing/8`, shortcut-button gap
+ * `spacing/4`, button fill `secondary/500`.
+ */
+interface AdvancedMetrics {
+  leadGap: number;
+  leadPadding: string;
+  leadRadiusLeft: number;
+  leadRadiusRight: number;
+  /** The lead group's own leading icon — a different scale from the field's `iconSize`. */
+  leadIconSize: number;
+  textPaddingX: number;
+  trailPaddingRight: number;
+  /** The confirmed `new_pink` size: always one step below the field's own size. */
+  buttonSize: ButtonSizeScaleB;
+}
+
+const ADVANCED_METRICS: Record<FieldSize, AdvancedMetrics> = {
+  sm: {
+    leadGap: 4,
+    leadPadding: "0 0.5rem",
+    leadRadiusLeft: 8,
+    leadRadiusRight: 8,
+    leadIconSize: 16,
+    textPaddingX: 8,
+    trailPaddingRight: 4,
+    buttonSize: "xs",
+  },
+  md: {
+    leadGap: 6,
+    leadPadding: "0.5rem 0.75rem",
+    leadRadiusLeft: 10,
+    leadRadiusRight: 10,
+    leadIconSize: 20,
+    textPaddingX: 8,
+    trailPaddingRight: 4,
+    buttonSize: "sm",
+  },
+  lg: {
+    leadGap: 8,
+    leadPadding: "0.75rem",
+    leadRadiusLeft: 12,
+    leadRadiusRight: 12,
+    leadIconSize: 22,
+    textPaddingX: 12,
+    trailPaddingRight: 8,
+    buttonSize: "md",
+  },
+  xl: {
+    leadGap: 8,
+    leadPadding: "1rem",
+    // The only genuinely asymmetric row: left `custom/xl` (16) vs right `border_radius_md` (12).
+    leadRadiusLeft: 16,
+    leadRadiusRight: 12,
+    leadIconSize: 28,
+    textPaddingX: 16,
+    trailPaddingRight: 12,
+    buttonSize: "lg",
+  },
+};
+
 export const Field = forwardRef<HTMLDivElement, FieldProps>(
   (
     {
@@ -148,11 +217,16 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
     }
 
     if (type === "advanced_with_buttons") {
-      // docs/audit/input.md §14 — confirmed richer structure: a bordered "lead" chip (its own
-      // fill/inset shadow, independent of the outer field's), a text row, an optional trailing
-      // label + icon, and 1-3 real pink action buttons (fill Color/secondary/500, radius.sm) —
-      // reusing NewPinkButton rather than redrawing an equivalent button. Only `md` was
-      // independently sampled; sm/lg/xl reuse md's proportions (documented, not re-verified).
+      // docs/audit/input.md §14 + P1 repair pass — ALL FOUR sizes independently sampled via
+      // get_design_context. Structure: a bordered `lead` chip with its own white fill, inset
+      // shadow and asymmetric corner radii; a flex-1 text column; an optional `trail` group
+      // (label + icon); and 1-3 real pink shortcut buttons.
+      //
+      // Confirmed composition: the shortcut button is a genuine `new_pink` Primary instance one
+      // size BELOW the field — field sm -> button xs, md -> sm, lg -> md, xl -> lg. Every metric
+      // matches (height, padding, radius, typography), so `NewPinkButton` is reused rather than a
+      // new variant being invented.
+      const adv = ADVANCED_METRICS[size];
       return (
         <div
           ref={ref}
@@ -163,7 +237,8 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
             display: "flex",
             alignItems: "center",
             height: metrics.height,
-            paddingRight: "0.25rem",
+            minHeight: metrics.height,
+            paddingRight: "0.25rem", // pr-[spacing/4] — confirmed identical at all four sizes
             borderRadius: metrics.radius,
             backgroundColor: color.gray[100],
             boxShadow: innerShadow,
@@ -178,13 +253,16 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
         >
           {leadTextContent !== undefined && (
             <span
+              data-testid="field-lead"
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "0.375rem",
+                gap: adv.leadGap,
                 height: metrics.height,
-                padding: "0.5rem 0.75rem",
-                borderRadius: `${radius.md}px ${radius.sm}px ${radius.sm}px ${radius.md}px`,
+                padding: adv.leadPadding,
+                // Confirmed asymmetric only at xl (left 16 / right 12); symmetric below that.
+                borderRadius: `${adv.leadRadiusLeft}px ${adv.leadRadiusRight}px ${adv.leadRadiusRight}px ${adv.leadRadiusLeft}px`,
+                border: `1px solid ${color.gray[100]}`,
                 backgroundColor: color.white[950],
                 boxShadow: "inset 0 1px 3px 0 rgba(255,255,255,0.04), inset 0 -1px 3px 0 rgba(0,0,0,0.04)",
                 color: fieldTextColorDefault,
@@ -192,21 +270,37 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
                 flexShrink: 0,
               }}
             >
+              {selectLeftIcon && <IconSlot size={adv.leadIconSize}>{selectLeftIcon}</IconSlot>}
               {leadTextContent}
             </span>
           )}
-          <span style={{ flex: "1 0 0", minWidth: 1, padding: "0 0.5rem", color: fieldTextColorDefault }}>
+          <span
+            style={{
+              flex: "1 0 0",
+              minWidth: 1,
+              padding: `0 ${adv.textPaddingX}px`,
+              color: fieldTextColorDefault,
+            }}
+          >
             {textContent}
           </span>
           {trailText && (
-            <span style={{ display: "flex", alignItems: "center", gap: "0.5rem", paddingRight: "0.25rem" }}>
+            <span
+              data-testid="field-trail"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem", // spacing/8 — confirmed identical at all four sizes
+                paddingRight: adv.trailPaddingRight,
+              }}
+            >
               <span style={{ color: fieldSupportTextColor }}>{trailTextContent}</span>
-              {rightIcon && <IconSlot size={18}>{selectRightIcon}</IconSlot>}
+              {rightIcon && <IconSlot size={metrics.iconSize}>{selectRightIcon}</IconSlot>}
             </span>
           )}
           <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
             {buttonLabels.map((label, i) => (
-              <NewPinkButton key={i} size="sm" type="Primary">
+              <NewPinkButton key={i} size={adv.buttonSize} type="Primary">
                 {label}
               </NewPinkButton>
             ))}

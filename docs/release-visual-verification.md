@@ -163,15 +163,36 @@ trail) were `lg`'s values all along — the original audit sampled `lg`. The P0 
 to `md`'s confirmed values and applied those to every size, which fixed md while breaking lg/xl.
 This table is the first time all three rows are independently correct.
 
-### Field `type="advanced_with_buttons"` — NOT COMPLETED
+### Field `type="advanced_with_buttons"` — RESOLVED (all four sizes sampled)
 
-`md` was sampled and is far richer than the current implementation: a bordered `lead` group with
-its own asymmetric radius and white fill, a flex-1 text column, a `trail` group, and 32px
-`secondary/500` shortcut buttons (`min-w-32`, `p-8`, `radius custom/sm`, 12/16 SemiBold).
+| property | sm | md | lg | xl |
+|---|---|---|---|---|
+| root height | 32 | 40 | 48 | 56 |
+| root radius | 8 | 10 | 12 | 16 |
+| root `pr` | 4 | 4 | 4 | 4 |
+| lead gap | 4 | 6 | 8 | 8 |
+| lead padding | `px-8 py-0` | `px-12 py-8` | `p-12` | `p-16` |
+| lead radius (L / R) | 8 / 8 | 10 / 10 | 12 / 12 | **16 / 12** |
+| lead icon | 16 | 20 | 22 | 28 |
+| text `px` | 8 | 8 | 12 | 16 |
+| trail `pr` | 4 | 4 | 8 | 12 |
+| trail / field icon | 16 | 18 | 20 | 24 |
+| typography | 12/16 | 13/20 | 13/20 | 18/24 |
+| **shortcut button** | `new_pink` **xs** | **sm** | **md** | **lg** |
 
-**sm / lg / xl were not sampled.** Building a per-size table from a single row is precisely the
-defect class this phase exists to eliminate, so nothing was changed. The branch still carries its
-pre-existing hard-coded inner-button padding/gap. Remains open at P1.
+**Confirmed composition, not invention:** the shortcut button is a genuine `new_pink` Primary
+instance **one size below the field** at every size — height, padding, radius and typography all
+match `NewPinkButton`'s own scale exactly (sm→xs 24/`px-6 py-4`/r6/11-16; md→sm 32/`p-8`/r8/12-16;
+lg→md 40/`px-12 py-8`/r10/13-20; xl→lg 48/`px-16 py-12`/r12/13-20). No new Button variant was
+created.
+
+**Only `xl` has genuinely asymmetric lead corners** (left `custom/xl` 16, right `border_radius_md`
+12). sm/md/lg are symmetric despite Figma using two different token *names* per side — a naming
+artefact, not a visual difference.
+
+Confirmed identical at all four sizes and therefore kept as shared constants: root `pr-4`, lead
+border `outline/gray-100`, lead fill `smoke_base`, trail gap `spacing/8`, button-group gap
+`spacing/4`, button fill `secondary/500`.
 
 ---
 

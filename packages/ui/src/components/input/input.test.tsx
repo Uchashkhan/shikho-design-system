@@ -167,3 +167,75 @@ describe("remaining Input family members render their confirmed state vocabulary
   });
 
 });
+
+// P1 repair pass — advanced_with_buttons per-size table. All four rows were independently
+// sampled from Figma; the previous implementation reused md's proportions for every size.
+describe("Field type=advanced_with_buttons per-size metrics", () => {
+  const rows = [
+    // size, root height, lead padding, lead radius, text padX, trail padRight, button height
+    ["sm", "32px", "0px 0.5rem", "8px 8px 8px 8px", "0px 8px", "4px", "32px"],
+    ["md", "40px", "0.5rem 0.75rem", "10px 10px 10px 10px", "0px 8px", "4px", "40px"],
+    ["lg", "48px", "0.75rem", "12px 12px 12px 12px", "0px 12px", "8px", "48px"],
+    ["xl", "56px", "1rem", "16px 12px 12px 16px", "0px 16px", "12px", "56px"],
+  ] as const;
+
+  it.each(rows)(
+    "size=%s → height %s, lead padding %s, lead radius %s",
+    (size, height, leadPadding, leadRadius, textPad, trailPad) => {
+      const { container } = render(
+        <Field
+          size={size}
+          type="advanced_with_buttons"
+          leadTextContent="+1"
+          textContent="Input text"
+          trailTextContent="Text"
+          buttonLabels={["Button"]}
+        />,
+      );
+      const root = container.firstChild as HTMLElement;
+      expect(root.style.height).toBe(height);
+
+      const lead = screen.getByTestId("field-lead");
+      expect(lead.style.padding).toBe(leadPadding);
+      expect(lead.style.borderRadius).toBe(leadRadius);
+
+      const textCol = Array.from(root.querySelectorAll("span")).find(
+        (el) => el.textContent === "Input text" && el.style.padding,
+      );
+      expect(textCol?.style.padding).toBe(textPad);
+
+      expect(screen.getByTestId("field-trail").style.paddingRight).toBe(trailPad);
+    },
+  );
+
+  // The shortcut button is a real new_pink instance one size BELOW the field.
+  const buttonSizes = [
+    ["sm", "xs"],
+    ["md", "sm"],
+    ["lg", "md"],
+    ["xl", "lg"],
+  ] as const;
+
+  it.each(buttonSizes)(
+    "size=%s composes NewPinkButton at size=%s (one step down)",
+    (fieldSize, buttonSize) => {
+      const { container } = render(
+        <Field
+          size={fieldSize}
+          type="advanced_with_buttons"
+          textContent="Input text"
+          buttonLabels={["Button"]}
+        />,
+      );
+      const button = container.querySelector("button[data-size]");
+      expect(button).toHaveAttribute("data-size", buttonSize);
+    },
+  );
+
+  it("draws the confirmed gray-100 border on the lead group", () => {
+    render(
+      <Field type="advanced_with_buttons" leadTextContent="+1" textContent="Input text" />,
+    );
+    expect(screen.getByTestId("field-lead").style.border).toContain("1px");
+  });
+});
