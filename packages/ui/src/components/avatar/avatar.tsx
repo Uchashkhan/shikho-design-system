@@ -23,7 +23,7 @@ interface AvatarSizeMetrics {
   verification: number;
 }
 
-const SIZE_METRICS: Record<AvatarSize, AvatarSizeMetrics> = {
+export const AVATAR_SIZE_METRICS: Record<AvatarSize, AvatarSizeMetrics> = {
   xs: { box: 24, fontSize: 11, lineHeight: "16px", status: 6, statusBorder: 2, verification: 8 },
   sm: { box: 32, fontSize: 12, lineHeight: "16px", status: 8, statusBorder: 2, verification: 10 },
   md: { box: 40, fontSize: 13, lineHeight: "20px", status: 10, statusBorder: 3, verification: 12 },
@@ -79,9 +79,10 @@ export interface AvatarProps extends Omit<HTMLAttributes<HTMLDivElement>, "child
  * docs/release-visual-verification.md). Root is `relative` with absolutely-positioned children —
  * confirmed: avatar does not use auto-layout, unlike Button/Input.
  *
- * Not implemented: the sibling component sets `avatar_face` (12 variants) and `avatar_group`
- * (5 variants). Both are real, shippable sets in Figma, but neither has ever been structurally
- * sampled, so implementing them would mean inventing values. Tracked as P1.
+ * `avatar_group` is implemented separately (see ./avatar_group.tsx) and composes this component.
+ * `avatar_face` is NOT a component: Figma's own description for that set reads "You can export
+ * these and use them as fills in the Avatar component" — it is a library of 12 illustration
+ * assets, consumed via `<Avatar type="image" src={...} />`.
  */
 export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
   (
@@ -99,7 +100,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
     },
     ref,
   ) => {
-    const metrics = SIZE_METRICS[size];
+    const metrics = AVATAR_SIZE_METRICS[size];
     const { box } = metrics;
 
     return (

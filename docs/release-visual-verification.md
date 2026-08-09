@@ -116,6 +116,65 @@ size and resizer size also vary per size**, not just padding.
 
 ---
 
+## 🔧 Repair status — P1 batch 2 (structural gaps) — 2 of 3 CLOSED
+
+### Avatar — RESOLVED (one built, one correctly excluded)
+
+**`avatar_face` — NOT a component. Excluded from v0.1.0 by evidence, not by deferral.**
+Figma's own component description for the set reads verbatim:
+> "You can export these and use them as fills in the Avatar component."
+
+All 12 variants are fixed 160×160 frames containing a gradient plus a raster PNG illustration.
+There is no size axis, no state, no status/verification, no interactive behaviour. They are
+**design assets**, consumed as `<Avatar type="image" src={…} />`. Building a React component for
+them would be wrong, not merely premature. What remains is an asset-pipeline task (export 12 PNGs),
+not a component task.
+
+**`avatar_group` — IMPLEMENTED.** Confirmed via `get_metadata` on all five variants plus
+`get_design_context` on `md`. Each variant lays 7 `avatar` instances at a fixed step:
+
+| size | avatar box | step | overlap |
+|---|---|---|---|
+| xs | 24 | 16 | 8 |
+| sm | 32 | 24 | 8 |
+| md | 40 | 28 | 12 |
+| lg | 48 | 32 | 16 |
+| xl | 64 | 44 | 20 |
+
+The `md` row is independently corroborated by `get_design_context` rendering an explicit
+`mr-[-12px]`. The group contributes exactly three things over a bare Avatar — the per-size
+negative-margin overlap, a 1px `white-88` ring on each avatar, and an optional trailing `+N`
+counter (`gray-100` fill, `gray-950` label). It **composes the real `Avatar`** and reads its box
+size from `AVATAR_SIZE_METRICS`, so the two cannot drift.
+
+### List — RESOLVED (lg and xl sampled)
+
+| size | padding | leadItemLg | side icon | main text | description | trail pad |
+|---|---|---|---|---|---|---|
+| md | 8 | 32 | 20 | 13/20 | 12/16 | 2 |
+| lg | 12 | 36 | 24 | 13/20 | 12/16 | 4 |
+| xl | 16 | 40 | 24 | **18/24** | **13/20** | 4 |
+
+Root gap (12px), the `leadItem` slot (24px) and the nested Tag (always Tags' own `md`) are
+confirmed identical at all three sizes and stay shared.
+
+**Worth recording:** the pre-repair constants (12px padding, 36px leadItemLg, 24px icons, 4px
+trail) were `lg`'s values all along — the original audit sampled `lg`. The P0 pass corrected them
+to `md`'s confirmed values and applied those to every size, which fixed md while breaking lg/xl.
+This table is the first time all three rows are independently correct.
+
+### Field `type="advanced_with_buttons"` — NOT COMPLETED
+
+`md` was sampled and is far richer than the current implementation: a bordered `lead` group with
+its own asymmetric radius and white fill, a flex-1 text column, a `trail` group, and 32px
+`secondary/500` shortcut buttons (`min-w-32`, `p-8`, `radius custom/sm`, 12/16 SemiBold).
+
+**sm / lg / xl were not sampled.** Building a per-size table from a single row is precisely the
+defect class this phase exists to eliminate, so nothing was changed. The branch still carries its
+pre-existing hard-coded inner-button padding/gap. Remains open at P1.
+
+---
+
 ## Status legend
 
 | Symbol | Meaning |

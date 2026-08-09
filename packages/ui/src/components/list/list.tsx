@@ -45,22 +45,58 @@ const dividerColor = color.gray[100]; // outline/gray-100
 const descriptionColor = color.gray[600]; // text/gray-600
 const trailTextColor = color.gray[700]; // text/gray-700 — confirmed distinct from main text
 
-const mainTextStyle = { fontSize: 13, lineHeight: "20px", fontWeight: 500 }; // body_1/para, Medium
-const descriptionStyle = { fontSize: 12, lineHeight: "16px", fontWeight: 500 }; // caption_2, Medium
+const TEXT_WEIGHT = 500; // Medium — confirmed at every size for both text rows
 
 // Confirmed: both icon slots carry `elevation/e2` as a `filter: drop-shadow()` pair, so the
 // shadow follows the glyph silhouette — the same convention used library-wide.
 const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[0].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
 
-// Confirmed exact at `md`. `lg`/`xl` bounding heights (60/76 vs md's 52) are known from
-// metadata, but their internal padding/gap/icon deltas have NOT been sampled — they render
-// md's confirmed metrics until that evidence exists, rather than inventing a scale. Tracked
-// as a P1 follow-up in docs/release-visual-verification.md.
-const ROOT_GAP = "0.75rem"; // gap-[spacing/12, 12px]
-const ROOT_PADDING = "0.5rem"; // p-[spacing/8, 8px] — confirmed 8px, not the previous 12px
-const LEAD_ITEM = 24;
-const LEAD_ITEM_LG = 32; // confirmed 32px, not the previous 36px
-const SIDE_ICON = 20; // confirmed 20px, not the previous 24px
+/**
+ * Per-size metrics — all three rows confirmed by live `get_design_context` samples during the
+ * P1 repair pass. Five properties vary by size; only the root gap (12px), the `leadItem` slot
+ * (24px) and the nested Tag (always Tags' own `md`) are confirmed identical across all three.
+ *
+ * Note: the pre-repair implementation's constants were `lg`'s values (12px padding, 36px
+ * leadItemLg, 24px icons, 4px trail padding), since the original audit sampled `lg` only.
+ */
+interface ListSizeMetrics {
+  padding: string;
+  leadItemLg: number;
+  sideIcon: number;
+  mainText: { fontSize: number; lineHeight: string };
+  description: { fontSize: number; lineHeight: string };
+  trailPadding: string;
+}
+
+const SIZE_METRICS: Record<ListSize, ListSizeMetrics> = {
+  md: {
+    padding: "0.5rem",
+    leadItemLg: 32,
+    sideIcon: 20,
+    mainText: { fontSize: 13, lineHeight: "20px" },
+    description: { fontSize: 12, lineHeight: "16px" },
+    trailPadding: "0.125rem",
+  },
+  lg: {
+    padding: "0.75rem",
+    leadItemLg: 36,
+    sideIcon: 24,
+    mainText: { fontSize: 13, lineHeight: "20px" },
+    description: { fontSize: 12, lineHeight: "16px" },
+    trailPadding: "0.25rem",
+  },
+  xl: {
+    padding: "1rem",
+    leadItemLg: 40,
+    sideIcon: 24,
+    mainText: { fontSize: 18, lineHeight: "24px" },
+    description: { fontSize: 13, lineHeight: "20px" },
+    trailPadding: "0.25rem",
+  },
+};
+
+const ROOT_GAP = "0.75rem"; // spacing/12 — confirmed identical at md, lg and xl
+const LEAD_ITEM = 24; // confirmed identical at md, lg and xl
 
 const listStyles = tv({
   slots: {
@@ -157,6 +193,9 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
   ) => {
     const styles = listStyles({ size, state });
     const visual = STATE_VISUAL[state];
+    const metrics = SIZE_METRICS[size];
+    const mainTextStyle = { ...metrics.mainText, fontWeight: TEXT_WEIGHT };
+    const descriptionStyle = { ...metrics.description, fontWeight: TEXT_WEIGHT };
 
     return (
       <div
@@ -166,7 +205,7 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
         className={styles.root({ className })}
         style={{
           gap: ROOT_GAP,
-          padding: ROOT_PADDING,
+          padding: metrics.padding,
           backgroundColor: visual.rowFill,
           borderBottom: `1px solid ${dividerColor}`,
           borderRadius: 0, // confirmed absence of any corner radius — §7
@@ -180,8 +219,8 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
             src={leadItemLgSrc}
             alt=""
             className={styles.leadItemLgImg()}
-            width={LEAD_ITEM_LG}
-            height={LEAD_ITEM_LG}
+            width={metrics.leadItemLg}
+            height={metrics.leadItemLg}
           />
         )}
         {leadItem && leadItemSrc && (
@@ -196,7 +235,7 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
         {leftIcon && (
           <span
             className={styles.leftIconSlot()}
-            style={{ width: SIDE_ICON, height: SIDE_ICON, filter: iconShadowFilter }}
+            style={{ width: metrics.sideIcon, height: metrics.sideIcon, filter: iconShadowFilter }}
           >
             {selectLeftIcon}
           </span>
@@ -221,7 +260,7 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
         {textGroup2 && (
           <span
             className={styles.textGroup2()}
-            style={{ gap: 0, paddingRight: "0.125rem" /* pr-[spacing/2, 2px] */ }}
+            style={{ gap: 0, paddingRight: metrics.trailPadding }}
           >
             {trailText && (
               <span style={{ color: trailTextColor, ...mainTextStyle }}>{trailTextContent}</span>
@@ -236,7 +275,7 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
         {rightIcon && (
           <span
             className={styles.rightIconSlot()}
-            style={{ width: SIDE_ICON, height: SIDE_ICON, filter: iconShadowFilter }}
+            style={{ width: metrics.sideIcon, height: metrics.sideIcon, filter: iconShadowFilter }}
           >
             {selectRightIcon}
           </span>

@@ -59,12 +59,49 @@ describe("confirmed variants render", () => {
     expect(mainTextColor(active.firstChild as HTMLElement)).toBe("rgb(10, 12, 17)");
   });
 
-  it("applies the confirmed 8px padding and 12px gap", () => {
+  it("applies the confirmed 12px gap at every size", () => {
     const { container } = render(<List textContent="List item" />);
-    const root = container.firstChild as HTMLElement;
-    expect(root.style.padding).toBe("0.5rem");
-    expect(root.style.gap).toBe("0.75rem");
+    expect((container.firstChild as HTMLElement).style.gap).toBe("0.75rem");
   });
+});
+
+// P1 repair pass — per-size metrics replace the previous md-for-all-sizes reuse.
+describe("per-size metrics are independent (P1 repair)", () => {
+  const rows = [
+    ["md", "0.5rem", 32, "20px", "13px", "12px", "0.125rem"],
+    ["lg", "0.75rem", 36, "24px", "13px", "12px", "0.25rem"],
+    ["xl", "1rem", 40, "24px", "18px", "13px", "0.25rem"],
+  ] as const;
+
+  it.each(rows)(
+    "size=%s → padding %s, leadItemLg %ipx, icon %s, text %s, description %s",
+    (size, padding, leadItemLg, icon, mainText, description, trailPad) => {
+      const { container } = render(
+        <List
+          size={size}
+          textContent="Row"
+          description1Content="Desc"
+          leadItemLg
+          leadItemLgSrc="/x.png"
+          selectLeftIcon={<i />}
+        />,
+      );
+      const root = container.firstChild as HTMLElement;
+      expect(root.style.padding).toBe(padding);
+
+      const img = root.querySelector("img") as HTMLImageElement;
+      expect(img.getAttribute("width")).toBe(String(leadItemLg));
+
+      const iconSlot = Array.from(root.querySelectorAll("span")).find((el) => el.style.filter);
+      expect(iconSlot?.style.width).toBe(icon);
+
+      const spans = Array.from(root.querySelectorAll("span"));
+      expect(spans.find((el) => el.textContent === "Row" && el.style.fontSize)?.style.fontSize).toBe(mainText);
+      expect(spans.find((el) => el.textContent === "Desc" && el.style.fontSize)?.style.fontSize).toBe(description);
+      const trailGroup = root.querySelector('[class*="items-end"]') as HTMLElement;
+      expect(trailGroup.style.paddingRight).toBe(trailPad);
+    },
+  );
 });
 
 describe("tag composes the real Tags component per state", () => {
