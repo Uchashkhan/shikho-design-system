@@ -53,3 +53,20 @@ describe("no duplicated Load More implementation (§1)", () => {
     expect(invalid).toBeDefined();
   });
 });
+
+// P1 one-off repair — the handle is taken from its real exported vector: a 14px circle filled
+// primary_med_em (#85a4ff) carrying elevation/e2 as a drop-shadow filter. The previous code used
+// primary[300] plus an invented box-shadow.
+describe("handle construction (P1 repair)", () => {
+  it("fills the handle with primary-400 and applies the e2 drop-shadow filter", () => {
+    const { container } = render(<Progress value={50} aria-label="Seek" />);
+    const handle = Array.from(container.querySelectorAll("div")).find(
+      (el) => el.style.width === "14px" && el.style.height === "14px",
+    ) as HTMLElement;
+    expect(handle).toBeTruthy();
+    expect(handle.style.backgroundColor).toBe("rgb(133, 164, 255)"); // #85a4ff
+    expect(handle.style.filter).toContain("drop-shadow");
+    // The old invented box-shadow must be gone.
+    expect(handle.style.boxShadow).toBe("");
+  });
+});

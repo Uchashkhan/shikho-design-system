@@ -180,7 +180,8 @@ function NavButton({ onClick, label, children }: { onClick: () => void; label: s
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        width: 40,
+        // P1 repair: confirmed 42px wide (18px icon + 12px padding each side), not 40.
+        width: 42,
         height: 40,
         padding: "0.5rem 0.75rem", // px-12 py-8 — confirmed §5
         borderRadius: radius.md,

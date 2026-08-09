@@ -38,11 +38,13 @@ export const Switcher = forwardRef<HTMLDivElement, SwitcherProps>(
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: "0.5rem",
-        padding: "0.25rem",
+        // P1 repair: confirmed `spacing/6` (6px), not the previous 8px.
+        gap: "0.375rem",
+        padding: "0.25rem", // spacing/4 — confirmed
         backgroundColor: color.gray[100],
         border: `1px solid ${color.gray[100]}`,
-        borderRadius: radius.lg,
+        // P1 repair: confirmed `radius/custom/md` (10px), not `radius.lg` (12px).
+        borderRadius: radius.md,
         ...style,
       }}
       {...props}

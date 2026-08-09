@@ -48,7 +48,8 @@ function IconButton({ onClick, disabled, label, children }: { onClick?: () => vo
         justifyContent: "center",
         width: 32,
         height: 32,
-        padding: "0.375rem",
+        // P1 repair: confirmed `p-8`, not the previous 6px.
+        padding: "0.5rem",
         border: "none",
         borderRadius: radius.sm,
         backgroundColor: color.gray[100],

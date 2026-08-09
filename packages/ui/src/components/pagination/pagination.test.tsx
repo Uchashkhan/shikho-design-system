@@ -150,3 +150,16 @@ describe("LoadMorePagination — confirmed distinct widget (§1, §4)", () => {
     expect(screen.getByRole("button", { name: "Load more" })).toBeDisabled();
   });
 });
+
+// P1 one-off repair — prev/next icon buttons are p-8, not 6px.
+describe("icon-button padding (P1 repair)", () => {
+  it("pads the prev/next buttons by 8px", () => {
+    const { container } = render(
+      <Pagination currentPage={2} totalPages={10} onPageChange={() => {}} />,
+    );
+    const iconButton = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.style.width === "32px" && b.style.height === "32px",
+    );
+    expect(iconButton?.style.padding).toBe("0.5rem");
+  });
+});

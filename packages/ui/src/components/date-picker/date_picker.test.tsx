@@ -327,3 +327,15 @@ describe("keyboard and ARIA semantics", () => {
     expect(cell).toBeInstanceOf(HTMLButtonElement);
   });
 });
+
+// P1 one-off repair — nav buttons hug to 42px (18px icon + 12px padding per side), not 40px.
+describe("nav button width (P1 repair)", () => {
+  it("renders the month nav buttons at 42x40", () => {
+    const { container } = render(<DatePicker type="single" size="lg" />);
+    const navButtons = Array.from(container.querySelectorAll("button")).filter(
+      (b) => b.style.width === "42px" && b.style.height === "40px",
+    );
+    // A single-month panel renders exactly two nav arrows (previous / next).
+    expect(navButtons).toHaveLength(2);
+  });
+});

@@ -196,6 +196,61 @@ border `outline/gray-100`, lead fill `smoke_base`, trail gap `spacing/8`, button
 
 ---
 
+## 🔧 Repair status — P1 batch 3 (one-off fixes) — P1 COMPLETE
+
+| # | Item | Result |
+|---|---|---|
+| 1 | Switcher radius / gap / xs typography | ✅ Fixed — radius 12→**10**, gap 8→**6**, xs 12px→**11px** |
+| 2 | Modal actions padding | ⚠️ **No change needed — the recorded defect was an error** |
+| 3 | Pagination icon-button padding | ✅ Fixed — 6px→**8px** |
+| 4 | Progress handle | ✅ Rebuilt from the real vector source |
+| 5 | DatePicker nav button width | ✅ Fixed — 40→**42px** |
+| 6 | TopNavItem `text_wrap` padding | ✅ Fixed — 4px→**6px** |
+| 7 | Alert Dismiss button border | ✅ Fixed — added 1px `outline/black-50` |
+
+### Correction: Modal actions padding was never a defect
+
+The original finding recorded the implementation value as `0.5rem 1.5rem`. That value belongs to
+the **body** block, not `modal_actions` — the finding misattributed it. Re-checking both branches
+against Figma:
+
+| type | Figma | Implementation | Verdict |
+|---|---|---|---|
+| default | `pt-16 px-32`, `border-t gray-100` | `1rem 2rem 0` + `pb 2rem`, `borderTop gray-100` | ✅ already correct |
+| confirmation | `pt-16 px-24`, **`border-0`** | `1rem 1.5rem 1.5rem`, no top border | ✅ already correct |
+
+The confirmation variant's `modal_actions` (`66086:36938`) was sampled for the first time here and
+confirms `px-24` **and no top border** — both already implemented. The trailing bottom space in
+each variant lives on the modal shell in Figma (default 32px, confirmation 24px), which the
+implementation reproduces as the wrapper's own `padding-bottom`. **No code was changed.**
+
+### Progress handle — rebuilt from the exported vector, not approximated
+
+Downloading the real `dot` asset (17×18.5 canvas) yields:
+
+```svg
+<circle cx="8.5" cy="7" r="7" fill="#85A4FF"/>   <!-- + 2 baked drop-shadow layers -->
+```
+
+with filter layers `dy=3 / stdDeviation=1.5 / erode=1.5` and `dy=1 / stdDeviation=0.5 / erode=0.5`,
+both at 4% black — precisely `elevation/e2` expressed as an SVG filter.
+
+So the confirmed handle is a **14px circle filled `primary_med_em` (#85a4ff → `primary[400]`)**
+carrying the e2 filter. The pre-repair code used **`primary[300]`** — its own comment admitted
+this was "derived — closest confirmed ramp member" — plus an invented
+`0 1px 3px rgba(0,0,0,0.16)` **box**-shadow, which drew a bounding-box shadow rather than one
+following the circle. Both are now exact. Since the vector proves the asset *is* a circle plus a
+standard e2 filter, expressing it as a token-driven circle with the library's existing e2
+filter chain is byte-equivalent in rendering — not an approximation — and avoids adding a binary
+asset to a package with no asset pipeline.
+
+### Alert Dismiss button
+
+Added only the confirmed 1px `outline/black-50` border. The button's outer drop-shadow /
+`secondary_button_effect` inset **remains unresolved** and was deliberately left untouched.
+
+---
+
 ## Status legend
 
 | Symbol | Meaning |

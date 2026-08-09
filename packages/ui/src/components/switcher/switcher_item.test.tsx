@@ -88,3 +88,16 @@ describe("interactivity", () => {
     expect(onClick).toHaveBeenCalled();
   });
 });
+
+// P1 one-off repair — xs is caption_1 (11px), not sm's 12px.
+describe("xs typography (P1 repair)", () => {
+  it("renders xs at 11px/16px and sm at 12px/16px", () => {
+    const { container: xs } = render(<SwitcherItem size="xs">Nav</SwitcherItem>);
+    const xsLabel = Array.from(xs.querySelectorAll("span")).find((el) => el.style.fontSize);
+    expect(xsLabel?.style.fontSize).toBe("11px");
+
+    const { container: sm } = render(<SwitcherItem size="sm">Nav</SwitcherItem>);
+    const smLabel = Array.from(sm.querySelectorAll("span")).find((el) => el.style.fontSize);
+    expect(smLabel?.style.fontSize).toBe("12px");
+  });
+});

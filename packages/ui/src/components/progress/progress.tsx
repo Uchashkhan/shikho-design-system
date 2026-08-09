@@ -1,5 +1,5 @@
 import { type InputHTMLAttributes, forwardRef, useId } from "react";
-import { color, radius } from "@shikho/tokens";
+import { color, elevation, radius } from "@shikho/tokens";
 
 // docs/audit/progress-deep-audit.md §2 — Progress (Property 1=Media): a scrubber/seek-bar
 // pattern — an 8px track, a filled portion up to the current value, and a draggable circular
@@ -10,6 +10,26 @@ import { color, radius } from "@shikho/tokens";
 
 const TRACK_HEIGHT = 8;
 const HANDLE_SIZE = 14;
+
+/**
+ * P1 repair — the handle's construction taken from its real exported vector source, not guessed.
+ * Downloading the `dot` asset yields a 17×18.5 canvas containing:
+ *
+ *   <circle cx="8.5" cy="7" r="7" fill="#85A4FF"/>
+ *
+ * plus two baked drop-shadow filter layers — dy=3 / stdDeviation=1.5 / erode=1.5 and
+ * dy=1 / stdDeviation=0.5 / erode=0.5, both at 4% black. Those are exactly `elevation/e2`
+ * expressed as an SVG filter, i.e. the same `blur + spread` collapse this library already uses
+ * for every icon slot.
+ *
+ * So the confirmed handle is a 14px circle filled `primary_med_em` (#85a4ff → token
+ * `primary[400]`) carrying the e2 filter. The pre-repair code used `primary[300]` (a guess, its
+ * own comment said "derived — closest confirmed ramp member") and a single invented
+ * `0 1px 3px rgba(0,0,0,0.16)` box-shadow, which drew a rectangle-derived shadow rather than one
+ * following the circle.
+ */
+const HANDLE_FILL = color.primary[400];
+const handleShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[0].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
 
 export interface ProgressProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "onChange"> {
@@ -67,8 +87,8 @@ export const Progress = forwardRef<HTMLInputElement, ProgressProps>(
             width: HANDLE_SIZE,
             height: HANDLE_SIZE,
             borderRadius: radius.full,
-            backgroundColor: color.primary[300], // derived — closest confirmed ramp member, §2
-            boxShadow: "0px 1px 3px rgba(0,0,0,0.16)",
+            backgroundColor: HANDLE_FILL,
+            filter: handleShadowFilter,
           }}
         />
         <input

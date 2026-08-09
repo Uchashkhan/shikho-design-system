@@ -160,3 +160,13 @@ describe("no unsupported variant is exported", () => {
     expect(invalidState).toBeDefined();
   });
 });
+
+// P1 one-off repair — the Dismiss button carries a confirmed 1px outline/black-50 border.
+describe("Dismiss button border (P1 repair)", () => {
+  it("outlines the dismiss button with 1px black-50", () => {
+    render(<Alert titleContent="Heads up" dismissContent="Dismiss" />);
+    const dismiss = screen.getByRole("button", { name: "Dismiss" });
+    expect(dismiss.style.border).toContain("1px");
+    expect(dismiss.style.border).toContain("rgba(0, 0, 0, 0.04)");
+  });
+});

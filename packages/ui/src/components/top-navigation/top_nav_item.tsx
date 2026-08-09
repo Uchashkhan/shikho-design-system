@@ -213,7 +213,8 @@ export const TopNavItem = forwardRef<HTMLButtonElement, TopNavItemProps>(
         {text && (
           <span
             style={{
-              padding: "0 0.25rem",
+              // P1 repair: confirmed `px-6` (6px), not the previous 4px.
+              padding: "0 0.375rem",
               fontSize: typography.fontSize,
               lineHeight: typography.lineHeight,
               fontWeight: 600,

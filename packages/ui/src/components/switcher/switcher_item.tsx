@@ -21,7 +21,8 @@ const ICON_SIZE: Record<SwitcherItemSize, number> = { xs: 14, sm: 16, md: 18, lg
 // Confirmed lg=body_1 (13/20 SemiBold), sm=caption_2 (12/16 SemiBold); xs shares sm's smaller
 // scale, md/xl share lg's — derived, not independently confirmed at every step.
 const TYPOGRAPHY: Record<SwitcherItemSize, { fontSize: number; lineHeight: string }> = {
-  xs: { fontSize: 12, lineHeight: "16px" },
+  // P1 repair: xs is confirmed `caption_1` 11px/16px, not sm's 12px.
+  xs: { fontSize: 11, lineHeight: "16px" },
   sm: { fontSize: 12, lineHeight: "16px" },
   md: { fontSize: 13, lineHeight: "20px" },
   lg: { fontSize: 13, lineHeight: "20px" },

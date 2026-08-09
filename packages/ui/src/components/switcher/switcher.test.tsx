@@ -58,3 +58,16 @@ describe("size propagation", () => {
     expect(screen.getByText("Day").closest("button")).toHaveAttribute("data-size", "sm");
   });
 });
+
+// P1 one-off repairs — confirmed container geometry.
+describe("container geometry (P1 repair)", () => {
+  it("uses radius/custom/md (10px) and a 6px gap, not 12px/8px", () => {
+    const { container } = render(
+      <Switcher options={[{ label: "One", value: "one" }, { label: "Two", value: "two" }]} />,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.borderRadius).toBe("10px");
+    expect(root.style.gap).toBe("0.375rem");
+    expect(root.style.padding).toBe("0.25rem");
+  });
+});

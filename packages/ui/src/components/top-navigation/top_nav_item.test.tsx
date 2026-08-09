@@ -115,3 +115,12 @@ describe("interactivity", () => {
     expect(onClick).toHaveBeenCalled();
   });
 });
+
+// P1 one-off repair — text_wrap padding is px-6, not px-4.
+describe("text_wrap padding (P1 repair)", () => {
+  it("pads the label wrapper by 6px horizontally", () => {
+    const { container } = render(<TopNavItem>Nav item</TopNavItem>);
+    const label = Array.from(container.querySelectorAll("span")).find((el) => el.style.padding);
+    expect(label?.style.padding).toBe("0px 0.375rem");
+  });
+});
