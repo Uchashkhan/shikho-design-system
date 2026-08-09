@@ -11,7 +11,7 @@ Implements the 7 Input component sets + 1 bare instance audited in `docs/audit/i
 | `Dropdown` | `dropdown` | `state`: 9 values (naked, disabled, error, active, brand, active_no_focus, hover, default_dark, default) — 6 confirmed directly, `naked` confirmed distinct, 2 derived (§14); `autoLayout` |
 | `Textarea` | `textarea` | `state`: same 7-value vocabulary as `input_field` |
 | `DigitInput` | `digit_input` | `state`: same 7-value vocabulary, its own confirmed typography and per-state colors (§14) |
-| `DigitField` | `digit_field` | none — a bare, unaudited single instance |
+| ~~`DigitField`~~ | `digit_field` | **Not exported in v0.1.0** — Figma has only a bare instance with no confirmed structure |
 
 ## This rebuild (§14)
 
@@ -41,7 +41,7 @@ The first deep audit pass confirmed real layout for exactly 2 instances (`field/
 - The nested `advanced_with_buttons` action buttons (via `NewPinkButton`) are confirmed to match on fill/radius/text, but their outer-shadow depth is confirmed to differ slightly (single e1 layer vs. `new_pink`'s own confirmed full e2) — not overridden, since doing so would require reaching into Button's internals rather than Input's own component.
 - `Textarea` (the standalone `<textarea>` element) has no independent `get_design_context` audit and reuses `Field`'s confirmed default appearance — the least-invented available baseline.
 - `Dropdown`'s `autoLayout` prop reflects a confirmed variant axis, but whether it's a real Figma boolean component property or only a variant-name convention remains unconfirmed (§13).
-- `DigitField` remains a single bare, unaudited instance (§13) — this implementation does not invent a multi-cell layout for it.
+- `DigitField` is **excluded from v0.1.0**: Figma contains only a single bare instance with no variant set, properties, or internal structure, so no faithful implementation is possible. Compose `DigitInput` directly instead.
 
 ## Not implemented (by explicit instruction)
 

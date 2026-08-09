@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Avatar, type AvatarSize, type AvatarType } from "./avatar";
+import { AvatarGroup } from "./avatar_group";
 
 const sizes: AvatarSize[] = ["xl", "lg", "md", "sm", "xs"];
 const types: AvatarType[] = ["image", "icon", "text"];
@@ -99,5 +100,26 @@ export const StatusAndVerification: Story = {
         />
       }
     />
+  ),
+};
+
+/**
+ * `avatar_group` — composes the real `Avatar` at the confirmed per-size overlap
+ * (xs/sm 8px, md 12px, lg 16px, xl 20px), with a 1px white-88 ring on each avatar and an
+ * optional trailing `+N` counter.
+ */
+export const Group: Story = {
+  render: () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
+        <AvatarGroup key={size} size={size} overflowCount={2}>
+          <Avatar size={size} type="image" src={PHOTO} alt="Photo" />
+          <Avatar size={size} type="text">
+            AT
+          </Avatar>
+          <Avatar size={size} type="image" src={PHOTO} alt="Photo" />
+        </AvatarGroup>
+      ))}
+    </div>
   ),
 };
