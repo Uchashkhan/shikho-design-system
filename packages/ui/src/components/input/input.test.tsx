@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { DigitField } from "./digit_field";
 import { DigitInput } from "./digit_input";
 import { Dropdown } from "./dropdown";
 import { Field } from "./field";
@@ -167,8 +166,4 @@ describe("remaining Input family members render their confirmed state vocabulary
     expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("hello");
   });
 
-  it("DigitField falls back to a single DigitInput when no children are supplied", () => {
-    const { container } = render(<DigitField />);
-    expect(container.querySelectorAll("input")).toHaveLength(1);
-  });
 });

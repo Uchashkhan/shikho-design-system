@@ -24,12 +24,63 @@ describe("confirmed variants render", () => {
     expect(container.querySelector(`[data-state='${state}']`)).toBeInTheDocument();
   });
 
-  it("applies the confirmed root fill and bottom-only divider for every state", () => {
-    const { container } = render(<List textContent="List item" />);
+  // Corrected in the v0.1.0 repair pass: the three states are visually distinct. The previous
+  // assertion required Color/Gray on EVERY state, which encoded the defect it was meant to guard.
+  it("renders no row fill in the default state — only the bottom divider", () => {
+    const { container } = render(<List state="default" textContent="List item" />);
     const root = container.firstChild as HTMLElement;
-    expect(root.style.backgroundColor).toBe("rgb(235, 236, 240)"); // Color/Gray #ebecf0
+    expect(root.style.backgroundColor).toBe("");
     expect(root.style.borderBottom).toContain("244, 244, 246"); // outline/Gray 100 #f4f4f6
     expect(root.style.borderRadius).toBe("0");
+  });
+
+  it("fills hover with gray-100 and active_primary_accent with gray-200", () => {
+    const { container: hover } = render(<List state="hover" textContent="List item" />);
+    expect((hover.firstChild as HTMLElement).style.backgroundColor).toBe("rgb(244, 244, 246)");
+
+    const { container: active } = render(
+      <List state="active_primary_accent" textContent="List item" />,
+    );
+    expect((active.firstChild as HTMLElement).style.backgroundColor).toBe("rgb(235, 236, 240)");
+  });
+
+  it("uses gray-700 main text in default and gray-950 once hovered/active", () => {
+    const mainTextColor = (root: HTMLElement) =>
+      Array.from(root.querySelectorAll("span")).find(
+        (el) => el.textContent === "Row" && el.style.color,
+      )?.style.color;
+
+    const { container: def } = render(<List state="default" textContent="Row" />);
+    expect(mainTextColor(def.firstChild as HTMLElement)).toBe("rgb(91, 97, 109)");
+
+    const { container: active } = render(
+      <List state="active_primary_accent" textContent="Row" />,
+    );
+    expect(mainTextColor(active.firstChild as HTMLElement)).toBe("rgb(10, 12, 17)");
+  });
+
+  it("applies the confirmed 8px padding and 12px gap", () => {
+    const { container } = render(<List textContent="List item" />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.padding).toBe("0.5rem");
+    expect(root.style.gap).toBe("0.75rem");
+  });
+});
+
+describe("tag composes the real Tags component per state", () => {
+  it("nests Tags at type=secondary in the default state", () => {
+    const { container } = render(<List state="default" tagContent="Tag" textContent="Row" />);
+    expect(container.querySelector("[data-type='secondary']")).toBeInTheDocument();
+  });
+
+  it("nests Tags at type=tertiary in hover and active_primary_accent", () => {
+    const { container: hover } = render(<List state="hover" tagContent="Tag" textContent="Row" />);
+    expect(hover.querySelector("[data-type='tertiary']")).toBeInTheDocument();
+
+    const { container: active } = render(
+      <List state="active_primary_accent" tagContent="Tag" textContent="Row" />,
+    );
+    expect(active.querySelector("[data-type='tertiary']")).toBeInTheDocument();
   });
 });
 

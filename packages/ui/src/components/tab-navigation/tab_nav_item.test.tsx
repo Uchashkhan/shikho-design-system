@@ -76,3 +76,23 @@ describe("interactivity", () => {
     expect(onClick).toHaveBeenCalled();
   });
 });
+
+// P1 repair pass — per-size gap/padding/typography replace md-only extrapolation.
+describe("per-size metrics are independent (P1 repair)", () => {
+  const rows = [
+    ["xs", "0.25rem", "0.125rem 0px 0.5rem", "11px"],
+    ["sm", "0.375rem", "0.25rem 0px 0.5rem", "12px"],
+    ["md", "0.5rem", "0.25rem 0px 0.75rem", "13px"],
+    ["lg", "0.5rem", "0.375rem 0px 1rem", "13px"],
+    ["xl", "0.75rem", "0.5rem 0px 1.25rem", "18px"],
+  ] as const;
+
+  it.each(rows)("size=%s → gap %s, padding %s, font %s", (size, gap, padding, fontSize) => {
+    const { container } = render(<TabNavItem size={size}>Nav item</TabNavItem>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.gap).toBe(gap);
+    expect(root.style.padding).toBe(padding);
+    const label = Array.from(root.querySelectorAll("span")).find((el) => el.style.fontSize);
+    expect(label?.style.fontSize).toBe(fontSize);
+  });
+});

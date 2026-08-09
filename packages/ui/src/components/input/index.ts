@@ -5,4 +5,9 @@ export { InputField, type InputFieldProps, type InputFieldState } from "./input_
 export { Dropdown, type DropdownProps, type DropdownState } from "./dropdown";
 export { Textarea, type TextareaProps, type TextareaState } from "./textarea";
 export { DigitInput, type DigitInputProps, type DigitInputState } from "./digit_input";
-export { DigitField, type DigitFieldProps } from "./digit_field";
+
+// `digit_field` is NOT exported for v0.1.0. docs/release-visual-verification.md (Tier B) records
+// that Figma contains only a single bare `digit_field` instance — no variant set, no properties,
+// no confirmed internal structure — so no faithful implementation is possible. Shipping the
+// previous container-only placeholder would have presented unaudited guesswork as a real
+// component. Consumers can compose `DigitInput` directly until the Figma evidence exists.

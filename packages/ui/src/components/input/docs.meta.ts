@@ -18,8 +18,7 @@ export const meta: ComponentDocsMeta = {
     "Dropdown",
     "Textarea",
     "DigitInput",
-    "DigitField",
   ],
-  figmaName: "input_label, input_hint, field, input_field, dropdown, textarea, digit_input, digit_field",
+  figmaName: "input_label, input_hint, field, input_field, dropdown, textarea, digit_input",
   auditFile: "docs/audit/input.md",
 };

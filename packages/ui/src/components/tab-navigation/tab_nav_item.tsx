@@ -16,6 +16,28 @@ export type TabNavItemState = "default" | "hover";
 const HEIGHT: Record<TabNavItemSize, number> = { xs: 24, sm: 32, md: 40, lg: 48, xl: 56 };
 const ICON_SIZE: Record<TabNavItemSize, number> = { xs: 14, sm: 16, md: 18, lg: 20, xl: 24 };
 
+/**
+ * Per-size gap, padding and typography — all five rows confirmed by live `get_design_context`
+ * samples during the P1 repair pass.
+ *
+ * The previous implementation hard-coded `md`'s values (gap 8px, `pt-4 pb-12`, 13px/20px) for
+ * every size. Figma varies all three independently; only `md` was correct.
+ */
+interface TabNavItemSizeMetrics {
+  gap: string;
+  padding: string;
+  fontSize: number;
+  lineHeight: string;
+}
+
+const SIZE_METRICS: Record<TabNavItemSize, TabNavItemSizeMetrics> = {
+  xs: { gap: "0.25rem", padding: "0.125rem 0 0.5rem", fontSize: 11, lineHeight: "16px" },
+  sm: { gap: "0.375rem", padding: "0.25rem 0 0.5rem", fontSize: 12, lineHeight: "16px" },
+  md: { gap: "0.5rem", padding: "0.25rem 0 0.75rem", fontSize: 13, lineHeight: "20px" },
+  lg: { gap: "0.5rem", padding: "0.375rem 0 1rem", fontSize: 13, lineHeight: "20px" },
+  xl: { gap: "0.75rem", padding: "0.5rem 0 1.25rem", fontSize: 18, lineHeight: "24px" },
+};
+
 const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[0].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
 
 // docs/audit/tab-navigation-deep-audit.md §1 — confirmed: unlike every sibling nav component
@@ -65,6 +87,7 @@ export const TabNavItem = forwardRef<HTMLButtonElement, TabNavItemProps>(
     ref,
   ) => {
     const iconSize = ICON_SIZE[size];
+    const metrics = SIZE_METRICS[size];
     // Confirmed: active never has a hover variant — the default text color is used regardless of
     // the `state` prop when type="active".
     const textColor = type === "active" ? TEXT_COLOR.active.default : TEXT_COLOR.inactive[state];
@@ -81,8 +104,8 @@ export const TabNavItem = forwardRef<HTMLButtonElement, TabNavItemProps>(
           alignItems: "center",
           justifyContent: "center",
           height: HEIGHT[size],
-          gap: "0.5rem",
-          padding: "0.25rem 0 0.75rem", // pt-4 pb-12, px-0 — confirmed
+          gap: metrics.gap,
+          padding: metrics.padding,
           border: "none",
           borderBottom: type === "active" ? `2px solid ${color.black[950]}` : "2px solid transparent", // outline/b
           background: "transparent",
@@ -98,7 +121,14 @@ export const TabNavItem = forwardRef<HTMLButtonElement, TabNavItemProps>(
           </span>
         )}
         {text && (
-          <span style={{ fontSize: 13, lineHeight: "20px", fontWeight: 600, color: textColor }}>
+          <span
+            style={{
+              fontSize: metrics.fontSize,
+              lineHeight: metrics.lineHeight,
+              fontWeight: 600,
+              color: textColor,
+            }}
+          >
             {children ?? "Nav item"}
           </span>
         )}

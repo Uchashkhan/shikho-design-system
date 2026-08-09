@@ -14,7 +14,32 @@ export type SidebarItemType =
   | "inactive";
 export type SidebarItemState = "default" | "hover";
 
-const HEIGHT: Record<SidebarItemSize, number> = { md: 40, lg: 48, xl: 56 };
+/**
+ * Per-size metrics — all three rows confirmed by live `get_design_context` samples during the
+ * P1 repair pass. The previous implementation carried a per-size HEIGHT table but single values
+ * for padding (12px), radius (`radius.lg`), typography (13/20) and right-icon size (24px) — all
+ * of which were `lg`'s values, the only size the original audit sampled. Figma confirms md and
+ * xl differ on four properties each.
+ *
+ * The left icon is confirmed 22px at EVERY size (it does not scale) — kept as a shared constant
+ * rather than an invented per-size row.
+ */
+interface SidebarItemSizeMetrics {
+  height: number;
+  padding: string;
+  radius: number;
+  fontSize: number;
+  lineHeight: string;
+  rightIconSize: number;
+}
+
+const SIZE_METRICS: Record<SidebarItemSize, SidebarItemSizeMetrics> = {
+  md: { height: 40, padding: "0.5rem 0.75rem", radius: radius.md, fontSize: 13, lineHeight: "20px", rightIconSize: 20 },
+  lg: { height: 48, padding: "0.75rem", radius: radius.lg, fontSize: 13, lineHeight: "20px", rightIconSize: 24 },
+  xl: { height: 56, padding: "1rem", radius: radius.lg, fontSize: 18, lineHeight: "24px", rightIconSize: 24 },
+};
+
+const LEFT_ICON_SIZE = 22; // confirmed identical at md, lg and xl
 
 const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[0].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
 const restingInsetShadow = `inset 0px 1px 3px -2px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.07)`;
@@ -128,16 +153,18 @@ export const SidebarItem = forwardRef<HTMLButtonElement, SidebarItemProps>(
     const tagStyle = TAG_STYLE[type];
     const isHover = state === "hover";
 
+    const metrics = SIZE_METRICS[size];
+
     const computedStyle: CSSProperties = {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       width: "100%",
-      height: HEIGHT[size],
-      gap: "0.75rem",
-      padding: "0.75rem",
+      height: metrics.height,
+      gap: "0.75rem", // spacing/12 — confirmed identical at all three sizes
+      padding: metrics.padding,
       border: typeStyle.border ?? "none",
-      borderRadius: radius.lg,
+      borderRadius: metrics.radius,
       backgroundColor: isHover ? typeStyle.hoverFill : typeStyle.defaultFill,
       boxShadow: typeStyle.shadow,
       cursor: "pointer",
@@ -147,7 +174,9 @@ export const SidebarItem = forwardRef<HTMLButtonElement, SidebarItemProps>(
     return (
       <button ref={ref} type="button" data-size={size} data-type={type} data-state={state} style={computedStyle} {...props}>
         {leftIcon && (
-          <span style={{ width: 22, height: 22, flexShrink: 0, filter: iconShadowFilter }}>{selectLeftIcon}</span>
+          <span style={{ width: LEFT_ICON_SIZE, height: LEFT_ICON_SIZE, flexShrink: 0, filter: iconShadowFilter }}>
+            {selectLeftIcon}
+          </span>
         )}
         {text && (
           <span
@@ -155,8 +184,8 @@ export const SidebarItem = forwardRef<HTMLButtonElement, SidebarItemProps>(
               flex: "1 0 0",
               minWidth: 1,
               textAlign: "left",
-              fontSize: 13,
-              lineHeight: "20px",
+              fontSize: metrics.fontSize,
+              lineHeight: metrics.lineHeight,
               fontWeight: typeStyle.fontWeight,
               color: typeStyle.textColor,
             }}
@@ -165,7 +194,16 @@ export const SidebarItem = forwardRef<HTMLButtonElement, SidebarItemProps>(
           </span>
         )}
         {rightIcon && (
-          <span style={{ width: 24, height: 24, flexShrink: 0, filter: iconShadowFilter }}>{selectRightIcon}</span>
+          <span
+            style={{
+              width: metrics.rightIconSize,
+              height: metrics.rightIconSize,
+              flexShrink: 0,
+              filter: iconShadowFilter,
+            }}
+          >
+            {selectRightIcon}
+          </span>
         )}
         {tag && (
           <span

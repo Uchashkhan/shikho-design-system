@@ -6,5 +6,5 @@
     "noEmit": true,
     "declaration": false
   },
-  "include": [".storybook", "src"]
+  "include": [".storybook/main.ts", ".storybook/preview.ts"]
 }

@@ -89,10 +89,23 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
 
     if (type === "textarea") {
       // docs/audit/input.md §14 — confirmed distinct structure: a single text row (no left/right
-      // icon groups, no support/trail text), an optional 24px avatar image, and a bottom-right
-      // resizer glyph. Height scales per size (sm 72 / md 96 / lg 104 / xl 128, §1 metadata) but
-      // was only independently re-sampled at md — other sizes reuse md's padding/gap by rank.
-      const TEXTAREA_HEIGHT: Record<FieldSize, number> = { sm: 72, md: 96, lg: 104, xl: 128 };
+      // icon groups, no support/trail text), an optional avatar image, and a bottom-right resizer
+      // glyph.
+      //
+      // P1 repair pass: every size was independently re-sampled via get_design_context. The
+      // previous code hard-coded md's `0.5rem 0.75rem` padding, md's `radius.md`, an 8px gap and a
+      // 24px image for all four sizes. Figma varies padding, radius, gap, image size and resizer
+      // size per size — only md matched.
+      const TEXTAREA_METRICS: Record<
+        FieldSize,
+        { height: number; padding: string; radius: number; gap: string; image: number; resizer: number }
+      > = {
+        sm: { height: 72, padding: "0.5rem", radius: radius.sm, gap: "0.5rem", image: 16, resizer: 20 },
+        md: { height: 96, padding: "0.5rem 0.75rem", radius: radius.md, gap: "0.5rem", image: 24, resizer: 20 },
+        lg: { height: 104, padding: "0.75rem 1rem", radius: radius.xl, gap: "0.75rem", image: 24, resizer: 20 },
+        xl: { height: 128, padding: "1rem", radius: radius.xl, gap: "1rem", image: 32, resizer: 24 },
+      };
+      const ta = TEXTAREA_METRICS[size];
       return (
         <div
           ref={ref}
@@ -102,10 +115,10 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
           style={{
             display: "flex",
             alignItems: "flex-start",
-            gap: "0.5rem",
-            height: TEXTAREA_HEIGHT[size],
-            padding: "0.5rem 0.75rem",
-            borderRadius: radius.md,
+            gap: ta.gap,
+            height: ta.height,
+            padding: ta.padding,
+            borderRadius: ta.radius,
             backgroundColor: color.gray[100],
             boxShadow: innerShadow,
             position: "relative",
@@ -117,12 +130,16 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
           {...props}
         >
           {image && imageSrc && (
-            <img src={imageSrc} alt="" style={{ width: 24, height: 24, borderRadius: radius.full, objectFit: "cover", flexShrink: 0 }} />
+            <img
+              src={imageSrc}
+              alt=""
+              style={{ width: ta.image, height: ta.image, borderRadius: radius.full, objectFit: "cover", flexShrink: 0 }}
+            />
           )}
           {textGroup && text && <span style={{ color: fieldTextColorDefault, flex: "1 0 0" }}>{textContent}</span>}
           <span
             aria-hidden
-            style={{ position: "absolute", bottom: 4, right: 4, width: 12, height: 12, color: color.gray[400] }}
+            style={{ position: "absolute", bottom: 0, right: 0, width: ta.resizer, height: ta.resizer, color: color.gray[400] }}
           >
             ⤡
           </span>

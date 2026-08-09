@@ -1,5 +1,4 @@
 import {
-  DigitField,
   DigitInput,
   Dropdown,
   Field,
@@ -155,7 +154,7 @@ export function EmailField() {
       ),
     },
     {
-      title: "Dropdown, Textarea, DigitInput and DigitField",
+      title: "Dropdown, Textarea and DigitInput",
       description:
         "None of these were deep-audited — they reuse Field's confirmed baseline styling.",
       layout: "stack",
@@ -163,11 +162,11 @@ export function EmailField() {
         <>
           <Dropdown state="default">Select an option</Dropdown>
           <Textarea state="default" aria-label="Message" placeholder="Write something…" rows={3} />
-          <DigitField>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
             {[0, 1, 2, 3].map((i) => (
               <DigitInput key={i} aria-label={`Digit ${i + 1}`} />
             ))}
-          </DigitField>
+          </div>
         </>
       ),
     },

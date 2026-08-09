@@ -29,13 +29,15 @@ type Story = StoryObj<typeof List>;
 
 export const Playground: Story = {};
 
-/** The one deep-audited combination: size=lg, state=active_primary_accent (docs/audit/list.md §7). */
+/** state=active_primary_accent: gray-200 row fill, gray-950 text, and a `tertiary` nested Tag. */
 export const ConfirmedBinding: Story = {
   args: { size: "lg", state: "active_primary_accent" },
 };
 
-/** size/state values beyond size=lg/state=active_primary_accent have no confirmed layout data
- * and currently render identically (docs/audit/list.md §7, §9 mark this out of scope). */
+/** All three states are now confirmed visually distinct (v0.1.0 repair pass): `default` has no
+ * row fill at all, `hover` fills gray-100, `active_primary_accent` fills gray-200 — and the
+ * nested Tag switches from `secondary` to `tertiary`. Per-size (lg/xl) internal deltas remain
+ * unsampled and still render md's confirmed metrics — see docs/release-visual-verification.md. */
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", width: 432 }}>

@@ -9,6 +9,25 @@ import { Checkbox, type CheckboxProps } from "./checkbox";
 export type CheckboxLabelSize = "sm" | "md";
 export type CheckboxLabelDirection = "left" | "right";
 
+/**
+ * Per-size label typography, both rows confirmed by live `get_design_context` during the P1
+ * repair pass. The previous implementation hard-coded `md`'s 13px/20px/400 for both sizes even
+ * though it accepted a `size` prop — `sm` is genuinely 12px/16px at Medium 500, matching the
+ * shape `RadioLabel` and `ToggleLabel` already implement.
+ *
+ * The caption is confirmed IDENTICAL at both sizes (12px/16px Medium 500), so it stays a shared
+ * constant rather than an invented per-size row.
+ */
+const LABEL_TYPOGRAPHY: Record<
+  CheckboxLabelSize,
+  { fontSize: number; lineHeight: string; fontWeight: number }
+> = {
+  sm: { fontSize: 12, lineHeight: "16px", fontWeight: 500 },
+  md: { fontSize: 13, lineHeight: "20px", fontWeight: 400 },
+};
+
+const CAPTION_TYPOGRAPHY = { fontSize: 12, lineHeight: "16px", fontWeight: 500 } as const;
+
 export interface CheckboxLabelProps extends Omit<HTMLAttributes<HTMLLabelElement>, "children"> {
   size?: CheckboxLabelSize;
   direction?: CheckboxLabelDirection;
@@ -44,15 +63,14 @@ export const CheckboxLabel = forwardRef<HTMLLabelElement, CheckboxLabelProps>(
     ref,
   ) => {
     const checkboxEl = <Checkbox size={size} {...checkboxProps} />;
+    const labelTypography = LABEL_TYPOGRAPHY[size];
     const textEl = label && (
       <span style={{ display: "flex", flexDirection: "column", gap: "0.125rem" }}>
-        <span style={{ fontFamily: "inherit", fontWeight: 400, fontSize: 13, lineHeight: "20px", color: color.gray[950] }}>
+        <span style={{ fontFamily: "inherit", ...labelTypography, color: color.gray[950] }}>
           {labelContent}
         </span>
         {caption && (
-          <span style={{ fontWeight: 500, fontSize: 12, lineHeight: "16px", color: color.gray[700] }}>
-            {captionContent}
-          </span>
+          <span style={{ ...CAPTION_TYPOGRAPHY, color: color.gray[700] }}>{captionContent}</span>
         )}
       </span>
     );

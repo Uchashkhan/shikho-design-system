@@ -101,3 +101,75 @@ describe("no auto-layout, no elevation — confirmed architectural differences",
     expect(verification.style.position).toBe("absolute");
   });
 });
+
+// ---------------------------------------------------------------------------
+// v0.1.0 repair pass — corrections verified against live Figma
+// (docs/release-visual-verification.md — Avatar).
+// ---------------------------------------------------------------------------
+
+describe("type=text and type=icon render brand gradients, not a flat gray fill", () => {
+  it("fills type=text with the primary gradient and white-900 initials", () => {
+    const { container } = render(<Avatar type="text">AT</Avatar>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.background).toContain("linear-gradient");
+    expect(root.style.background).toContain("#85a4ff"); // primary_med_em
+    expect(root.style.background).toContain("#5468ff"); // primary_base
+
+    const initials = screen.getByText("AT");
+    expect(initials.style.color).toBe("rgba(255, 255, 255, 0.88)"); // color/white/900
+  });
+
+  it("fills type=icon with the secondary gradient", () => {
+    const { container } = render(<Avatar type="icon" />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.background).toContain("#ea42b2"); // secondary_med_em
+    expect(root.style.background).toContain("#e2008d"); // secondary_base
+  });
+
+  it("leaves type=image with no background fill", () => {
+    const { container } = render(<Avatar type="image" src="/photo.jpg" />);
+    expect((container.firstChild as HTMLElement).style.background).toBe("");
+  });
+});
+
+describe("per-size metrics are independent, not extrapolated from md", () => {
+  const cases = [
+    ["xs", "11px", 6, "2px", 8],
+    ["sm", "12px", 8, "2px", 10],
+    ["md", "13px", 10, "3px", 12],
+    ["lg", "13px", 12, "3px", 14],
+    ["xl", "22px", 14, "3px", 18],
+  ] as const;
+
+  it.each(cases)(
+    "size=%s uses %s initials, a %ipx status dot and a %ipx verification tick",
+    (size, fontSize, status, statusBorder, verification) => {
+      render(
+        <Avatar size={size} type="text" status verification>
+          AT
+        </Avatar>,
+      );
+      expect(screen.getByText("AT").style.fontSize).toBe(fontSize);
+
+      const dot = screen.getByTestId("avatar-status");
+      expect(dot.style.width).toBe(`${status}px`);
+      expect(dot.style.border).toContain(statusBorder);
+
+      expect(screen.getByTestId("avatar-verification").style.width).toBe(`${verification}px`);
+    },
+  );
+});
+
+describe("type=icon glyph container", () => {
+  it("is exactly half the avatar box and carries the e2 drop-shadow filter", () => {
+    const { container } = render(
+      <Avatar size="xl" type="icon">
+        <span data-testid="glyph" />
+      </Avatar>,
+    );
+    const slot = screen.getByTestId("glyph").parentElement as HTMLElement;
+    expect(slot.style.width).toBe("32px"); // half of xl's 64px box
+    expect(slot.style.filter).toContain("drop-shadow");
+    expect(container.firstChild).toBeInTheDocument();
+  });
+});

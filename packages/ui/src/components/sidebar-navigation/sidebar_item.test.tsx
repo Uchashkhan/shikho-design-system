@@ -109,3 +109,26 @@ describe("interactivity", () => {
     expect(onClick).toHaveBeenCalled();
   });
 });
+
+// P1 repair pass — per-size table replaces lg-only extrapolation.
+describe("per-size metrics are independent (P1 repair)", () => {
+  const rows = [
+    ["md", "40px", "0.5rem 0.75rem", "10px", "13px", "20px"],
+    ["lg", "48px", "0.75rem", "12px", "13px", "20px"],
+    ["xl", "56px", "1rem", "12px", "18px", "24px"],
+  ] as const;
+
+  it.each(rows)(
+    "size=%s → height %s, padding %s, radius %s, text %s",
+    (size, height, padding, radiusPx, fontSize, rightIcon) => {
+      const { container } = render(<SidebarItem size={size}>Nav item</SidebarItem>);
+      const root = container.firstChild as HTMLElement;
+      expect(root.style.height).toBe(height);
+      expect(root.style.padding).toBe(padding);
+      expect(root.style.borderRadius).toBe(radiusPx);
+      const label = Array.from(root.querySelectorAll("span")).find((el) => el.style.fontSize);
+      expect(label?.style.fontSize).toBe(fontSize);
+      expect(rightIcon).toBeTruthy();
+    },
+  );
+});

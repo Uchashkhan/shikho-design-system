@@ -138,3 +138,22 @@ describe("no unsupported variant is exported", () => {
     expect([invalidSize, invalidType]).toBeDefined();
   });
 });
+
+// P1 repair pass — per-size padding/gap/typography replace md-only extrapolation.
+describe("per-size metrics are independent (P1 repair)", () => {
+  const rows = [
+    ["sm", "24px", "0.25rem 0.375rem", "0", "11px"],
+    ["md", "32px", "0.5rem", "0.125rem", "12px"],
+    ["lg", "40px", "0.5rem 0.75rem", "0.25rem", "13px"],
+  ] as const;
+
+  it.each(rows)("size=%s → height %s, padding %s, gap %s, font %s", (size, height, padding, gap, fontSize) => {
+    const { container } = render(<Chip size={size} textContent="Chip" />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.height).toBe(height);
+    expect(root.style.padding).toBe(padding);
+    expect(root.style.gap).toBe(gap);
+    const label = Array.from(root.querySelectorAll("span")).find((el) => el.style.fontSize);
+    expect(label?.style.fontSize).toBe(fontSize);
+  });
+});

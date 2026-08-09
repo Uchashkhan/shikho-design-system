@@ -10,11 +10,30 @@ export type ChipSize = "lg" | "md" | "sm";
 export type ChipType = "unselected" | "selected" | "selected_neutral" | "Green" | "Red";
 export type ChipState = "disabled" | "focus" | "hover" | "drag" | "default";
 
-// docs/audit/chips.md §4, §14 — confirmed exact at all 3 sizes via get_design_context.
-const heightPx: Record<ChipSize, number> = { lg: 40, md: 32, sm: 24 };
+/**
+ * Per-size metrics — every row confirmed by a live `get_design_context` sample of that size's
+ * `unselected/default` variant during the P1 repair pass.
+ *
+ * The previous implementation carried a per-size `heightPx` table but a SINGLE padding (`p-8`),
+ * gap (2px), icon size (16px) and font size (12px) — all of which were `md`'s values applied to
+ * all three sizes. Figma defines each independently.
+ */
+interface ChipSizeMetrics {
+  height: number;
+  padding: string;
+  gap: string;
+  iconSize: number;
+  fontSize: number;
+  lineHeight: string;
+}
+
+const SIZE_METRICS: Record<ChipSize, ChipSizeMetrics> = {
+  sm: { height: 24, padding: "0.25rem 0.375rem", gap: "0", iconSize: 14, fontSize: 11, lineHeight: "16px" },
+  md: { height: 32, padding: "0.5rem", gap: "0.125rem", iconSize: 16, fontSize: 12, lineHeight: "16px" },
+  lg: { height: 40, padding: "0.5rem 0.75rem", gap: "0.25rem", iconSize: 18, fontSize: 13, lineHeight: "20px" },
+};
 
 const chipRadius = radius.full; // radius/border_radius_round (1000) — the ONLY radius token, §7/§9
-const iconSize = 16; // sizing/icon/16, confirmed applied §7/§9
 
 // docs/audit/chips.md §9/§14 — the icon-slot drop-shadow filter, confirmed on every icon in every
 // sampled instance. The pre-rebuild implementation applied this as a `boxShadow` on the icon's
@@ -161,10 +180,11 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(
     const isDisabled = disabled || state === "disabled";
     const isFocusVariant = state === "focus" && type !== "Green" && type !== "Red";
     const visual = resolveVisual(type, state);
+    const metrics = SIZE_METRICS[size];
 
     const iconSlotStyle: CSSProperties = {
-      width: iconSize,
-      height: iconSize,
+      width: metrics.iconSize,
+      height: metrics.iconSize,
       flexShrink: 0,
       filter: iconShadowFilter,
     };
@@ -183,9 +203,9 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(
           (className ? ` ${className}` : "")
         }
         style={{
-          height: heightPx[size],
-          gap: "0.125rem", // gap-[spacing/2, 2px] — §9
-          padding: "0.5rem", // p-[spacing/8, 8px] uniform — §9
+          height: metrics.height,
+          gap: metrics.gap,
+          padding: metrics.padding,
           borderRadius: chipRadius,
           background: visual.background,
           border: visual.border,
@@ -202,10 +222,10 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(
             style={{
               display: "flex",
               alignItems: "center",
-              padding: "0 0.125rem", // px-[spacing/2, 2px] — §9
+              padding: "0 0.125rem", // px-[spacing/2, 2px] — confirmed identical at all 3 sizes
               gap: "0.5rem", // gap-[spacing/8, 8px] — §9
-              fontSize: 12,
-              lineHeight: "16px", // web/Body/12 Medium/SemiBold — §9/§14
+              fontSize: metrics.fontSize,
+              lineHeight: metrics.lineHeight,
               fontWeight: "inherit",
             }}
           >

@@ -1,44 +1,75 @@
 import { type HTMLAttributes, type ReactNode, forwardRef } from "react";
-import { color, radius } from "@shikho/tokens";
+import { color, elevation } from "@shikho/tokens";
 import { tv } from "tailwind-variants";
 import { Checkbox, type CheckboxProps } from "../checkbox";
+import { Tags, type TagType } from "../tags";
 
 // docs/audit/list.md §2 — list exposes exactly two properties: size (md, lg, xl) and
 // state (default, hover, active_primary_accent). No `type` property exists. This is ONE
-// component set (a single list row), not a List+ListItem container/child pair — confirmed by
-// the audit's own architecture (§1, §2): no wrapping "list container" component was found.
+// component set (a single list row), not a List+ListItem container/child pair.
 export type ListSize = "md" | "lg" | "xl";
 export type ListState = "default" | "hover" | "active_primary_accent";
 
-// docs/audit/list.md §7 — deep-audited at size=lg, state=active_primary_accent. Only this one
-// combination has confirmed layout/color data; §9 explicitly marks default/hover and md/xl as
-// "out of scope, no sibling inference performed." All three states and all three sizes render
-// using these same confirmed values as a shared baseline rather than an invented per-variant
-// design — see packages/ui/src/components/list/README.md.
-const rootFill = color.gray[200]; // "Color/Gray" (unnumbered, #ebecf0) — §7, §8 duplicate-naming note
-const dividerColor = color.gray[100]; // outline/Gray 100 (#f4f4f6) — §7
-const mainTextColor = color.gray[950]; // Text/Gray 950 — §7
-const descriptionColor = color.gray[600]; // Text/Gray 600 — §7
-const trailTextColor = color.gray[700]; // Text/Gray 700 — §7 (confirmed different from main text)
-const tagTextColor = color.gray[700]; // Text/Gray 700 — §7
-const tagBorderColor = color.black[50]; // outline/black-50 (#0000000a) — §7
-const tagFill = color.white[950]; // Color/white/950 (#ffffff) — §7
-const tagRadius = radius.sm; // radius/custom/sm (8px) — §7
+/**
+ * Per-state visuals, confirmed by live `get_design_context` samples of all three `md` states
+ * during the v0.1.0 repair pass (docs/release-visual-verification.md — List).
+ *
+ * The previous implementation rendered all three states identically, using the single
+ * `lg/active_primary_accent` instance the original audit sampled. Figma confirms the three
+ * states differ in exactly three properties — row fill, main text colour, and which `tags`
+ * type is nested — and in nothing else.
+ */
+interface ListStateVisual {
+  /** `undefined` = no fill at all (confirmed for `default`: only the bottom divider shows). */
+  rowFill: string | undefined;
+  mainTextColor: string;
+  /** The confirmed nested `Tags` type for this state. */
+  tagType: Extract<TagType, "secondary" | "tertiary">;
+}
+
+const STATE_VISUAL: Record<ListState, ListStateVisual> = {
+  // No background fill — the row reads as plain surface with only its divider.
+  default: { rowFill: undefined, mainTextColor: color.gray[700], tagType: "secondary" },
+  // `color/gray-100` (#f4f4f6).
+  hover: { rowFill: color.gray[100], mainTextColor: color.gray[950], tagType: "tertiary" },
+  // `color/gray` (#ebecf0) — the unnumbered ramp entry, matching token `gray[200]`.
+  active_primary_accent: {
+    rowFill: color.gray[200],
+    mainTextColor: color.gray[950],
+    tagType: "tertiary",
+  },
+};
+
+// Confirmed identical across all three states (§7 + release verification):
+const dividerColor = color.gray[100]; // outline/gray-100
+const descriptionColor = color.gray[600]; // text/gray-600
+const trailTextColor = color.gray[700]; // text/gray-700 — confirmed distinct from main text
 
 const mainTextStyle = { fontSize: 13, lineHeight: "20px", fontWeight: 500 }; // body_1/para, Medium
 const descriptionStyle = { fontSize: 12, lineHeight: "16px", fontWeight: 500 }; // caption_2, Medium
-const tagTextStyle = { fontSize: 11, lineHeight: "16px", fontWeight: 600 }; // caption_1, SemiBold
+
+// Confirmed: both icon slots carry `elevation/e2` as a `filter: drop-shadow()` pair, so the
+// shadow follows the glyph silhouette — the same convention used library-wide.
+const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[0].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
+
+// Confirmed exact at `md`. `lg`/`xl` bounding heights (60/76 vs md's 52) are known from
+// metadata, but their internal padding/gap/icon deltas have NOT been sampled — they render
+// md's confirmed metrics until that evidence exists, rather than inventing a scale. Tracked
+// as a P1 follow-up in docs/release-visual-verification.md.
+const ROOT_GAP = "0.75rem"; // gap-[spacing/12, 12px]
+const ROOT_PADDING = "0.5rem"; // p-[spacing/8, 8px] — confirmed 8px, not the previous 12px
+const LEAD_ITEM = 24;
+const LEAD_ITEM_LG = 32; // confirmed 32px, not the previous 36px
+const SIDE_ICON = 20; // confirmed 20px, not the previous 24px
 
 const listStyles = tv({
   slots: {
-    root: "flex items-center justify-center",
+    root: "flex items-center justify-center overflow-hidden",
     leadItemImg: "shrink-0 object-cover",
     leadItemLgImg: "shrink-0 object-cover",
     leftIconSlot: "shrink-0",
     textGroup1: "flex flex-col items-center justify-center",
     textGroup2: "flex flex-col items-end justify-center text-right",
-    tags: "flex items-center justify-center",
-    tagInner: "flex items-center justify-center",
     rightIconSlot: "shrink-0",
   },
   variants: {
@@ -51,13 +82,11 @@ const listStyles = tv({
 export interface ListProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   size?: ListSize;
   state?: ListState;
-  // The 12 confirmed boolean properties (§7), with their confirmed defaults inferred directly
-  // from the deep-audited instance's [rendered]/[NOT rendered] annotations.
-  /** Renders the nested Checkbox (§7 — see `checkboxProps` and "Composition" in the README). */
+  /** Renders the nested Checkbox (§7 — the audit's own naming mismatch is preserved). */
   leadIcon?: boolean;
   /** 24×24 "token" image slot. */
   leadItem?: boolean;
-  /** 36×36 "token" image slot — confirmed NOT rendered by default. */
+  /** 32×32 "token" image slot — confirmed NOT rendered by default. */
   leadItemLg?: boolean;
   leftIcon?: boolean;
   rightIcon?: boolean;
@@ -68,12 +97,8 @@ export interface ListProps extends Omit<HTMLAttributes<HTMLDivElement>, "childre
   textGroup2?: boolean;
   trailText?: boolean;
   description2?: boolean;
-  // Confirmed instance-swap properties (§7) — React.ReactNode | null, default null.
   selectLeftIcon?: ReactNode | null;
   selectRightIcon?: ReactNode | null;
-  // Content for the slots above — no default text is supplied, since the audit's own
-  // placeholder content ("List item" reused for both trailText and description2, §7) is a
-  // confirmed Figma inconsistency, not real product copy to reproduce as a default.
   textContent?: ReactNode;
   description1Content?: ReactNode;
   trailTextContent?: ReactNode;
@@ -82,26 +107,20 @@ export interface ListProps extends Omit<HTMLAttributes<HTMLDivElement>, "childre
   leadItemSrc?: string;
   leadItemLgSrc?: string;
   /**
-   * Props forwarded to the nested `Checkbox` when `leadIcon` is true. `size`/`shape` are fixed
-   * to the confirmed nested configuration (`sm`/`square`, §7) and are not part of this type —
-   * requirement 8 ("do not duplicate Checkbox styling inside List") means List never re-derives
-   * Checkbox's own visual, only composes it.
+   * Props forwarded to the nested `Checkbox`. `size`/`shape` are fixed to the confirmed nested
+   * configuration (`sm`/`square`) and are not overridable.
    */
   checkboxProps?: Omit<CheckboxProps, "size" | "shape">;
 }
 
 /**
- * `list` (docs/audit/list.md) — a single list-row component (confirmed: `size` × `state` only,
- * no `type` property, no wrapping container component). Composes the real `Checkbox` component
- * from `@shikho/ui`'s checkbox module via the confirmed `leadIcon` boolean — preserving the
- * audit's own naming mismatch (`leadIcon` controls a checkbox, not a generic icon, §7).
+ * `list` (docs/audit/list.md; per-state visuals corrected against live Figma in
+ * docs/release-visual-verification.md).
  *
- * Only `size="lg" state="active_primary_accent"` has confirmed layout/color data. The state name
- * itself is misleading — the audit confirms its only background fill is plain `Color/Gray`, not
- * a primary-tinted color (§7, "State-name/fill discrepancy, flagged") — reproduced faithfully,
- * not "fixed." `default`/`hover` and `md`/`xl` reuse this same confirmed visual as a baseline,
- * since the audit explicitly marks their structural differences out of scope (§7, §9). See
- * packages/ui/src/components/list/README.md.
+ * Composes the real `Checkbox` and `Tags` components rather than re-implementing their styling.
+ * The nested tag is a genuine `tags` instance in Figma: its `secondary` type in the `default`
+ * state and its `tertiary` type in `hover`/`active_primary_accent` — both already implemented
+ * exactly by `Tags`, so List no longer duplicates (and drifts from) that styling.
  */
 export const List = forwardRef<HTMLDivElement, ListProps>(
   (
@@ -137,6 +156,7 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
     ref,
   ) => {
     const styles = listStyles({ size, state });
+    const visual = STATE_VISUAL[state];
 
     return (
       <div
@@ -145,9 +165,9 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
         data-state={state}
         className={styles.root({ className })}
         style={{
-          gap: "0.75rem", // gap-[spacing/12, 12px] — §7
-          padding: "0.75rem", // p-[spacing/12, 12px] uniform — §7
-          backgroundColor: rootFill,
+          gap: ROOT_GAP,
+          padding: ROOT_PADDING,
+          backgroundColor: visual.rowFill,
           borderBottom: `1px solid ${dividerColor}`,
           borderRadius: 0, // confirmed absence of any corner radius — §7
           ...style,
@@ -156,55 +176,68 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
       >
         {leadIcon && <Checkbox size="sm" shape="square" {...checkboxProps} />}
         {leadItemLg && leadItemLgSrc && (
-          <img src={leadItemLgSrc} alt="" className={styles.leadItemLgImg()} width={36} height={36} />
+          <img
+            src={leadItemLgSrc}
+            alt=""
+            className={styles.leadItemLgImg()}
+            width={LEAD_ITEM_LG}
+            height={LEAD_ITEM_LG}
+          />
         )}
         {leadItem && leadItemSrc && (
-          <img src={leadItemSrc} alt="" className={styles.leadItemImg()} width={24} height={24} />
+          <img
+            src={leadItemSrc}
+            alt=""
+            className={styles.leadItemImg()}
+            width={LEAD_ITEM}
+            height={LEAD_ITEM}
+          />
         )}
         {leftIcon && (
-          <span className={styles.leftIconSlot()} style={{ width: 24, height: 24 }}>
+          <span
+            className={styles.leftIconSlot()}
+            style={{ width: SIDE_ICON, height: SIDE_ICON, filter: iconShadowFilter }}
+          >
             {selectLeftIcon}
           </span>
         )}
         {textGroup1 && (
           <span className={styles.textGroup1()} style={{ flex: "1 0 0", minWidth: 1, gap: 0 }}>
-            {text && <span style={{ color: mainTextColor, ...mainTextStyle }}>{textContent}</span>}
+            {text && (
+              <span style={{ color: visual.mainTextColor, ...mainTextStyle }}>{textContent}</span>
+            )}
             {description1 && (
-              <span style={{ color: descriptionColor, ...descriptionStyle }}>{description1Content}</span>
+              <span style={{ color: descriptionColor, ...descriptionStyle }}>
+                {description1Content}
+              </span>
             )}
           </span>
         )}
         {tag && (
-          <span
-            className={styles.tags()}
-            style={{
-              height: 24,
-              padding: "0.25rem 0.375rem", // py-[spacing/4] px-[spacing/6] — §7
-              border: `1px solid ${tagBorderColor}`,
-              backgroundColor: tagFill,
-              borderRadius: tagRadius,
-            }}
-          >
-            <span className={styles.tagInner()} style={{ padding: "0 0.25rem" /* px-[spacing/4] */ }}>
-              <span style={{ color: tagTextColor, ...tagTextStyle }}>{tagContent}</span>
-            </span>
-          </span>
+          <Tags size="md" type={visual.tagType} leftIcon={false} rightIcon={false}>
+            {tagContent}
+          </Tags>
         )}
         {textGroup2 && (
           <span
             className={styles.textGroup2()}
-            style={{ gap: 0, paddingRight: "0.25rem" /* pr-[spacing/4] */ }}
+            style={{ gap: 0, paddingRight: "0.125rem" /* pr-[spacing/2, 2px] */ }}
           >
             {trailText && (
               <span style={{ color: trailTextColor, ...mainTextStyle }}>{trailTextContent}</span>
             )}
             {description2 && (
-              <span style={{ color: descriptionColor, ...descriptionStyle }}>{description2Content}</span>
+              <span style={{ color: descriptionColor, ...descriptionStyle }}>
+                {description2Content}
+              </span>
             )}
           </span>
         )}
         {rightIcon && (
-          <span className={styles.rightIconSlot()} style={{ width: 24, height: 24 }}>
+          <span
+            className={styles.rightIconSlot()}
+            style={{ width: SIDE_ICON, height: SIDE_ICON, filter: iconShadowFilter }}
+          >
             {selectRightIcon}
           </span>
         )}
