@@ -109,27 +109,45 @@ describe("component gallery", () => {
   });
 });
 
-describe("sidebar search", () => {
-  it("narrows the sidebar nav to matching components", async () => {
+describe("sidebar navigation", () => {
+  it("always lists every registered component, independent of the gallery's own filter", async () => {
     const user = userEvent.setup();
     renderAt("/components");
     const sidebar = screen.getByRole("complementary");
 
     expect(within(sidebar).getByRole("link", { name: "Chip" })).toBeInTheDocument();
-
-    await user.type(screen.getByLabelText("Search documentation"), "radio");
-
     expect(within(sidebar).getByRole("link", { name: "Radio" })).toBeInTheDocument();
-    expect(within(sidebar).queryByRole("link", { name: "Chip" })).not.toBeInTheDocument();
-  });
 
-  it("reports when nothing matches", async () => {
+    // Filtering the main catalogue (a separate control) must not touch the sidebar's own nav —
+    // there is only one filtering surface now, not two.
+    await user.type(screen.getByLabelText("Filter components"), "radio");
+
+    expect(within(sidebar).getByRole("link", { name: "Chip" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("link", { name: "Radio" })).toBeInTheDocument();
+  });
+});
+
+describe("component gallery category filter", () => {
+  /** Cards are queried by href — several previews attach `aria-label`s to their own inner
+      controls (e.g. Toggle's "On"/"Off"), which would otherwise leak into the link's computed
+      accessible name and make name-based queries unreliable. */
+  const hrefsIn = (main: HTMLElement) =>
+    Array.from(main.querySelectorAll<HTMLAnchorElement>("a.sk-card")).map(
+      (a) => a.getAttribute("href") ?? "",
+    );
+
+  it("narrows the gallery to one category via the real Switcher control", async () => {
     const user = userEvent.setup();
     renderAt("/components");
+    const main = screen.getByRole("main");
 
-    await user.type(screen.getByLabelText("Search documentation"), "zzzz");
+    expect(hrefsIn(main)).toContain("/components/toggle");
+    expect(hrefsIn(main)).toContain("/components/button");
 
-    expect(screen.getByText(/no matches for/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^Forms/ }));
+
+    expect(hrefsIn(main)).toContain("/components/toggle");
+    expect(hrefsIn(main)).not.toContain("/components/button");
   });
 });
 

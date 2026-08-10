@@ -1,5 +1,6 @@
 import type { ComponentDocsCategory, ComponentDocsMeta } from "@shikho/ui";
 import { discoveredComponentMeta } from "./meta-discovery";
+import { getPageConfig } from "./pages";
 
 export type { ComponentDocsCategory, ComponentDocsMeta, ComponentDocsStatus } from "@shikho/ui";
 export { getPageConfig } from "./pages";
@@ -40,6 +41,19 @@ export const componentRegistry: ComponentDocsMeta[] = [...discoveredComponentMet
 
 export function getComponent(slug: string): ComponentDocsMeta | undefined {
   return componentRegistry.find((entry) => entry.slug === slug);
+}
+
+/**
+ * Total confirmed variant values across every axis of a component's page config (e.g. Button's
+ * `size` + `type` + `state` axes). Used for the gallery card metadata row — real, derived from
+ * the same confirmed `variants` data the component's own detail page renders, never hand-typed.
+ * Returns 0 for components with no page config yet, or whose confirmed axes are empty (e.g.
+ * `progress`) — callers should omit the stat rather than show "0 variants".
+ */
+export function totalVariantValues(slug: string): number {
+  const page = getPageConfig(slug);
+  if (!page) return 0;
+  return page.variants.reduce((sum, axis) => sum + axis.values.length, 0);
 }
 
 /** Categories that actually contain at least one registered component, in canonical order. */

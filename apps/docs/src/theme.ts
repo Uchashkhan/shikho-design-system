@@ -20,13 +20,20 @@ export function buildThemeVars(): Record<string, string> {
     "--sk-surface-muted": color.gray[100],
 
     // Text
+    // `muted`/`subtle` sit one ramp step darker than their original gray-600/gray-500 mapping —
+    // both were reading as washed-out "similar pale greys" against the near-black `--sk-text`
+    // (gray-950), especially stacked together (nav labels, card descriptions, card metadata).
+    // The relative hierarchy (text > muted > subtle, one ramp step apart each) is unchanged;
+    // only the absolute contrast against the page's light surfaces moved up.
     "--sk-text": color.gray[950],
-    "--sk-text-muted": color.gray[600],
-    "--sk-text-subtle": color.gray[500],
+    "--sk-text-muted": color.gray[700],
+    "--sk-text-subtle": color.gray[600],
 
     // Lines
-    "--sk-border": color.gray[200],
-    "--sk-border-strong": color.gray[300],
+    // Same one-step move as the text tokens above, for the same reason — gray-200/300 read as
+    // barely-there against the gray-50/white surfaces (sidebar edge, card borders, nav divider).
+    "--sk-border": color.gray[300],
+    "--sk-border-strong": color.gray[400],
 
     // Brand
     "--sk-brand": color.primary[500],

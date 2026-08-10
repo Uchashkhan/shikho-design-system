@@ -1,64 +1,44 @@
-import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { groupByCategory, searchComponents, searchFoundations } from "../registry";
+import { componentRegistry, foundationRegistry, groupByCategory } from "../registry";
+
+const grouped = groupByCategory(componentRegistry);
 
 /**
- * Every nav item below is derived from the registry — nothing is hand-listed. The search box
- * filters components and foundations together, and empty groups disappear.
+ * Every nav item below is derived from the registry — nothing is hand-listed.
+ *
+ * This is navigation only: filtering the catalogue lives on the Components page itself (its own
+ * search field plus category filter), so the sidebar always shows the full, real information
+ * architecture rather than a second, narrower search surface for the same task.
  */
 export function Sidebar() {
-  const [query, setQuery] = useState("");
-
-  const components = useMemo(() => searchComponents(query), [query]);
-  const foundations = useMemo(() => searchFoundations(query), [query]);
-  const grouped = useMemo(() => groupByCategory(components), [components]);
-
-  const overviewVisible = query.trim() === "" || "overview".includes(query.trim().toLowerCase());
-  const nothingMatched = !overviewVisible && components.length === 0 && foundations.length === 0;
-
   return (
     <aside className="sk-sidebar">
-      <input
-        className="sk-search"
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search components…"
-        aria-label="Search documentation"
-      />
+      <div className="sk-navgroup">
+        <NavLink to="/" end className="sk-navlink">
+          Overview
+        </NavLink>
+      </div>
 
-      {overviewVisible ? (
-        <div className="sk-navgroup">
-          <NavLink to="/" end className="sk-navlink">
-            Overview
+      <div className="sk-navgroup">
+        <p className="sk-navgroup__title">Foundations</p>
+        {foundationRegistry.map((foundation) => (
+          <NavLink
+            key={foundation.slug}
+            to={`/foundations/${foundation.slug}`}
+            className="sk-navlink"
+          >
+            {foundation.name}
           </NavLink>
-        </div>
-      ) : null}
+        ))}
+      </div>
 
-      {foundations.length > 0 ? (
-        <div className="sk-navgroup">
-          <p className="sk-navgroup__title">Foundations</p>
-          {foundations.map((foundation) => (
-            <NavLink
-              key={foundation.slug}
-              to={`/foundations/${foundation.slug}`}
-              className="sk-navlink"
-            >
-              {foundation.name}
-            </NavLink>
-          ))}
-        </div>
-      ) : null}
-
-      {components.length > 0 ? (
-        <div className="sk-navgroup">
-          <p className="sk-navgroup__title">Components</p>
-          <NavLink to="/components" end className="sk-navlink">
-            All components
-            <span className="sk-navlink__count">{components.length}</span>
-          </NavLink>
-        </div>
-      ) : null}
+      <div className="sk-navgroup">
+        <p className="sk-navgroup__title">Components</p>
+        <NavLink to="/components" end className="sk-navlink">
+          All components
+          <span className="sk-navlink__count">{componentRegistry.length}</span>
+        </NavLink>
+      </div>
 
       {grouped.map(({ category, entries }) => (
         <div className="sk-navgroup" key={category}>
@@ -75,10 +55,6 @@ export function Sidebar() {
           ))}
         </div>
       ))}
-
-      {nothingMatched ? (
-        <p className="sk-nav-empty">No matches for “{query}”.</p>
-      ) : null}
     </aside>
   );
 }

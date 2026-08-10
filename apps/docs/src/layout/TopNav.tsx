@@ -27,8 +27,13 @@ const NAV_LINKS = [
  * light inset pill, then search / GitHub / version on the right. Everything is docs-site chrome
  * themed from `--sk-*` (which are derived from `@shikho/tokens`) — no `@shikho/ui` component is
  * restyled here.
+ *
+ * `variant="docs"` (used by `AppShell`) trims the same markup down to a flush, bordered bar —
+ * lighter and less floaty than the landing page's raised pill — via `.sk-topnav-wrap--docs` in
+ * `styles.css`. `variant="floating"` (the default, used by `LandingShell`) is pixel-identical to
+ * the original homepage treatment.
  */
-export function TopNav() {
+export function TopNav({ variant = "floating" }: { variant?: "floating" | "docs" }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
 
@@ -40,7 +45,7 @@ export function TopNav() {
   };
 
   return (
-    <div className="sk-topnav-wrap">
+    <div className={`sk-topnav-wrap${variant === "docs" ? " sk-topnav-wrap--docs" : ""}`}>
       <header className="sk-topnav">
         <NavLink to="/" className="sk-topnav__brand">
           <ShikhoLogo height={30} />

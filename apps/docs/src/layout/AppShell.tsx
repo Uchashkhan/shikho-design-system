@@ -5,7 +5,7 @@ import { TopNav } from "./TopNav";
 export function AppShell() {
   return (
     <div className="sk-shell">
-      <TopNav />
+      <TopNav variant="docs" />
       <div className="sk-body">
         <Sidebar />
         <main className="sk-main">

@@ -46,18 +46,18 @@ a {
 
 /* ------------------------------------------------------------------ sidebar */
 
-/* Full viewport height, independent of the floating nav's own reserved flow space — the nav
-   (`.sk-topnav-wrap`, position: sticky, z-index 20) floats visually ON TOP of the sidebar's own
-   background rather than pushing it down by a height that has to be kept in sync with the nav's.
-   `padding-top` (not a `top`/`height` offset matched to the nav) is what keeps the sidebar's own
-   content (search box, links) clear of the nav visually. */
+/* Full viewport height, independent of the docs top nav's own reserved flow space — the nav
+   (`.sk-topnav-wrap--docs`, position: sticky, z-index 20, 56px tall) sits visually ON TOP of the
+   sidebar's own background rather than pushing it down by a height that has to be kept in sync
+   with the nav's. `padding-top` (not a `top`/`height` offset matched to the nav) is what keeps
+   the sidebar's own nav links clear of the bar above. */
 .sk-sidebar {
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
   width: 260px;
-  padding: 104px 12px 40px;
+  padding: 76px 12px 40px;
   overflow-y: auto;
   border-right: 1px solid var(--sk-border);
   background: var(--sk-surface);
@@ -71,7 +71,9 @@ a {
   font: inherit;
   font-size: 13px;
   color: var(--sk-text);
-  background: var(--sk-bg);
+  /* `--sk-surface` (white), not `--sk-bg` — the field sits on the page's own gray-50 background,
+     so matching that background made it read as un-defined chrome rather than an input. */
+  background: var(--sk-surface);
   border: 1px solid var(--sk-border);
   border-radius: var(--sk-radius-md);
   outline: none;
@@ -87,14 +89,14 @@ a {
 }
 
 .sk-navgroup + .sk-navgroup {
-  margin-top: 20px;
+  margin-top: 18px;
 }
 
 .sk-navgroup__title {
   padding: 0 10px;
   margin-bottom: 6px;
-  color: var(--sk-text-subtle);
-  font-size: 11px;
+  color: var(--sk-text-muted);
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -105,7 +107,7 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 10px;
+  padding: 5px 10px;
   border-radius: var(--sk-radius-sm);
   color: var(--sk-text-muted);
   font-size: 13.5px;
@@ -141,9 +143,11 @@ a {
   flex: 1;
   min-width: 0;
   /* Clears the now-fixed `.sk-sidebar` (which no longer occupies flex layout space) — kept in
-     sync with `.sk-sidebar`'s own `width` at each breakpoint below. */
+     sync with `.sk-sidebar`'s own `width` at each breakpoint below. Unlike the sidebar, `.sk-main`
+     is a normal in-flow sibling of the (also in-flow, sticky) top nav, so its own `padding-top`
+     only has to cover a plain content gutter, not the nav's height a second time. */
   margin-left: 260px;
-  padding: 104px 48px 96px;
+  padding: 32px 40px 96px;
 }
 
 .sk-container {
@@ -201,6 +205,44 @@ a {
   font-size: 13.5px;
 }
 
+/* --------------------------------------------------------------- catalogue toolbar */
+
+/* One coherent, left-aligned row — count, category filter and search read as a single toolbar
+   sharing the page's own content edge, rather than count/filter pinned to opposite ends with
+   search floating on its own line below. */
+.sk-catalogue__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.sk-catalogue__toolbar + .sk-section {
+  margin-top: 24px;
+}
+
+.sk-catalogue__count {
+  margin: 0;
+  color: var(--sk-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sk-catalogue__filter-count {
+  padding: 1px 6px;
+  border-radius: var(--sk-radius-full);
+  background: rgba(10, 12, 17, 0.1);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sk-catalogue__search {
+  flex: 1 1 220px;
+  max-width: 300px;
+  margin: 0;
+}
+
 /* -------------------------------------------------------------------- cards */
 
 .sk-grid {
@@ -220,9 +262,19 @@ a {
 }
 
 a.sk-card:hover {
+  border-color: var(--sk-border-strong);
+  box-shadow: var(--sk-shadow-sm);
+}
+
+a.sk-card:hover .sk-card__arrow {
+  transform: translateX(2px);
+  color: var(--sk-text-muted);
+}
+
+a.sk-card:focus-visible {
+  outline: none;
   border-color: var(--sk-brand-border);
-  box-shadow: var(--sk-shadow-lg);
-  transform: translateY(-2px);
+  box-shadow: 0 0 0 3px var(--sk-focus-ring);
 }
 
 .sk-card__preview {
@@ -231,10 +283,10 @@ a.sk-card:hover {
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
-  min-height: 152px;
-  padding: 24px;
+  min-height: 168px;
+  padding: 28px;
   background: var(--sk-bg);
-  border-bottom: 1px solid var(--sk-border);
+  border-bottom: 1px solid var(--sk-border-strong);
   overflow: hidden;
 }
 
@@ -242,18 +294,54 @@ a.sk-card:hover {
   padding: 14px 16px 16px;
 }
 
-.sk-card__title {
+.sk-card__head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
+}
+
+.sk-card__title {
   font-size: 14.5px;
   font-weight: 650;
 }
 
+.sk-card__arrow {
+  flex-shrink: 0;
+  color: var(--sk-text-subtle);
+  transition: transform 140ms ease, color 140ms ease;
+}
+
 .sk-card__desc {
   margin: 4px 0 0;
+  overflow: hidden;
   color: var(--sk-text-muted);
   font-size: 13px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.sk-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  color: var(--sk-text-subtle);
+  font-size: 11.5px;
+}
+
+.sk-card__meta-audited {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--sk-accent-success);
+}
+
+.sk-card__meta-audited--partial {
+  color: var(--sk-text-subtle);
 }
 
 .sk-pill {
@@ -664,7 +752,7 @@ a.sk-card:hover {
 @media (max-width: 1024px) {
   .sk-main {
     margin-left: 224px;
-    padding: 104px 24px 72px;
+    padding: 32px 24px 72px;
   }
 
   .sk-sidebar {
@@ -700,6 +788,26 @@ a.sk-card:hover {
   top: 0;
   z-index: 20;
   padding: 16px 24px;
+}
+
+/* Docs workspace variant (`AppShell`, every page under the persistent sidebar) — the same
+   markup as the floating landing pill, flattened into a lighter, flush bar: no outer padding, no
+   rounded floating card, a hairline border instead of a shadow. Reads as part of the sidebar's
+   own workspace chrome rather than a brand element sitting on top of it. */
+.sk-topnav-wrap--docs {
+  padding: 0;
+  background: var(--sk-surface);
+  border-bottom: 1px solid var(--sk-border);
+}
+
+.sk-topnav-wrap--docs .sk-topnav {
+  height: 56px;
+  max-width: none;
+  padding: 0 20px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .sk-topnav {
