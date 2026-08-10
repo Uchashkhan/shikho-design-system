@@ -21,19 +21,15 @@ const NAV_LINKS = [
 ];
 
 /**
- * Shared site header, used by both the landing shell and the docs shell.
+ * Shared site header, used by every shell (landing and docs alike) — one consistent floating
+ * nav across the whole site rather than a page-specific variant.
  *
  * Composition follows the homepage reference: brand at the left, the destination group in a
  * light inset pill, then search / GitHub / version on the right. Everything is docs-site chrome
  * themed from `--sk-*` (which are derived from `@shikho/tokens`) — no `@shikho/ui` component is
  * restyled here.
- *
- * `variant="docs"` (used by `AppShell`) trims the same markup down to a flush, bordered bar —
- * lighter and less floaty than the landing page's raised pill — via `.sk-topnav-wrap--docs` in
- * `styles.css`. `variant="floating"` (the default, used by `LandingShell`) is pixel-identical to
- * the original homepage treatment.
  */
-export function TopNav({ variant = "floating" }: { variant?: "floating" | "docs" }) {
+export function TopNav() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
 
@@ -45,7 +41,7 @@ export function TopNav({ variant = "floating" }: { variant?: "floating" | "docs"
   };
 
   return (
-    <div className={`sk-topnav-wrap${variant === "docs" ? " sk-topnav-wrap--docs" : ""}`}>
+    <div className="sk-topnav-wrap">
       <header className="sk-topnav">
         <NavLink to="/" className="sk-topnav__brand">
           <ShikhoLogo height={30} />

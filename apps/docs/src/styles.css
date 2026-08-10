@@ -46,18 +46,18 @@ a {
 
 /* ------------------------------------------------------------------ sidebar */
 
-/* Full viewport height, independent of the docs top nav's own reserved flow space — the nav
-   (`.sk-topnav-wrap--docs`, position: sticky, z-index 20, 56px tall) sits visually ON TOP of the
-   sidebar's own background rather than pushing it down by a height that has to be kept in sync
-   with the nav's. `padding-top` (not a `top`/`height` offset matched to the nav) is what keeps
-   the sidebar's own nav links clear of the bar above. */
+/* Full viewport height, independent of the floating nav's own reserved flow space — the nav
+   (`.sk-topnav-wrap`, position: sticky, z-index 20, ~92px tall including its own outer padding)
+   floats visually ON TOP of the sidebar's own background rather than pushing it down by a height
+   that has to be kept in sync with the nav's. `padding-top` (not a `top`/`height` offset matched
+   to the nav) is what keeps the sidebar's own nav links clear of the bar above. */
 .sk-sidebar {
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
   width: 260px;
-  padding: 76px 12px 40px;
+  padding: 104px 12px 40px;
   overflow-y: auto;
   border-right: 1px solid var(--sk-border);
   background: var(--sk-surface);
@@ -788,26 +788,6 @@ a.sk-card:focus-visible {
   top: 0;
   z-index: 20;
   padding: 16px 24px;
-}
-
-/* Docs workspace variant (`AppShell`, every page under the persistent sidebar) — the same
-   markup as the floating landing pill, flattened into a lighter, flush bar: no outer padding, no
-   rounded floating card, a hairline border instead of a shadow. Reads as part of the sidebar's
-   own workspace chrome rather than a brand element sitting on top of it. */
-.sk-topnav-wrap--docs {
-  padding: 0;
-  background: var(--sk-surface);
-  border-bottom: 1px solid var(--sk-border);
-}
-
-.sk-topnav-wrap--docs .sk-topnav {
-  height: 56px;
-  max-width: none;
-  padding: 0 20px;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
 }
 
 .sk-topnav {
