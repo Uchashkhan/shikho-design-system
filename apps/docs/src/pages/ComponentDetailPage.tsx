@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Chip } from "@shikho/ui";
-import { getComponent, getPageConfig, type Control } from "../registry";
+import { InfoCircleIcon } from "@shikho/icons";
+import { componentSummaries, getComponent, getPageConfig, totalVariantValues, type Control } from "../registry";
 import {
   CodeBlock,
   ConfidencePill,
@@ -27,7 +28,7 @@ function ControlGroup({
   onChange: (next: string) => void;
 }) {
   return (
-    <div>
+    <div className="sk-control-group">
       <span className="sk-control__label">{control.label}</span>
       <div className="sk-control__options">
         {control.options.map((option) => (
@@ -90,13 +91,16 @@ export function ComponentDetailPage() {
       <PageHeader
         eyebrow={entry.category}
         title={entry.name}
-        lede={page?.longDescription ?? entry.description}
+        lede={componentSummaries[entry.slug] ?? entry.description}
       />
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16, alignItems: "center" }}>
+      <div className="sk-meta-row">
         <ConfidencePill status={entry.status} />
         <TokenChip>{entry.auditFile}</TokenChip>
         <TokenChip>{entry.storybookTitle}</TokenChip>
+        {page && totalVariantValues(entry.slug) > 0 ? (
+          <TokenChip>{totalVariantValues(entry.slug)} variants</TokenChip>
+        ) : null}
       </div>
 
       {!page ? (
@@ -140,6 +144,15 @@ export function ComponentDetailPage() {
           <Section title="Usage">
             <CodeBlock code={page.usageExample} />
           </Section>
+
+          {page.longDescription ? (
+            <Section title="Audit notes" description="The deeper implementation story behind this component, for when the short summary above isn't enough.">
+              <div className="sk-audit-note">
+                <InfoCircleIcon size={18} className="sk-audit-note__icon" />
+                <p>{page.longDescription}</p>
+              </div>
+            </Section>
+          ) : null}
 
           <Section
             title="Confirmed variants"

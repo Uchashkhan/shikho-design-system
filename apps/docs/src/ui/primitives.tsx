@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CheckIcon } from "@shikho/icons";
 
 /**
  * Docs-site chrome only — cards, tables, code blocks, section headers.
@@ -103,7 +104,13 @@ export function ConfidencePill({ status }: { status: "deep-audited" | "partially
   const isDeep = status === "deep-audited";
   return (
     <span className={`sk-pill ${isDeep ? "sk-pill--stable" : "sk-pill--partial"}`}>
-      {isDeep ? "Deep-audited" : "Partly derived"}
+      {isDeep ? (
+        <>
+          <CheckIcon size={14} /> Audited
+        </>
+      ) : (
+        "Partly derived"
+      )}
     </span>
   );
 }

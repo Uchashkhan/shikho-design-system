@@ -4,6 +4,7 @@ import { Switcher, type SwitcherOption } from "@shikho/ui";
 import { CheckIcon, ChevronRightIcon } from "@shikho/icons";
 import {
   componentRegistry,
+  componentSummaries,
   getPageConfig,
   groupByCategory,
   searchComponents,
@@ -14,38 +15,6 @@ import {
 import { FallbackPreview, PageHeader } from "../ui/primitives";
 
 type CategoryFilter = "all" | ComponentDocsCategory;
-
-/**
- * Short, user-facing blurbs for the catalogue grid — deliberately separate from
- * `ComponentDocsMeta.description` (the long, audit-history copy sourced from each component's
- * `docs.meta.ts`), which stays exactly as-is and is still what the component detail page shows.
- * A card here should read in one glance; the full technical description lives one click away.
- */
-const CARD_SUMMARY: Record<string, string> = {
-  button: "Primary actions and calls to action.",
-  "button-group": "Grouped, related actions in one row.",
-  link: "Text or icon links for navigation.",
-  "sidebar-navigation": "Vertical navigation for app sidebars.",
-  switcher: "Segmented control for switching views.",
-  "tab-navigation": "Tabs for organizing related content.",
-  "top-navigation": "Horizontal navigation for primary sections.",
-  list: "Rows of structured, scannable content.",
-  chip: "Compact tags for filters and selections.",
-  tags: "Small labels for status and metadata.",
-  avatar: "User or entity profile images.",
-  pagination: "Page controls for long result sets.",
-  table: "Structured rows for tabular data.",
-  tooltip: "Contextual hints on hover or focus.",
-  alert: "Inline messages for important context.",
-  toast: "Brief, temporary status notifications.",
-  modal: "Focused dialogs for a single task.",
-  progress: "Visual indicator of task completion.",
-  input: "Text fields for collecting user input.",
-  checkbox: "Multi-select choices in a list.",
-  radio: "Single-select choices in a group.",
-  toggle: "On/off switches for settings.",
-  "date-picker": "Calendar input for choosing dates.",
-};
 
 function filterLabel(text: string, count: number) {
   return (
@@ -135,15 +104,17 @@ export function ComponentsPage() {
                         <span className="sk-card__title">{entry.name}</span>
                         <ChevronRightIcon size={14} className="sk-card__arrow" />
                       </div>
-                      <p className="sk-card__desc">{CARD_SUMMARY[entry.slug] ?? entry.description}</p>
+                      <p className="sk-card__desc">
+                        {componentSummaries[entry.slug] ?? entry.description}
+                      </p>
                       <div className="sk-card__meta">
                         {variantCount > 0 ? <span>{variantCount} variants</span> : null}
                         {entry.status === "deep-audited" ? (
-                          <span className="sk-card__meta-audited">
+                          <span className="sk-audit-status">
                             <CheckIcon size={14} /> Audited
                           </span>
                         ) : (
-                          <span className="sk-card__meta-audited sk-card__meta-audited--partial">
+                          <span className="sk-audit-status sk-audit-status--partial">
                             Partly derived
                           </span>
                         )}

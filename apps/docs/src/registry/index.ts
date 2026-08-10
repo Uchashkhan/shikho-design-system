@@ -4,6 +4,7 @@ import { getPageConfig } from "./pages";
 
 export type { ComponentDocsCategory, ComponentDocsMeta, ComponentDocsStatus } from "@shikho/ui";
 export { getPageConfig } from "./pages";
+export { componentSummaries } from "./summaries";
 export type {
   Control,
   ControlOption,
