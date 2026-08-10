@@ -1545,3 +1545,83 @@ a.sk-card:hover {
     border-top: 1px solid var(--sk-border);
   }
 }
+
+/* --------------------------------------------------------------- pattern layouts */
+
+/* Layout-only wrappers for `/patterns` — every control inside them is a real `@shikho/ui`
+   component; these classes just arrange them into a page-like shape (surface, spacing, rows). */
+
+.ptn-surface {
+  padding: 28px;
+  background: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-lg);
+}
+
+.ptn-surface--narrow {
+  max-width: 400px;
+}
+
+.ptn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ptn-row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ptn-row-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.ptn-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ptn-toolbar__title {
+  margin: 0;
+  color: var(--sk-text);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.ptn-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-md);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.ptn-table > * + * {
+  border-top: 1px solid var(--sk-border);
+}
+
+.ptn-divider {
+  height: 1px;
+  margin: 20px 0;
+  background: var(--sk-border);
+}
+
+.ptn-group-label {
+  margin: 0 0 12px;
+  color: var(--sk-text-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
