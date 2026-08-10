@@ -12,6 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@shikho/icons": "workspace:*",
     "@shikho/tokens": "workspace:*",
     "@shikho/ui": "workspace:*",
     "react": "^18.3.1",

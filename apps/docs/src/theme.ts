@@ -41,6 +41,12 @@ export function buildThemeVars(): Record<string, string> {
     "--sk-accent-warning": color.warning[600],
     "--sk-accent-warning-soft": color.warning[50],
 
+    // Two further brand-family accents, used only to differentiate the homepage's discovery
+    // tiles. Both come straight from existing token ramps — `shikhoAi` (the product's own violet)
+    // and `secondary` (the brand pink) — rather than introducing homepage-only colors.
+    "--sk-tone-violet": color.shikhoAi[500],
+    "--sk-tone-pink": color.secondary[500],
+
     // Radii
     "--sk-radius-sm": `${radius.sm}px`,
     "--sk-radius-md": `${radius.md}px`,

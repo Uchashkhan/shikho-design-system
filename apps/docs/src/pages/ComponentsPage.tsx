@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { getPageConfig, groupByCategory, searchComponents } from "../registry";
 import { ConfidencePill, FallbackPreview, PageHeader } from "../ui/primitives";
 
 export function ComponentsPage() {
-  const [query, setQuery] = useState("");
+  // Seeded from `?q=` so the header's search field can hand off a real query here rather than
+  // just dropping the visitor on an unfiltered gallery.
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
   const matches = useMemo(() => searchComponents(query), [query]);
   const grouped = useMemo(() => groupByCategory(matches), [matches]);
 

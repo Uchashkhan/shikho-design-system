@@ -6,6 +6,7 @@ import { foundationRegistry } from "./registry";
 import { ComponentDetailPage } from "./pages/ComponentDetailPage";
 import { ComponentsPage } from "./pages/ComponentsPage";
 import { HomePage } from "./pages/HomePage";
+import { PatternsPage } from "./pages/PatternsPage";
 import { PlaygroundPage } from "./pages/PlaygroundPage";
 import { ColorsPage } from "./pages/foundations/ColorsPage";
 import { ElevationPage } from "./pages/foundations/ElevationPage";
@@ -69,6 +70,7 @@ export function App() {
         <Route path="/components/:slug" element={<ComponentDetailPage />} />
         <Route path="/foundations" element={<Navigate to="/foundations/colors" replace />} />
         <Route path="/foundations/:slug" element={<FoundationRoute />} />
+        <Route path="/patterns" element={<PatternsPage />} />
         <Route path="/playground" element={<PlaygroundPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

@@ -691,8 +691,7 @@ a.sk-card:hover {
 }
 
 /* ============================================================ landing / hero */
-
-/* ---------------------------------------------------- shared floating pill nav (every route) */
+/* ---------------------------------------------------- shared floating nav (every route) */
 
 .sk-topnav-wrap {
   position: sticky;
@@ -704,23 +703,24 @@ a.sk-card:hover {
 .sk-topnav {
   display: flex;
   align-items: center;
-  gap: 16px;
-  height: 56px;
-  max-width: 1080px;
+  gap: 14px;
+  height: 60px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 8px 8px 8px 20px;
-  background: #ffffff;
-  border: 1px solid rgba(10, 12, 17, 0.06);
-  border-radius: var(--sk-radius-full);
+  padding: 0 10px 0 18px;
+  background: var(--sk-surface);
+  border: 1px solid rgba(10, 12, 17, 0.05);
+  border-radius: var(--sk-radius-xl);
   box-shadow:
-    0 1px 2px rgba(10, 12, 17, 0.04),
-    0 12px 24px -8px rgba(10, 12, 17, 0.1);
+    0 1px 2px rgba(10, 12, 17, 0.03),
+    0 10px 30px -14px rgba(10, 12, 17, 0.12);
 }
 
 .sk-topnav__brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
+  padding-right: 4px;
   font-weight: 700;
   font-size: 15px;
   letter-spacing: -0.01em;
@@ -731,25 +731,29 @@ a.sk-card:hover {
 .sk-topnav__brand-sub {
   color: var(--sk-text-subtle);
   font-weight: 500;
-  font-size: 13px;
-  line-height: 1.2;
+  font-size: 12px;
+  line-height: 1.15;
+  letter-spacing: 0;
 }
 
+/* The destination group: one light inset track, active item lifted onto a white pill. Reads as a
+   structured segmented control rather than a single oversized grey slab. */
 .sk-topnav__links {
   display: flex;
   align-items: center;
   gap: 2px;
+  min-width: 0;
+  padding: 3px;
   background: var(--sk-surface-muted);
   border-radius: var(--sk-radius-full);
-  padding: 4px;
 }
 
 .sk-topnav__link {
-  padding: 8px 16px;
+  padding: 7px 13px;
   border-radius: var(--sk-radius-full);
   color: var(--sk-text-muted);
   font-weight: 500;
-  font-size: 14px;
+  font-size: 13.5px;
   white-space: nowrap;
   transition: background 120ms ease, color 120ms ease;
 }
@@ -760,23 +764,92 @@ a.sk-card:hover {
 
 .sk-topnav__link[aria-current="page"] {
   background: var(--sk-surface);
-  color: var(--sk-text);
-  box-shadow: 0 1px 2px rgba(10, 12, 17, 0.06);
+  /* --sk-brand (primary-500) on white is 4.37:1 — just under WCAG AA's 4.5:1 for normal text at
+     this 13.5px size. --sk-brand-hover (primary-600) reads as the same accent blue but clears
+     6.2:1. */
+  color: var(--sk-brand-hover);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(10, 12, 17, 0.07);
 }
 
 .sk-topnav__spacer {
   flex: 1;
+  min-width: 8px;
+}
+
+.sk-topnav__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sk-topnav__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 8px 0 11px;
+  background: var(--sk-bg);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-full);
+  color: var(--sk-text-subtle);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.sk-topnav__search:focus-within {
+  border-color: var(--sk-brand-border);
+  box-shadow: 0 0 0 3px var(--sk-focus-ring);
+}
+
+.sk-topnav__search-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.sk-topnav__search input {
+  width: 130px;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--sk-text);
+}
+
+.sk-topnav__search input::placeholder {
+  color: var(--sk-text-subtle);
+}
+
+/* Hide the native clear affordance so the field keeps its ⌘K treatment aligned. */
+.sk-topnav__search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.sk-topnav__kbd {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  border-radius: var(--sk-radius-sm);
+  background: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+  color: var(--sk-text-subtle);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .sk-topnav__github {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 7px;
+  height: 38px;
+  padding: 0 13px;
   border-radius: var(--sk-radius-full);
   color: var(--sk-text-muted);
   font-weight: 500;
-  font-size: 14px;
+  font-size: 13.5px;
   white-space: nowrap;
   transition: background 120ms ease, color 120ms ease;
 }
@@ -786,23 +859,94 @@ a.sk-card:hover {
   color: var(--sk-text);
 }
 
-.sk-topnav__meta {
-  padding-right: 12px;
-  color: var(--sk-text-subtle);
-  font-size: 12px;
+.sk-topnav__version {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 38px;
+  padding: 0 10px 0 13px;
+  border-radius: var(--sk-radius-full);
+  background: var(--sk-bg);
+  border: 1px solid var(--sk-border);
+  color: var(--sk-text-muted);
+  font-size: 13px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
 }
 
-@media (max-width: 860px) {
-  .sk-topnav__meta {
+.sk-topnav__version:hover {
+  background: var(--sk-surface-muted);
+  color: var(--sk-text);
+}
+
+/* The header degrades by dropping the least-essential affordance first, so the five destinations
+   stay intact as long as possible and nothing is ever clipped mid-word. */
+@media (max-width: 1220px) {
+  .sk-topnav__search input {
+    width: 88px;
+  }
+
+  .sk-topnav__kbd {
     display: none;
   }
 }
 
-@media (max-width: 720px) {
-  .sk-topnav__links,
+@media (max-width: 1120px) {
+  .sk-topnav__github span {
+    display: none;
+  }
+
+  .sk-topnav__github {
+    padding: 0 10px;
+  }
+
+  .sk-topnav__link {
+    padding: 7px 11px;
+  }
+}
+
+@media (max-width: 1020px) {
+  .sk-topnav__search {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .sk-topnav__version {
+    display: none;
+  }
+}
+
+/* Below this the destinations no longer fit in a row. Rather than hiding them — which would
+   leave the mobile header as a logo and an empty gap, with no way to navigate from the homepage —
+   the group scrolls horizontally and keeps every destination reachable. */
+@media (max-width: 760px) {
   .sk-topnav__brand-sub {
+    display: none;
+  }
+
+  .sk-topnav {
+    gap: 10px;
+    padding-right: 8px;
+  }
+
+  .sk-topnav__links {
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* Fade the trailing edge so it reads as scrollable rather than clipped. */
+    mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
+  }
+
+  .sk-topnav__links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sk-topnav__spacer {
     display: none;
   }
 }
@@ -817,10 +961,7 @@ a.sk-card:hover {
 .lp {
   position: relative;
   flex: 1;
-  display: grid;
-  place-items: center;
   padding: 0 24px;
-  min-height: calc(100vh - 88px);
 }
 
 /* Shared background for the whole landing shell (nav + hero), kept on one common ancestor rather
@@ -831,15 +972,11 @@ a.sk-card:hover {
 }
 
 /* One full-page decorative layer (wash + dot-grid + glow blobs), rendered as a SIBLING of the
-   sticky nav rather than an ancestor or a descendant of `.lp`. This is what actually fixes the
-   seam: the blobs need their own `overflow: hidden` to contain their bleed, but putting that on
-   any ANCESTOR of the sticky nav breaks `position: sticky`, and putting it on `.lp` alone (a
-   descendant that starts below the nav) reintroduces a hard edge exactly at `.lp`'s own top
-   boundary — visible in the corner the wash's own centered falloff doesn't reach. As a sibling,
-   this layer can clip freely without touching the nav's containing-block chain, and spans the
-   nav+hero as one uninterrupted backdrop with no internal edge to seam against. z-index 0, so it
-   sits behind both the sticky nav (`.sk-topnav-wrap`, z-index 20) and the hero content (`.lp__inner`,
-   z-index 1). */
+   sticky nav rather than an ancestor or a descendant of `.lp`. The blobs need their own
+   `overflow: hidden` to contain their bleed, but putting that on any ANCESTOR of the sticky nav
+   breaks `position: sticky`, and putting it on `.lp` alone reintroduces a hard edge at `.lp`'s
+   own top boundary. As a sibling it can clip freely without touching the nav's containing-block
+   chain. z-index 0, so it sits behind both the sticky nav (z-index 20) and the hero content. */
 .lp-page__bg {
   position: absolute;
   inset: 0;
@@ -853,43 +990,41 @@ a.sk-card:hover {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(65% 55% at 50% 0%, var(--sk-brand-soft), transparent 70%);
+  background: radial-gradient(70% 50% at 50% 0%, var(--sk-brand-soft), transparent 68%);
 }
 
-/* Subtle dot-grid texture across the same shared backdrop, fading out toward the edges. */
+/* Subtle dot-grid texture, biased toward the hero's right side where the reference shows it
+   reading through between the copy and the preview cards. */
 .lp-page__grid {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(color-mix(in srgb, var(--sk-text) 14%, transparent) 1px, transparent 1px);
-  background-size: 24px 24px;
-  mask-image: radial-gradient(80% 70% at 50% 30%, black, transparent 100%);
-  -webkit-mask-image: radial-gradient(80% 70% at 50% 30%, black, transparent 100%);
+  background-image: radial-gradient(color-mix(in srgb, var(--sk-text) 13%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(58% 42% at 52% 34%, black, transparent 100%);
+  -webkit-mask-image: radial-gradient(58% 42% at 52% 34%, black, transparent 100%);
 }
 
-/* Extra corner accent glows, layered on top of the shared wash/grid above — now positioned
-   relative to the full-page `.lp-page__bg` layer (not `.lp`), so their vertical extent can safely
-   sit anywhere across the whole nav+hero height with no internal boundary to clip against. */
 .lp__glow {
   position: absolute;
   border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.6;
+  filter: blur(80px);
+  opacity: 0.5;
 }
 
 .lp__glow--a {
-  width: 440px;
-  height: 440px;
-  top: -60px;
-  left: -60px;
-  background: color-mix(in srgb, var(--sk-brand) 32%, transparent);
+  width: 460px;
+  height: 460px;
+  top: -110px;
+  left: -80px;
+  background: color-mix(in srgb, var(--sk-brand) 26%, transparent);
 }
 
 .lp__glow--b {
-  width: 380px;
-  height: 380px;
-  right: -70px;
-  bottom: -140px;
-  background: color-mix(in srgb, var(--sk-brand) 20%, transparent);
+  width: 420px;
+  height: 420px;
+  right: -90px;
+  top: 90px;
+  background: color-mix(in srgb, var(--sk-brand) 18%, transparent);
 }
 
 /* -------------------------------------------------------- hero appear animation */
@@ -917,127 +1052,210 @@ a.sk-card:hover {
     animation: none;
     opacity: 1;
   }
+
+  .lp-card {
+    animation: none;
+  }
 }
 
 .lp__inner {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1080px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 56px 0 72px;
-  text-align: center;
+  padding: 28px 0 44px;
 }
 
-.lp__logo {
+/* ------------------------------------------------------------------ hero grid */
+
+.lp__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr);
+  align-items: center;
+  gap: 56px;
+  min-height: min(66vh, 600px);
+}
+
+.lp__copy {
+  min-width: 0;
+  max-width: 560px;
+}
+
+.lp__badges {
   display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
 }
 
-.lp__eyebrow {
-  display: inline-block;
-  margin: 0 0 20px;
+.lp__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 5px 12px;
   border-radius: var(--sk-radius-full);
-  background: var(--sk-brand-soft);
+  background: var(--sk-surface);
   border: 1px solid var(--sk-brand-border);
   color: var(--sk-brand);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+}
+
+.lp__badge--version {
+  color: var(--sk-text-muted);
+  border-color: var(--sk-border);
+}
+
+.lp__badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--sk-radius-full);
+  background: var(--sk-accent-success);
 }
 
 .lp__title {
-  margin: 0 auto;
-  max-width: 720px;
-  font-size: clamp(2.3rem, 5vw, 3.4rem);
-  font-weight: 700;
-  line-height: 1.06;
-  letter-spacing: -0.03em;
+  margin: 0;
+  /* The measure lets "Build consistent products," wrap onto two lines; the accent below is a
+     block, so "faster." always starts its own line. Together that reproduces the reference's
+     three-line rhythm deterministically instead of relying on a lucky wrap point. */
+  max-width: 13ch;
+  font-size: clamp(2.6rem, 4.6vw, 4rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
   color: var(--sk-text);
 }
 
 .lp__title-accent {
+  display: block;
   color: var(--sk-brand);
 }
 
 .lp__lede {
-  margin: 20px auto 0;
-  max-width: 600px;
+  margin: 26px 0 0;
+  max-width: 52ch;
   color: var(--sk-text-muted);
-  font-size: clamp(1rem, 1.3vw, 1.14rem);
-  line-height: 1.6;
+  font-size: clamp(0.98rem, 1.1vw, 1.06rem);
+  line-height: 1.62;
 }
 
 .lp__ctas {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 12px;
-  margin-top: 30px;
+  margin-top: 32px;
 }
 
-.lp__tech {
-  margin: 20px 0 0;
+.lp__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
   color: var(--sk-text-subtle);
-  font-size: 13px;
+  font-size: 12.5px;
   font-variant-numeric: tabular-nums;
 }
 
-.lp__tech-pkg {
-  color: var(--sk-brand);
-  font-weight: 600;
+.lp__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
-.lp__tech-dot {
-  margin: 0 8px;
-  color: var(--sk-border-strong);
-}
+/* ------------------------------------------------------- hero showcase (right column) */
 
-.lp__cards {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-start;
+.lp__showcase {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 20px;
-  margin-top: 60px;
+  min-width: 0;
 }
 
 .lp-card {
   --lp-rest-y: 0px;
-  flex: 1 1 220px;
-  min-width: 210px;
-  max-width: 262px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 18px;
   text-align: left;
   background: var(--sk-surface);
-  border: 1px solid var(--sk-border);
+  border: 1px solid rgba(10, 12, 17, 0.05);
   border-radius: var(--sk-radius-xl);
-  box-shadow: var(--sk-shadow-lg);
+  box-shadow:
+    0 1px 2px rgba(10, 12, 17, 0.03),
+    0 18px 40px -22px rgba(10, 12, 17, 0.22);
   transform: translateY(var(--lp-rest-y));
+  /* `animation` is a shorthand — a second rule setting it doesn't merge with `.lp-fade`'s, it
+     fully REPLACES it for any element matching both (this class is applied alongside `.lp-fade`
+     in JSX). That's what silently killed the entrance fade the first time: `.lp-card`'s own
+     `animation: lp-float …` wiped out `.lp-fade`'s `lp-fade-up`, leaving these cards permanently
+     `opacity: 0`. Both animations are listed together here instead, so this declaration is
+     self-contained and doesn't depend on `.lp-fade`'s rule (or source order) at all.
+     `lp-float` only touches the standalone `translate` property, never `transform`, so it can't
+     collide with `lp-fade-up`'s own `transform` animation even while both are running together
+     during the entrance. */
+  animation:
+    lp-fade-up 620ms cubic-bezier(0.16, 1, 0.3, 1) both var(--lp-delay),
+    lp-float 6.4s ease-in-out infinite alternate;
 }
 
+/* Stagger so the four cards drift out of phase with each other instead of moving in lockstep —
+   this is what reads as "alive" rather than mechanical. Full shorthand repeated per rule (rather
+   than overriding just animation-delay) because :nth-child's higher specificity makes the winner
+   deterministic regardless of stylesheet order — the same guarantee the base rule above relies on. */
+.lp__showcase .lp-card:nth-child(2) {
+  animation:
+    lp-fade-up 620ms cubic-bezier(0.16, 1, 0.3, 1) both var(--lp-delay),
+    lp-float 6.4s ease-in-out 1.1s infinite alternate;
+}
+
+.lp__showcase .lp-card:nth-child(3) {
+  animation:
+    lp-fade-up 620ms cubic-bezier(0.16, 1, 0.3, 1) both var(--lp-delay),
+    lp-float 6.4s ease-in-out 2.3s infinite alternate;
+}
+
+.lp__showcase .lp-card:nth-child(4) {
+  animation:
+    lp-fade-up 620ms cubic-bezier(0.16, 1, 0.3, 1) both var(--lp-delay),
+    lp-float 6.4s ease-in-out 3.4s infinite alternate;
+}
+
+@keyframes lp-float {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -7px;
+  }
+}
+
+/* A gentle vertical offset on the alternating cards gives the cluster the staggered rhythm the
+   reference has, without any extra decoration. */
 .lp-card--lift {
-  --lp-rest-y: -16px;
+  --lp-rest-y: -22px;
 }
 
 .lp-card__label {
-  color: var(--sk-text-subtle);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--sk-text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
 }
 
 .lp-card__body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 72px;
 }
 
 .lp-stack {
@@ -1050,19 +1268,13 @@ a.sk-card:hover {
 .lp-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.lp-field__label {
-  color: var(--sk-text-muted);
-  font-size: 12px;
-  font-weight: 500;
+  gap: 7px;
 }
 
 .lp-rows {
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 12px;
 }
 
 .lp-row {
@@ -1077,34 +1289,255 @@ a.sk-card:hover {
 .lp-chiprow {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
-@media (max-width: 1080px) {
-  .lp-card {
-    flex-basis: 200px;
-    max-width: 300px;
+/* ------------------------------------------------------------------- footer */
+
+.lp-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 22px;
+  margin-top: 34px;
+  padding-top: 4px;
+  color: var(--sk-text-subtle);
+  font-size: 13px;
+}
+
+.lp-footer__heart {
+  color: var(--sk-tone-pink);
+}
+
+.lp-footer__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-footer__meta a {
+  color: var(--sk-brand);
+  font-weight: 600;
+}
+
+.lp-footer__meta span[aria-hidden] {
+  color: var(--sk-border-strong);
+}
+
+/* ------------------------------------------------------------------- discovery row */
+
+.lp-discovery {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 48px;
+  background: var(--sk-surface);
+  border: 1px solid rgba(10, 12, 17, 0.05);
+  border-radius: var(--sk-radius-2xl);
+  box-shadow:
+    0 1px 2px rgba(10, 12, 17, 0.03),
+    0 20px 44px -26px rgba(10, 12, 17, 0.18);
+  overflow: hidden;
+}
+
+.lp-disc {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 28px 26px;
+  min-width: 0;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--sk-border);
+  font: inherit;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.lp-disc:first-child {
+  border-left: 0;
+}
+
+.lp-disc:hover {
+  background: var(--sk-bg);
+}
+
+.lp-disc:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--sk-brand-border);
+}
+
+.lp-disc__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 4px;
+  border-radius: var(--sk-radius-lg);
+}
+
+.lp-disc__icon--brand {
+  background: var(--sk-brand-soft);
+  color: var(--sk-brand);
+}
+
+.lp-disc__icon--violet {
+  background: color-mix(in srgb, var(--sk-tone-violet) 12%, var(--sk-surface));
+  color: var(--sk-tone-violet);
+}
+
+.lp-disc__icon--success {
+  background: var(--sk-accent-success-soft);
+  color: var(--sk-accent-success);
+}
+
+.lp-disc__icon--pink {
+  background: color-mix(in srgb, var(--sk-tone-pink) 12%, var(--sk-surface));
+  color: var(--sk-tone-pink);
+}
+
+.lp-disc__title {
+  color: var(--sk-text);
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.012em;
+}
+
+.lp-disc__desc {
+  color: var(--sk-text-muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.lp-disc__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.lp-disc__action--brand {
+  color: var(--sk-brand);
+}
+
+.lp-disc__action--violet {
+  color: var(--sk-tone-violet);
+}
+
+.lp-disc__action--success {
+  color: var(--sk-accent-success);
+}
+
+.lp-disc__action--pink {
+  color: var(--sk-tone-pink);
+}
+
+.lp-disc__action svg {
+  transition: transform 140ms ease;
+}
+
+.lp-disc:hover .lp-disc__action svg {
+  transform: translateX(2px);
+}
+
+/* ------------------------------------------------------------------- responsive */
+
+@media (max-width: 1160px) {
+  .lp__hero {
+    gap: 40px;
+  }
+
+  .lp__showcase {
+    gap: 16px;
+  }
+}
+
+/* Tablet: hero stacks into one column, but the showcase stays a 2-up grid so the previews remain
+   readable at a usable size rather than shrinking. */
+@media (max-width: 960px) {
+  .lp__hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 44px;
+    min-height: 0;
+    padding-top: 8px;
+  }
+
+  .lp__copy {
+    max-width: 640px;
+  }
+
+  .lp__title {
+    max-width: 16ch;
+  }
+
+  .lp-card--lift {
+    --lp-rest-y: 0px;
+  }
+
+  .lp-discovery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 48px;
+  }
+
+  /* With two columns the third card starts a new row, so it needs its own top divider and must
+     drop the left one. */
+  .lp-disc:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .lp-disc:nth-child(n + 3) {
+    border-top: 1px solid var(--sk-border);
   }
 }
 
 @media (max-width: 720px) {
+  .lp {
+    padding: 0 16px;
+  }
+
   .lp__inner {
-    padding: 40px 0 56px;
+    padding: 24px 0 40px;
   }
 
-  .lp__cards {
-    margin-top: 44px;
-    gap: 16px;
+  .lp__title {
+    max-width: none;
   }
 
-  .lp-card--lift {
-    transform: none;
+  .lp__lede {
+    margin-top: 20px;
+  }
+
+  .lp__ctas {
+    margin-top: 26px;
+  }
+
+  /* Full-width CTAs read better than two cramped pills once the column is narrow. */
+  .lp__ctas > * {
+    flex: 1 1 100%;
   }
 }
 
-@media (max-width: 520px) {
-  .lp-card {
-    flex-basis: 100%;
-    max-width: 360px;
+@media (max-width: 620px) {
+  .lp__showcase {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lp-discovery {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lp-disc {
+    border-left: 0;
+    padding: 22px 20px;
+  }
+
+  .lp-disc + .lp-disc {
+    border-top: 1px solid var(--sk-border);
   }
 }
