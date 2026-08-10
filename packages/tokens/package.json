@@ -2,7 +2,7 @@
   "name": "@shikho/tokens",
   "version": "0.0.0",
   "private": true,
-  "description": "Design tokens for the Shikho Design System (foundation scaffold \u2014 no real token values yet).",
+  "description": "Confirmed design tokens (color, radius, elevation) for the Shikho Design System, sourced verbatim from the Figma audit \u2014 no inferred or placeholder values.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -12,12 +12,25 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
   "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Uchashkhan/shikho-design-system.git",
+    "directory": "packages/tokens"
+  },
+  "homepage": "https://github.com/Uchashkhan/shikho-design-system/tree/main/packages/tokens#readme",
+  "bugs": {
+    "url": "https://github.com/Uchashkhan/shikho-design-system/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

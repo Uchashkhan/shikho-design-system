@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Uchashkhan/shikho-design-system.git"
+  },
   "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": ">=20"

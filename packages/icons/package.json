@@ -2,7 +2,7 @@
   "name": "@shikho/icons",
   "version": "0.0.0",
   "private": true,
-  "description": "Icon components for the Shikho Design System (confirmed Figma glyphs, exported verbatim).",
+  "description": "Tree-shakeable React icon components for the Shikho Design System, exported verbatim from confirmed Figma glyphs. Currently covers only glyphs confirmed during component audits, not a full icon library.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -12,12 +12,25 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
   "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Uchashkhan/shikho-design-system.git",
+    "directory": "packages/icons"
+  },
+  "homepage": "https://github.com/Uchashkhan/shikho-design-system/tree/main/packages/icons#readme",
+  "bugs": {
+    "url": "https://github.com/Uchashkhan/shikho-design-system/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
