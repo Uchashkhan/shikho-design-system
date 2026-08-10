@@ -1307,6 +1307,12 @@ a.sk-card:focus-visible {
   margin-top: 32px;
 }
 
+/* Match both hero CTAs to the wider label ("Read documentation") instead of each button
+   auto-sizing to its own text — layout-only, the buttons themselves are untouched. */
+.lp__ctas .lp__cta {
+  min-width: 212px;
+}
+
 .lp__meta {
   display: flex;
   flex-wrap: wrap;

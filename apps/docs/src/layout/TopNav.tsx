@@ -2,11 +2,7 @@ import { useState, type FormEvent } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { ShikhoLogo } from "../ui/ShikhoLogo";
 import { ChevronDownMark, GithubMark, SearchMark } from "../ui/DocsIcons";
-
-/** Repository the design system is published from — surfaced as a nav action. */
-const REPO_URL = "https://github.com/Uchashkhan/shikho-design-system";
-/** The `docs/` folder is the written documentation; the site itself is the component reference. */
-const DOCS_URL = `${REPO_URL}/tree/main/docs`;
+import { DOCS_URL, REPO_URL } from "../config";
 
 /**
  * Every entry points at a destination that actually exists — no nav item leads to a 404.

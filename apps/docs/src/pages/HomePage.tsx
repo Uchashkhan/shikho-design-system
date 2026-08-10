@@ -10,6 +10,7 @@ import {
   Toggle,
 } from "@shikho/ui";
 import { CheckIcon, ChevronRightIcon } from "@shikho/icons";
+import { DOCS_URL, REPO_URL } from "../config";
 import { componentRegistry } from "../registry";
 import {
   ComponentsMark,
@@ -64,8 +65,6 @@ export function HomePage() {
   );
 }
 
-const REPO_URL = "https://github.com/Uchashkhan/shikho-design-system";
-
 /* ------------------------------------------------------------------ hero (left column) */
 
 function HeroCopy({
@@ -100,16 +99,18 @@ function HeroCopy({
         <NewBlueButton
           size="lg"
           type="Primary"
+          className="lp__cta"
           onClick={() => onNavigate("/components")}
-          rightIcon
-          selectRightIcon={<ChevronRightIcon size={16} />}
+          leftIcon={false}
+          rightIcon={false}
         >
           Browse components
         </NewBlueButton>
         <NewBlueButton
           size="lg"
           type="Outline"
-          onClick={() => onNavigate("/foundations/colors")}
+          className="lp__cta"
+          onClick={() => window.open(DOCS_URL, "_blank", "noopener,noreferrer")}
         >
           Read documentation
         </NewBlueButton>
