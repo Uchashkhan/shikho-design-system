@@ -173,3 +173,59 @@ describe("Dismiss button border (P1 repair)", () => {
     expect(dismiss.style.border).toContain("rgba(0, 0, 0, 0.04)");
   });
 });
+
+// P3 repair — none of the alert's own buttons responded to a real pointer at all before this
+// fix; every fill was a static inline style regardless of hover, the same "no interactivity"
+// defect already fixed across every other component this session.
+describe("real pointer-driven hover on the alert's own buttons (P3 repair)", () => {
+  it("darkens the Dismiss button on real hover and reverts on mouse-leave", () => {
+    render(<Alert dismissContent="Dismiss" />);
+    const dismiss = screen.getByRole("button", { name: "Dismiss" });
+    expect(dismiss.style.backgroundColor).toBe("rgb(226, 0, 141)"); // secondary/500
+    fireEvent.mouseEnter(dismiss);
+    expect(dismiss.style.backgroundColor).toBe("rgb(204, 1, 119)"); // secondary/600
+    fireEvent.mouseLeave(dismiss);
+    expect(dismiss.style.backgroundColor).toBe("rgb(226, 0, 141)");
+  });
+
+  it("darkens the corner close button on real hover and reverts on mouse-leave", () => {
+    render(<Alert onCloseClick={() => {}} />);
+    const close = screen.getByRole("button", { name: "Close" });
+    expect(close.style.backgroundColor).toBe("rgb(244, 244, 246)"); // gray/100
+    fireEvent.mouseEnter(close);
+    expect(close.style.backgroundColor).toBe("rgb(235, 236, 240)"); // gray/200
+    fireEvent.mouseLeave(close);
+    expect(close.style.backgroundColor).toBe("rgb(244, 244, 246)");
+  });
+
+  it("darkens the plain neutral primary button (Default/warning/info) on real hover", () => {
+    render(<Alert state="warning" primaryActionContent="Learn more" />);
+    const button = screen.getByRole("button", { name: "Learn more" });
+    expect(button.style.backgroundColor).toBe("rgb(244, 244, 246)"); // gray/100
+    fireEvent.mouseEnter(button);
+    expect(button.style.backgroundColor).toBe("rgb(235, 236, 240)"); // gray/200
+    fireEvent.mouseLeave(button);
+    expect(button.style.backgroundColor).toBe("rgb(244, 244, 246)");
+  });
+
+  it("drives the composed ButtonDanger to its real hover state on pointer-over", () => {
+    render(<Alert state="danger" primaryActionContent="Learn more" />);
+    const button = screen.getByRole("button", { name: "Learn more" });
+    expect(button).toHaveAttribute("data-state", "default");
+    fireEvent.mouseEnter(button);
+    expect(button).toHaveAttribute("data-state", "hover");
+    expect(button.style.backgroundColor).toBe("rgb(235, 236, 240)"); // gray/200, confirmedSecondaryHover
+    fireEvent.mouseLeave(button);
+    expect(button).toHaveAttribute("data-state", "default");
+  });
+
+  it("drives the composed ButtonSuccess to its real hover state on pointer-over", () => {
+    render(<Alert state="success" primaryActionContent="Learn more" />);
+    const button = screen.getByRole("button", { name: "Learn more" });
+    expect(button).toHaveAttribute("data-state", "default");
+    fireEvent.mouseEnter(button);
+    expect(button).toHaveAttribute("data-state", "hover");
+    fireEvent.mouseLeave(button);
+    expect(button).toHaveAttribute("data-state", "default");
+  });
+});

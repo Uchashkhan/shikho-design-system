@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type ReactNode, forwardRef } from "react";
+import { type HTMLAttributes, type ReactNode, forwardRef, useState } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
 import { InfoCircleIcon, CloseIcon } from "@shikho/icons";
 import { ButtonDanger } from "../button/button_danger";
@@ -21,6 +21,16 @@ const iconShadow = shadowToCss(elevation.e2); // confirmed exact, both icon size
 // system-wide "special_drop" 2-layer inset — the same construction already used by
 // Chip/Tags/DatePicker/Modal/Pagination/SidebarItem/TopNavItem/TableCell/Tooltip for this effect.
 const neutralButtonShadow = `${shadowToCss([elevation.e2[1]])}, inset 0px 1px 3px -2px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.07)`;
+
+// P3: none of the alert's own buttons (the plain neutral primary action, "Dismiss", and the
+// corner close icon_button) responded to a real pointer at all — every fill was a static inline
+// style, the same "no hover" defect already fixed across every other component this session.
+// `ButtonDanger`/`ButtonSuccess` already support a real `hover` phase (§11/§14); the hand-rolled
+// buttons get one-step-darker hover fills, matching the same darkening convention already
+// confirmed for the Secondary button family (button_danger.tsx's `confirmedSecondaryHover`).
+const neutralButtonHoverBg = color.gray[200];
+const dismissButtonHoverBg = color.secondary[600];
+const cornerButtonHoverBg = color.gray[200];
 
 // docs/audit/alerts.md §14 — confirmed via a fresh get_design_context on all 5 severities: the
 // border color, plus (§14) `Default`'s border is `outline/gray-100` (#f4f4f6), NOT gray-200 as
@@ -119,13 +129,34 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
     },
     ref,
   ) => {
+    // P3 — real pointer-driven hover for the alert's own buttons (§ above). Left as separate
+    // flags per control since each is independently hoverable, matching the same
+    // pointer/focus-driven-state pattern used library-wide (see sidebar_item.tsx).
+    const [primaryHover, setPrimaryHover] = useState(false);
+    const [dismissHover, setDismissHover] = useState(false);
+    const [cornerHover, setCornerHover] = useState(false);
+
     const primaryButton =
       state === "danger" ? (
-        <ButtonDanger size="md" type="Secondary" state="default" onClick={onPrimaryActionClick}>
+        <ButtonDanger
+          size="md"
+          type="Secondary"
+          state={primaryHover ? "hover" : "default"}
+          onClick={onPrimaryActionClick}
+          onMouseEnter={() => setPrimaryHover(true)}
+          onMouseLeave={() => setPrimaryHover(false)}
+        >
           {primaryActionContent}
         </ButtonDanger>
       ) : state === "success" ? (
-        <ButtonSuccess size="md" type="Secondary" state="default" onClick={onPrimaryActionClick}>
+        <ButtonSuccess
+          size="md"
+          type="Secondary"
+          state={primaryHover ? "hover" : "default"}
+          onClick={onPrimaryActionClick}
+          onMouseEnter={() => setPrimaryHover(true)}
+          onMouseLeave={() => setPrimaryHover(false)}
+        >
           {primaryActionContent}
         </ButtonSuccess>
       ) : (
@@ -135,6 +166,8 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
         <button
           type="button"
           onClick={onPrimaryActionClick}
+          onMouseEnter={() => setPrimaryHover(true)}
+          onMouseLeave={() => setPrimaryHover(false)}
           style={{
             display: "flex",
             alignItems: "center",
@@ -144,7 +177,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
             gap: "0.25rem",
             borderRadius: radius.md,
             border: "none",
-            backgroundColor: color.gray[100],
+            backgroundColor: primaryHover ? neutralButtonHoverBg : color.gray[100],
             boxShadow: neutralButtonShadow,
             color: color.gray[700],
             fontSize: 13,
@@ -209,6 +242,8 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
             <button
               type="button"
               onClick={onDismissClick}
+              onMouseEnter={() => setDismissHover(true)}
+              onMouseLeave={() => setDismissHover(false)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -218,7 +253,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
                 // P1 repair: confirmed 1px `outline/black-50` border. The button's outer
                 // drop-shadow / inset effect remains unresolved and is deliberately untouched.
                 border: `1px solid ${color.black[50]}`,
-                backgroundColor: color.secondary[500], // confirmed — §11
+                backgroundColor: dismissHover ? dismissButtonHoverBg : color.secondary[500], // confirmed — §11
                 color: color.white[950], // text/white-950 — §11
                 fontSize: 13,
                 lineHeight: "20px",
@@ -237,6 +272,8 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
         <button
           type="button"
           onClick={onCloseClick}
+          onMouseEnter={() => setCornerHover(true)}
+          onMouseLeave={() => setCornerHover(false)}
           aria-label={closeButtonLabel}
           style={{
             position: "absolute",
@@ -251,7 +288,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
             gap: "0.375rem", // gap-[spacing/6] — §11
             border: "none",
             borderRadius: radius.full,
-            backgroundColor: color.gray[100],
+            backgroundColor: cornerHover ? cornerButtonHoverBg : color.gray[100],
             boxShadow: cornerButtonShadow,
             cursor: "pointer",
           }}
