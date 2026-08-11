@@ -35,9 +35,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsup && pnpm build:css",
+    "build": "rm -rf dist && tsup && pnpm build:css",
     "build:css": "tailwindcss -i ./src/styles.css -o ./dist/styles.css",
-    "dev": "tsup --watch",
+    "dev": "tsup --watch & tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch=always & wait",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint ."

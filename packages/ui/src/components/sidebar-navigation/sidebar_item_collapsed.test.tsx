@@ -44,4 +44,25 @@ describe("interactivity", () => {
     fireEvent.click(screen.getByRole("button"));
     expect(onClick).toHaveBeenCalled();
   });
+
+  it("with no `state` prop, the real pointer drives hover", () => {
+    render(<SidebarItemCollapsed type="active_primary_accent">Item</SidebarItemCollapsed>);
+    const el = screen.getByRole("button");
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)");
+    fireEvent.mouseEnter(el);
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.2)");
+    fireEvent.mouseLeave(el);
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)");
+  });
+
+  it("an explicit `state` prop overrides the pointer", () => {
+    render(
+      <SidebarItemCollapsed type="active_primary_accent" state="default">
+        Item
+      </SidebarItemCollapsed>,
+    );
+    const el = screen.getByRole("button");
+    fireEvent.mouseEnter(el);
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)");
+  });
 });

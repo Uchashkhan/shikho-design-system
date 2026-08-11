@@ -1,4 +1,4 @@
-import { type ButtonHTMLAttributes, type CSSProperties, type ReactNode, forwardRef } from "react";
+import { type ButtonHTMLAttributes, type CSSProperties, type MouseEvent, type ReactNode, forwardRef, useState } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
 
 // docs/audit/sidebar-navigation-deep-audit.md §2-§3 — sidebar_item: size (md, lg, xl), type (6
@@ -42,7 +42,13 @@ const SIZE_METRICS: Record<SidebarItemSize, SidebarItemSizeMetrics> = {
 const LEFT_ICON_SIZE = 22; // confirmed identical at md, lg and xl
 
 const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[0].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
+// Two distinct inset-overlay strengths, confirmed via get_design_context: the black-7 (7% alpha)
+// variant dresses active_primary/active_primary_accent/active_neutral/active_neutral_inverse;
+// `active` (plain) gets a visibly lighter black-4 (4% alpha) variant instead of no shadow at all
+// — the previous implementation omitted `active`/`active_neutral`/`active_neutral_inverse`'s
+// shadow entirely, which the deep-audit doc had (incorrectly) generalized as "no root shadow".
 const restingInsetShadow = `inset 0px 1px 3px -2px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.07)`;
+const activeInsetShadow = `inset 0px 1px 3px 0px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.04)`;
 
 interface TypeStyle {
   defaultFill: string;
@@ -53,14 +59,12 @@ interface TypeStyle {
   shadow?: string;
 }
 
-// docs/audit/sidebar-navigation-deep-audit.md §2 — the confirmed type x state=default matrix, for
-// all 6 types. hover fills for active_primary_accent and inactive are directly confirmed (12%->
-// 20% alpha, and transparent->gray-50 respectively); the other 4 types' hover fill is derived by
-// the same "intensify one step" pattern, not independently audited.
+// docs/audit/sidebar-navigation-deep-audit.md §2, re-confirmed against a live Figma
+// get_design_context pull — the full type x state (default/hover) matrix for all 6 types.
 const TYPE_STYLE: Record<SidebarItemType, TypeStyle> = {
   active_primary: {
     defaultFill: color.primary[400], // Color/primary_med_em
-    hoverFill: color.primary[400],
+    hoverFill: color.primary[500], // Color/primary_base — confirmed via get_design_context
     border: `1px solid ${color.black[150]}`,
     textColor: color.white[950], // text/inverse_black_neutral
     fontWeight: 600,
@@ -78,18 +82,21 @@ const TYPE_STYLE: Record<SidebarItemType, TypeStyle> = {
     hoverFill: color.gray[200], // Color/smoke_high — derived, one step darker
     textColor: color.gray[950],
     fontWeight: 600,
+    shadow: activeInsetShadow, // inset-only, no outer drop-shadow — confirmed via get_design_context
   },
   active_neutral: {
     defaultFill: color.black[950], // Color/inverse_white_neutral
-    hoverFill: color.black[950], // unconfirmed hover — kept static, derived
+    hoverFill: color.black[900], // alpha_88 (~88% opaque black) — confirmed via get_design_context
     textColor: color.white[950], // text/inverse_black_neutral
     fontWeight: 600,
+    shadow: `0px 1px 1px -0.5px rgba(0,0,0,0.04), ${restingInsetShadow}`, // confirmed via get_design_context
   },
   active_neutral_inverse: {
     defaultFill: color.white[950], // Color/smoke_base
-    hoverFill: color.gray[100], // derived, one step darker (smoke_med)
+    hoverFill: color.gray[50], // Color/smoke_low — confirmed via get_design_context
     textColor: color.gray[950],
     fontWeight: 600,
+    shadow: `0px 1px 1px -0.5px rgba(0,0,0,0.04), ${restingInsetShadow}`, // confirmed via get_design_context
   },
   inactive: {
     defaultFill: "transparent",
@@ -112,6 +119,9 @@ export interface SidebarItemProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
   size?: SidebarItemSize;
   type?: SidebarItemType;
+  /** Forces a specific state (used by Storybook/playground controls to preview `hover` without a
+   * pointer). Left unset, the real cursor drives it via onMouseEnter/onMouseLeave — consumers
+   * don't need to wire hover up themselves. */
   state?: SidebarItemState;
   /** The 4 confirmed boolean slots (§3), all default `true`. */
   leftIcon?: boolean;
@@ -135,7 +145,7 @@ export const SidebarItem = forwardRef<HTMLButtonElement, SidebarItemProps>(
     {
       size = "lg",
       type = "inactive",
-      state = "default",
+      state,
       leftIcon = true,
       rightIcon = true,
       tag = true,
@@ -145,13 +155,29 @@ export const SidebarItem = forwardRef<HTMLButtonElement, SidebarItemProps>(
       tagContent,
       children,
       style,
+      onMouseEnter,
+      onMouseLeave,
       ...props
     },
     ref,
   ) => {
     const typeStyle = TYPE_STYLE[type];
     const tagStyle = TAG_STYLE[type];
-    const isHover = state === "hover";
+
+    // `state` left unset (the normal case for real usage) → hover is driven by the actual
+    // pointer. An explicit `state` (Storybook/playground controls) always wins, so a forced
+    // preview never flickers back to whatever the cursor happens to be doing.
+    const [pointerHover, setPointerHover] = useState(false);
+    const isHover = state ? state === "hover" : pointerHover;
+
+    const handleMouseEnter = (event: MouseEvent<HTMLButtonElement>) => {
+      setPointerHover(true);
+      onMouseEnter?.(event);
+    };
+    const handleMouseLeave = (event: MouseEvent<HTMLButtonElement>) => {
+      setPointerHover(false);
+      onMouseLeave?.(event);
+    };
 
     const metrics = SIZE_METRICS[size];
 
@@ -172,7 +198,17 @@ export const SidebarItem = forwardRef<HTMLButtonElement, SidebarItemProps>(
     };
 
     return (
-      <button ref={ref} type="button" data-size={size} data-type={type} data-state={state} style={computedStyle} {...props}>
+      <button
+        ref={ref}
+        type="button"
+        data-size={size}
+        data-type={type}
+        data-state={isHover ? "hover" : "default"}
+        style={computedStyle}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        {...props}
+      >
         {leftIcon && (
           <span style={{ width: LEFT_ICON_SIZE, height: LEFT_ICON_SIZE, flexShrink: 0, filter: iconShadowFilter }}>
             {selectLeftIcon}

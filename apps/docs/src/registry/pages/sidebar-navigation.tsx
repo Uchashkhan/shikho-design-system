@@ -26,7 +26,6 @@ export const pageConfig: ComponentPageConfig = {
   ],
   states: STATES,
   gaps: [
-    "Hover fill for active_primary, active, active_neutral, and active_neutral_inverse was not independently audited — derived by the same \"intensify one step\" pattern confirmed on active_primary_accent and inactive.",
     "The confirmed asymmetric icon sizing (22px left icon vs. 24px right icon) has no known reason — preserved as confirmed, not corrected.",
     "SidebarItemCollapsed's fill/text mapping for 5 of its 6 types reuses SidebarItem's own confirmed matrix — only active_primary_accent was independently confirmed for the collapsed variant.",
     "sidebar_nav is confirmed a demo composition (9 stacked sidebar_item instances), not a primitive — not implemented as its own component, consistent with this project's existing treatment of top_nav/tab_nav.",
@@ -44,7 +43,7 @@ function Nav() {
   props: [
     { name: "size", type: "md | lg | xl", defaultValue: "lg", description: "SidebarItem only. Confirmed heights: 40/48/56." },
     { name: "type", type: "6 confirmed values", defaultValue: "inactive", description: "Confirmed distinct fill/text/weight per type." },
-    { name: "state", type: "default | hover", defaultValue: "default", description: "No disabled state exists." },
+    { name: "state", type: "default | hover", description: "Left unset, the real cursor drives it. Pass explicitly to force a preview (e.g. in this playground). No disabled state exists." },
     { name: "leftIcon / rightIcon / tag / text", type: "boolean", defaultValue: "true", description: "SidebarItem's 4 confirmed boolean slots." },
     { name: "icon / text (SidebarItemCollapsed)", type: "boolean", defaultValue: "true", description: "Only 2 booleans — no tag, no rightIcon, a confirmed reduced structure." },
     { name: "selectLeftIcon / selectRightIcon", type: "ReactNode | null", description: "Confirmed instance-swap slots." },

@@ -23,11 +23,13 @@ All at `size=lg`, root `240×48`, `flex items-center justify-center`, `p-12`, `g
 | `active_neutral_inverse` | `Color/smoke_base` (white) | `text/gray-950` SemiBold | `Color/primary/500` (solid) | white |
 | `inactive` | none (transparent) | `text/gray-700` **Medium** (the only type at Medium weight — every `active_*` type is SemiBold) | `Color/gray/100` | `text/gray-600` |
 
-**Confirmed `default → hover` transitions** (2 directly audited):
+**Confirmed `default → hover` transitions** (all 6 types, re-audited via a live `get_design_context` pull on `66068-24447`):
+- `active_primary`: `Color/primary_med_em` (`#85a4ff`, primary/400) → `Color/primary_base` (`#5468ff`, primary/500).
 - `active_primary_accent`: fill intensifies `primary_base_em_alpha` (12%) → `primary_low_em_alpha` (20%) — same token family, higher alpha.
-- `inactive`: transparent → `Color/gray-50` (a subtle neutral tint appears only on hover).
-
-The remaining 4 types' hover treatment was not independently re-audited; this implementation derives their hover fill by the same confirmed pattern (either intensify to the next step in the same color family, or introduce a subtle neutral tint when no bg exists at rest) — documented as derived, not directly confirmed, for `active_primary`, `active`, `active_neutral`, and `active_neutral_inverse`.
+- `active`: `Color/smoke_med` (`#f4f4f6`) → `Color/smoke_high` (`#ebecf0`).
+- `active_neutral`: `Color/inverse_white_neutral` (solid black) → `rgba(0,0,0,0.88)` (`neutral_transparent_Black/alpha_88`, ≈black/900).
+- `active_neutral_inverse`: `Color/smoke_base` (white) → `Color/smoke_low` (`#f9f9fa`) — **not** `smoke_med`/gray-100, which the previous derivation had guessed.
+- `inactive`: transparent → `Color/gray-50` (a subtle neutral tint appears only on hover; text color is unchanged).
 
 ## 3. Confirmed internal structure (reconfirms `sidebar-navigation.md` §7, adds default-state detail)
 
@@ -40,7 +42,7 @@ sidebar_item
 ```
 4 confirmed booleans (`leftIcon`, `rightIcon`, `tag`, `text`) + 2 instance-swap slots (`selectLeftIcon`, `selectRightIcon`).
 
-**Root shadow**: only `active_primary`/`active_primary_accent` carry a visible drop-shadow + the `secondary_button_effect`-derived inset overlay; `active` (plain) and `inactive` have no root shadow at all — confirmed, not a rendering gap.
+**Root shadow** (corrected — the original claim below was wrong for 2 of the 6 types): `active_primary`, `active_primary_accent`, `active_neutral`, and `active_neutral_inverse` all carry a visible outer drop-shadow (`0px 1px 1px -0.5px rgba(0,0,0,0.04)`) plus a `secondary_button_effect`-derived inset overlay (the stronger, black-7-alpha variant). `active` (plain, `smoke_med`/`smoke_high`) carries *only* the inset overlay, at a visibly lighter black-4-alpha variant — not "no shadow at all" as originally logged here. `inactive` alone has genuinely no shadow at any layer, at either state.
 
 ## 4. Confirmed `sidebar_item_collapsed` structure (new — was 0 confirmed variants in the overview)
 
@@ -49,7 +51,7 @@ sidebar_item_collapsed — 64×56, flex-col, gap-2, px-4 py-8, radius.md (10px)
 ├─ icon (22×22, conditional — boolean `icon`)
 └─ label (below the icon, centered, caption_1 11px/16px SemiBold)
 ```
-Only 2 booleans (`icon`, `text`) + 1 instance-swap slot (`selectLeftIcon`) — **no `tag`, no `rightIcon`** at all, confirming this is a deliberately reduced variant of `sidebar_item`, not a resize. Confirmed for `type=active_primary_accent`: fill `primary_base_em_alpha` (identical token to the full-size item's own `active_primary_accent`), label `text/primary-600`. The other 5 types were not independently re-audited for the collapsed variant; this implementation reuses the same fill/text mapping confirmed for the full-size `sidebar_item` (§2), documented as a reasonable, low-invention extension since both components share the identical `type` vocabulary.
+Only 2 booleans (`icon`, `text`) + 1 instance-swap slot (`selectLeftIcon`) — **no `tag`, no `rightIcon`** at all, confirming this is a deliberately reduced variant of `sidebar_item`, not a resize. Confirmed for `type=active_primary_accent`: fill `primary_base_em_alpha` (identical token to the full-size item's own `active_primary_accent`), label `text/primary-600`. The other 5 types were not independently re-audited for the collapsed variant against a dedicated `sidebar_item_collapsed` Figma instance; this implementation reuses the same fill/text/hover mapping confirmed for the full-size `sidebar_item` (§2), a reasonable, low-invention extension since both components share the identical `type` vocabulary and the collapsed frame's own metadata lists the same 6-type × default/hover grid.
 
 ## 5. Confirmed vs. still-unresolved
 
@@ -59,7 +61,6 @@ Only 2 booleans (`icon`, `text`) + 1 instance-swap slot (`selectLeftIcon`) — *
 - `sidebar_item_collapsed`'s reduced structure (§4) — was previously 0 confirmed variants.
 
 **Still not confirmed, not invented:**
-- Hover fill for `active_primary`, `active`, `active_neutral`, `active_neutral_inverse` — derived from the two confirmed hover examples' pattern, not independently audited (§2).
 - Why `left_icon`/`right_icon` differ in size (22 vs. 24px) — confirmed discrepancy, reason unknown (`sidebar-navigation.md` §7).
 - Whether the Tag sub-component is genuinely byte-identical to List's Tag, or a separate but similarly-built instance.
 - The internal structure of `side_bar`, `side_bar_collapsed`, `side_bar_collapsed_2`, `sidebar_nav_collapsed` — all remain bare, unexpanded instances; not in scope for this deep audit and not implemented.

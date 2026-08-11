@@ -60,7 +60,7 @@ a {
   padding: 104px 12px 40px;
   overflow-y: auto;
   border-right: 1px solid var(--sk-border);
-  background: #ffffff;
+  background: var(--sk-surface);
   z-index: 10;
 }
 
@@ -118,8 +118,10 @@ a {
 }
 
 .sk-navlink:hover {
-  background: var(--sk-surface-muted);
-  color: var(--sk-text);
+  /* gray-50, not gray-100 — matches sidebar_item's `inactive` hover fill
+     (@shikho/ui sidebar_item.tsx TYPE_STYLE.inactive.hoverFill). Text color is intentionally
+     unchanged on hover: the design-system component never recolors text for this state. */
+  background: var(--sk-bg);
 }
 
 .sk-navlink:focus-visible {
@@ -128,8 +130,13 @@ a {
 }
 
 .sk-navlink[aria-current="page"] {
-  background: var(--sk-brand-soft);
-  color: var(--sk-brand);
+  /* 12% alpha wash of --sk-brand (primary-500), not a solid ramp step — matches sidebar_item's
+     `active_primary_accent` default fill (Color/primary_base_em_alpha). --sk-brand-hover
+     (primary-600), not --sk-brand (primary-500), for the text — matches that same type's
+     textColor, and clears WCAG AA contrast the same way `.sk-topnav__link[aria-current="page"]`
+     already does below. */
+  background: color-mix(in srgb, var(--sk-brand) 12%, transparent);
+  color: var(--sk-brand-hover);
   font-weight: 600;
 }
 

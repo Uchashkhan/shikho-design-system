@@ -1,4 +1,4 @@
-import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from "react";
+import { type ButtonHTMLAttributes, type MouseEvent, type ReactNode, forwardRef, useState } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
 import type { SidebarItemState, SidebarItemType } from "./sidebar_item";
 
@@ -6,7 +6,10 @@ import type { SidebarItemState, SidebarItemType } from "./sidebar_item";
 // as sidebar_item), state (default, hover). Confirmed no `size` property — one fixed 64×56 size.
 
 const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[0].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
+// Two distinct inset-overlay strengths, confirmed via get_design_context on the collapsed frame
+// itself (66068:24628) — see sidebar_item.tsx for the matching full-size confirmation.
 const restingInsetShadow = `inset 0px 1px 3px -2px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.07)`;
+const activeInsetShadow = `inset 0px 1px 3px 0px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.04)`;
 
 interface TypeStyle {
   defaultFill: string;
@@ -16,13 +19,12 @@ interface TypeStyle {
   shadow?: string;
 }
 
-// docs/audit/sidebar-navigation-deep-audit.md §4 — confirmed for active_primary_accent only
-// (same fill token as the full-size sidebar_item); the other 5 types reuse sidebar_item's own
-// confirmed §2 mapping, a low-invention extension since both share the identical type vocabulary.
+// docs/audit/sidebar-navigation-deep-audit.md §4, re-confirmed against a live Figma
+// get_design_context pull — shares sidebar_item's confirmed type x state mapping.
 const TYPE_STYLE: Record<SidebarItemType, TypeStyle> = {
   active_primary: {
     defaultFill: color.primary[400],
-    hoverFill: color.primary[400],
+    hoverFill: color.primary[500], // Color/primary_base — confirmed via get_design_context
     border: `1px solid ${color.black[150]}`,
     textColor: color.white[950],
     shadow: `0px 1px 1px -0.5px rgba(0,0,0,0.04), ${restingInsetShadow}`,
@@ -37,16 +39,19 @@ const TYPE_STYLE: Record<SidebarItemType, TypeStyle> = {
     defaultFill: color.gray[100],
     hoverFill: color.gray[200],
     textColor: color.gray[950],
+    shadow: activeInsetShadow,
   },
   active_neutral: {
     defaultFill: color.black[950],
-    hoverFill: color.black[950],
+    hoverFill: color.black[900], // alpha_88 — confirmed via get_design_context
     textColor: color.white[950],
+    shadow: `0px 1px 1px -0.5px rgba(0,0,0,0.04), ${restingInsetShadow}`,
   },
   active_neutral_inverse: {
     defaultFill: color.white[950],
-    hoverFill: color.gray[100],
+    hoverFill: color.gray[50], // Color/smoke_low — confirmed via get_design_context
     textColor: color.gray[950],
+    shadow: `0px 1px 1px -0.5px rgba(0,0,0,0.04), ${restingInsetShadow}`,
   },
   inactive: {
     defaultFill: "transparent",
@@ -58,6 +63,8 @@ const TYPE_STYLE: Record<SidebarItemType, TypeStyle> = {
 export interface SidebarItemCollapsedProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
   type?: SidebarItemType;
+  /** Forces a specific state (used by Storybook/playground controls to preview `hover` without a
+   * pointer). Left unset, the real cursor drives it via onMouseEnter/onMouseLeave. */
   state?: SidebarItemState;
   /** The 2 confirmed boolean slots (§4), both default `true`. No `tag`, no `rightIcon` — a
    * confirmed deliberately reduced structure vs. `SidebarItem`. */
@@ -73,16 +80,34 @@ export interface SidebarItemCollapsedProps
  * icon). Used for a collapsed sidebar layout.
  */
 export const SidebarItemCollapsed = forwardRef<HTMLButtonElement, SidebarItemCollapsedProps>(
-  ({ type = "inactive", state = "default", icon = true, text = true, selectLeftIcon = null, children, style, ...props }, ref) => {
+  (
+    { type = "inactive", state, icon = true, text = true, selectLeftIcon = null, children, style, onMouseEnter, onMouseLeave, ...props },
+    ref,
+  ) => {
     const typeStyle = TYPE_STYLE[type];
-    const isHover = state === "hover";
+
+    // See sidebar_item.tsx for the rationale: unset `state` → real pointer drives hover;
+    // an explicit `state` (Storybook/playground) always wins.
+    const [pointerHover, setPointerHover] = useState(false);
+    const isHover = state ? state === "hover" : pointerHover;
+
+    const handleMouseEnter = (event: MouseEvent<HTMLButtonElement>) => {
+      setPointerHover(true);
+      onMouseEnter?.(event);
+    };
+    const handleMouseLeave = (event: MouseEvent<HTMLButtonElement>) => {
+      setPointerHover(false);
+      onMouseLeave?.(event);
+    };
 
     return (
       <button
         ref={ref}
         type="button"
         data-type={type}
-        data-state={state}
+        data-state={isHover ? "hover" : "default"}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         style={{
           display: "flex",
           flexDirection: "column",

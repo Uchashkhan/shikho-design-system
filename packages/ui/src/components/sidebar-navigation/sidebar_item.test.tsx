@@ -108,6 +108,42 @@ describe("interactivity", () => {
     fireEvent.click(screen.getByRole("button"));
     expect(onClick).toHaveBeenCalled();
   });
+
+  it("with no `state` prop, the real pointer drives hover (previously a static swatch — no visual change on mouseover)", () => {
+    render(<SidebarItem type="active_primary_accent">Nav item</SidebarItem>);
+    const el = screen.getByRole("button");
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)");
+    fireEvent.mouseEnter(el);
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.2)");
+    fireEvent.mouseLeave(el);
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)");
+  });
+
+  it("an explicit `state` prop overrides the pointer (Storybook/playground forcing a preview)", () => {
+    render(
+      <SidebarItem type="active_primary_accent" state="default">
+        Nav item
+      </SidebarItem>,
+    );
+    const el = screen.getByRole("button");
+    fireEvent.mouseEnter(el);
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)"); // stays default, not hover
+  });
+
+  it("still fires a caller's own onMouseEnter/onMouseLeave alongside the internal hover tracking", () => {
+    const onMouseEnter = vi.fn();
+    const onMouseLeave = vi.fn();
+    render(
+      <SidebarItem onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        Nav item
+      </SidebarItem>,
+    );
+    const el = screen.getByRole("button");
+    fireEvent.mouseEnter(el);
+    fireEvent.mouseLeave(el);
+    expect(onMouseEnter).toHaveBeenCalledTimes(1);
+    expect(onMouseLeave).toHaveBeenCalledTimes(1);
+  });
 });
 
 // P1 repair pass — per-size table replaces lg-only extrapolation.
