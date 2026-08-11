@@ -69,7 +69,10 @@ a {
   padding: 8px 10px;
   margin-bottom: 18px;
   font: inherit;
-  font-size: 13px;
+  /* 16px, not 13px — iOS Safari auto-zooms the whole page on focus for any text input under
+     16px, which is jarring and this is the one text input reachable on every viewport width
+     (the catalogue filter). */
+  font-size: 16px;
   color: var(--sk-text);
   /* `--sk-surface` (white), not `--sk-bg` — the field sits on the page's own gray-50 background,
      so matching that background made it read as un-defined chrome rather than an input. */
@@ -117,6 +120,11 @@ a {
 .sk-navlink:hover {
   background: var(--sk-surface-muted);
   color: var(--sk-text);
+}
+
+.sk-navlink:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--sk-brand-border);
 }
 
 .sk-navlink[aria-current="page"] {
@@ -241,6 +249,16 @@ a {
   flex: 1 1 220px;
   max-width: 300px;
   margin: 0;
+}
+
+.sk-catalogue__filter-scroll {
+  /* `min-width: 0` lets this flex item actually shrink below its content's natural width —
+     without it, a flex item defaults to `min-width: auto` and forces the row (and the page)
+     wider than the viewport instead of scrolling. */
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 /* -------------------------------------------------------------------- cards */
@@ -874,9 +892,60 @@ a.sk-card:focus-visible {
     border-bottom: 1px solid var(--sk-border);
   }
 
+  /* The sidebar is a mouse-first 13.5px/tight-padding list on desktop; below 820px it becomes
+     the primary way to navigate on a touch device, so its links need a real tap target here. */
+  .sk-navlink {
+    min-height: 44px;
+    padding: 10px 10px;
+    font-size: 14.5px;
+  }
+
   .sk-main {
     margin-left: 0;
     padding-top: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .sk-main {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .sk-preview {
+    padding: 24px 20px;
+    min-height: 160px;
+  }
+
+  .sk-card__preview {
+    padding: 20px;
+  }
+
+  /* Once control groups (Size / Type / State) no longer fit in a row, stack them — the group
+     divider is a vertical rule meant for side-by-side groups; left in place it would wrongly
+     reappear at the start of every wrapped line instead of only between columns. */
+  .sk-controls {
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px 20px;
+  }
+
+  .sk-control-group,
+  .sk-control-group:first-child {
+    padding-left: 0;
+  }
+
+  .sk-control-group:not(:first-child)::before {
+    content: none;
+  }
+
+  .sk-control-group:not(:first-child) {
+    padding-top: 18px;
+    border-top: 1px solid var(--sk-border);
+  }
+
+  .ptn-surface {
+    padding: 20px;
   }
 }
 
@@ -888,6 +957,30 @@ a.sk-card:focus-visible {
   top: 0;
   z-index: 20;
   padding: 16px 24px;
+}
+
+/* The wrap itself is transparent — only the pill (`.sk-topnav`) has a background — so scrolled
+   content used to appear/disappear abruptly in the padding around the pill and behind its
+   rounded corners. This fades it out first: a soft matching-background-to-transparent wash sat
+   behind the pill (painted first, so `.sk-topnav`/the mobile menu naturally layer on top with no
+   z-index needed), taller than the pill itself so the fade reads as gradual rather than a hard
+   edge right at the nav's boundary. */
+.sk-topnav-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  /* Fades immediately from the top, no solid plateau first: the pill itself already hides
+     anything directly behind it, this only needs to soften the sliver of content visible in the
+     wrap's padding and the pill's rounded corners. */
+  height: 40px;
+  background: linear-gradient(to bottom, var(--sk-bg) 0%, transparent 100%);
+  pointer-events: none;
+  /* `.sk-topnav` (the pill) is `position: static`, which paints BEFORE (below) a positioned,
+     z-index:auto sibling like this one by default — without this, the gradient's opaque top
+     covered the pill entirely instead of sitting behind it. `-1` is scoped to this stacking
+     context (`.sk-topnav-wrap` already has `z-index: 20` of its own), so it only affects
+     ordering among these children, not the wrap's position relative to the rest of the page. */
+  z-index: -1;
 }
 
 .sk-topnav {
@@ -1109,36 +1202,149 @@ a.sk-card:focus-visible {
   }
 }
 
-/* Below this the destinations no longer fit in a row. Rather than hiding them — which would
-   leave the mobile header as a logo and an empty gap, with no way to navigate from the homepage —
-   the group scrolls horizontally and keeps every destination reachable. */
+/* A real icon button — hidden until .sk-topnav__links/.sk-topnav__actions are hidden below, so
+   it never shows alongside them. 44×44 is a real touch target (not the 38px used elsewhere in
+   this bar for mouse-first desktop chrome) since this is the primary way to reach navigation on
+   a touch device. */
+.sk-topnav__menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--sk-radius-full);
+  color: var(--sk-text-muted);
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.sk-topnav__menu-btn:hover {
+  background: var(--sk-surface-muted);
+  color: var(--sk-text);
+}
+
+.sk-topnav__menu-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--sk-focus-ring);
+}
+
+/* Below this the destination group, search, GitHub and version no longer fit in one bar.
+   Previously this squeezed a shrunk, horizontally-scrolling version of the nav into the same
+   row — a pattern nobody expects on mobile. Below 760px it's a standard collapsed header instead:
+   brand + a menu button that opens a full-width dropdown with everything stacked and easy to tap. */
 @media (max-width: 760px) {
+  .sk-topnav {
+    gap: 10px;
+    padding-right: 10px;
+  }
+
+  .sk-topnav__links,
+  .sk-topnav__spacer,
+  .sk-topnav__actions {
+    display: none;
+  }
+
+  .sk-topnav__menu-btn {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 420px) {
   .sk-topnav__brand-sub {
     display: none;
   }
+}
 
-  .sk-topnav {
-    gap: 10px;
-    padding-right: 8px;
-  }
+.sk-topnav__mobile {
+  /* Horizontal position comes from `.sk-topnav-wrap`'s own padding (this panel is its child,
+     same as the header bar above it) — a horizontal margin here would double that inset and
+     leave the panel narrower than, and misaligned with, the bar it drops down from. */
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--sk-surface);
+  border: 1px solid rgba(10, 12, 17, 0.05);
+  border-radius: var(--sk-radius-xl);
+  box-shadow:
+    0 1px 2px rgba(10, 12, 17, 0.03),
+    0 10px 30px -14px rgba(10, 12, 17, 0.12);
+}
 
-  .sk-topnav__links {
-    flex: 1;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    /* Fade the trailing edge so it reads as scrollable rather than clipped. */
-    mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black calc(100% - 20px), transparent 100%);
-  }
+.sk-topnav__mobile-links {
+  display: flex;
+  flex-direction: column;
+}
 
-  .sk-topnav__links::-webkit-scrollbar {
-    display: none;
-  }
+.sk-topnav__mobile-link {
+  display: flex;
+  align-items: center;
+  /* 15px line-height plus padding clears the 44px touch-target minimum. */
+  min-height: 44px;
+  padding: 12px 10px;
+  border-radius: var(--sk-radius-md);
+  color: var(--sk-text-muted);
+  font-weight: 500;
+  font-size: 15px;
+}
 
-  .sk-topnav__spacer {
-    display: none;
-  }
+.sk-topnav__mobile-link:hover {
+  background: var(--sk-surface-muted);
+  color: var(--sk-text);
+}
+
+.sk-topnav__mobile-link:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--sk-brand-border);
+}
+
+.sk-topnav__mobile-link[aria-current="page"] {
+  background: var(--sk-brand-soft);
+  color: var(--sk-brand-hover);
+  font-weight: 600;
+}
+
+.sk-topnav__mobile-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  margin-top: 6px;
+  padding: 0 12px;
+  background: var(--sk-bg);
+  border: 1px solid var(--sk-border);
+  border-radius: var(--sk-radius-md);
+  color: var(--sk-text-subtle);
+}
+
+.sk-topnav__mobile-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px; /* same iOS auto-zoom reasoning as .sk-search */
+  color: var(--sk-text);
+}
+
+.sk-topnav__mobile-search input::placeholder {
+  color: var(--sk-text-subtle);
+}
+
+.sk-topnav__mobile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sk-border);
+}
+
+/* `.sk-topnav__github`/`.sk-topnav__version` are shared with the desktop bar, sized 38px for
+   mouse-first chrome there. Reused here as real tap targets, so this context bumps them to 44px
+   without touching their desktop sizing. */
+.sk-topnav__mobile-actions .sk-topnav__github,
+.sk-topnav__mobile-actions .sk-topnav__version {
+  height: 44px;
 }
 
 .sk-landing {

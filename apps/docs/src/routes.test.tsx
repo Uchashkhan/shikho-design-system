@@ -199,3 +199,29 @@ describe("component detail page content", () => {
     expect(within(preview).getByRole("button", { name: "Button" })).toBeInTheDocument();
   });
 });
+
+describe("mobile nav menu", () => {
+  it("opens on tap, exposes every primary destination, and closes on navigation", async () => {
+    const user = userEvent.setup();
+    renderAt("/");
+
+    const menuButton = screen.getByRole("button", { name: "Open menu" });
+    expect(screen.queryByRole("navigation", { name: "Primary" })).toBeInTheDocument(); // the desktop <nav>, always in the DOM
+
+    await user.click(menuButton);
+    expect(screen.getByRole("button", { name: "Close menu" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    const mobileNav = document.getElementById("sk-mobile-nav")!;
+    for (const label of ["Components", "Foundations", "Patterns", "Playground", "Documentation"]) {
+      expect(within(mobileNav).getByRole("link", { name: label })).toBeInTheDocument();
+    }
+
+    await user.click(within(mobileNav).getByRole("link", { name: "Components" }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Components" })).toBeInTheDocument();
+    expect(document.getElementById("sk-mobile-nav")).not.toBeInTheDocument();
+  });
+});

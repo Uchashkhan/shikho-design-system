@@ -24,6 +24,19 @@ export function SearchMark({ size = 15 }: MarkProps) {
   );
 }
 
+export function MenuMark({ size = 18 }: MarkProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path
+        d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function CopyMark({ size = 14 }: MarkProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>

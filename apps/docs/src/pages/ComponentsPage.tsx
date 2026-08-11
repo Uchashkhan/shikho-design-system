@@ -59,12 +59,16 @@ export function ComponentsPage() {
 
       <div className="sk-catalogue__toolbar">
         <p className="sk-catalogue__count">{componentRegistry.length} components</p>
-        <Switcher
-          size="sm"
-          options={CATEGORY_OPTIONS}
-          value={category}
-          onChange={(value) => setCategory(value as CategoryFilter)}
-        />
+        {/* The Switcher's own segments never wrap internally — on a narrow viewport the row
+            scrolls horizontally instead of overflowing the page. */}
+        <div className="sk-catalogue__filter-scroll">
+          <Switcher
+            size="sm"
+            options={CATEGORY_OPTIONS}
+            value={category}
+            onChange={(value) => setCategory(value as CategoryFilter)}
+          />
+        </div>
         <input
           className="sk-search sk-catalogue__search"
           type="search"
