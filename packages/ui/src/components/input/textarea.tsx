@@ -1,8 +1,9 @@
 import { type ChangeEvent, type FocusEvent, type MouseEvent as ReactMouseEvent, type TextareaHTMLAttributes, forwardRef, useState } from "react";
-import { fieldChromeInnerShadow, fieldChromeStyle, fieldRadiusMd, typography, type FieldChromeState } from "./shared";
+import { color, radius } from "@shikho/tokens";
+import { fieldChromeInnerShadow, fieldChromeStyle, typography, type FieldChromeState } from "./shared";
 
-// docs/audit/input.md §2, §4 — textarea: state default|default_dark|hover|filled|active|error|
-// disabled — the identical 7-state vocabulary shared with input_field and digit_input.
+// docs/audit/input.md §2, §4, §15 — textarea: state default|default_dark|hover|filled|active|
+// error|disabled — the identical 7-state vocabulary shared with input_field and digit_input.
 export type TextareaState = FieldChromeState;
 
 export interface TextareaProps
@@ -14,16 +15,23 @@ export interface TextareaProps
 }
 
 /**
- * `textarea` (docs/audit/input.md). No `get_design_context` deep audit exists for this set —
- * only its `state` variant axis is confirmed (§2). Rendered as a real `<textarea>` element
- * (the only reasonable HTML mapping, not a visual guess), reusing `InputField`'s own confirmed
- * per-state chrome table (`fieldChromeStyle`) since `textarea` shares its exact 7-state
- * vocabulary — a documented, derived reuse, not an independently confirmed binding.
+ * `textarea` (docs/audit/input.md §15 — a live `get_design_context` pull on the component set
+ * itself, `66056:19282`, resolving what was previously an unconfirmed derived guess). Rendered as
+ * a real `<textarea>` element (the only reasonable HTML mapping — Figma's own node also composes
+ * a label + hint row around it, which this primitive intentionally omits, matching `Field`'s own
+ * bare-vs-composed split with `InputField`).
+ *
+ * Two confirmed corrections vs. the prior derived guess (which had assumed `field`'s own default
+ * geometry): radius is `radius/border_radius_lg` (16px), not `radius/custom/md` (10px); padding
+ * is `py-12 px-16`, not `field`'s 8px/10px. And a genuine divergence from `input_field`'s shared
+ * chrome: `textarea`'s `error` state colors the input text itself `danger-500` (red) — confirmed
+ * different from `input_field`'s `error`, which only reddens the border/hint and keeps the input
+ * text `gray-700`.
  *
  * Previously `state` was accepted but never actually applied to any style — every state rendered
  * identically to `field`'s bare default fill/radius/shadow, regardless of what was passed. Now
- * shares the same real chrome `InputField`/`Dropdown` use, and — left unset — the same real
- * pointer/focus-driven state resolution already applied there.
+ * renders its own confirmed per-state chrome, and — left unset — the same real pointer/focus-
+ * driven state resolution already applied to `InputField`/`Dropdown`/`DigitInput`.
  */
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   (
@@ -48,6 +56,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 
     const isDisabled = disabled || resolvedState === "disabled";
     const chrome = fieldChromeStyle(resolvedState);
+    // Confirmed: textarea's own error state reddens the input text itself (danger-500) —
+    // different from input_field/dropdown's error, which keeps gray-700 text and only reddens
+    // the border/hint. Everything else (fill, border, ring) is confirmed shared.
+    const textColor = resolvedState === "error" ? color.danger[500] : chrome.textColor;
 
     const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
       setHasValue(event.target.value.length > 0);
@@ -87,13 +99,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           (className ? ` ${className}` : "")
         }
         style={{
-          padding: "0.5rem 0.625rem",
-          borderRadius: fieldRadiusMd,
+          padding: "0.75rem 1rem", // confirmed py-12/px-16, distinct from field's own padding
+          borderRadius: radius.xl, // confirmed radius/border_radius_lg (16px), not field's radius/custom/md
           backgroundColor: chrome.background,
           border: chrome.border,
           boxShadow:
             [fieldChromeInnerShadow(resolvedState), chrome.boxShadow].filter(Boolean).join(", ") || "none",
-          color: chrome.textColor,
+          color: textColor,
           resize: "vertical",
           ...typography,
           ...style,

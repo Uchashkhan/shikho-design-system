@@ -36,9 +36,9 @@ export const pageConfig: ComponentPageConfig = {
   gaps: [
     "There is no literal `focus` state anywhere in the Input family — `active` is the closest analogue, and it is the only state with a confirmed distinct visual.",
     "Only `error` exists as a validation state; no `success` or `warning` state was found anywhere.",
-    "`field`'s sizes beyond `md` and types beyond `default` have no confirmed structural data, so they currently render identically to md/default rather than a fabricated scale.",
+    "`field`'s sizes (sm/md/lg/xl) and all 3 types now each render their own confirmed geometry — previously every size/type beyond md/default silently rendered identically to md/default.",
     "The nested field inside input_field/active uses a 12px radius and full width, while the standalone field uses 10px and a fixed width — a confirmed, unexplained discrepancy. One consistent radius is used here rather than forking an undocumented second variant.",
-    "`Dropdown`, `Textarea` and `DigitInput` were never deep-audited; they reuse `field`'s confirmed baseline styling.",
+    "`Dropdown` and `Textarea` are now independently confirmed via their own `get_design_context` pulls rather than reusing `field`'s baseline — both turned out to genuinely differ (Textarea's own radius/padding/error-text-color; Dropdown's own text color, `brand`/`active_no_focus` chrome, padding and gap). `DigitInput` was already independently confirmed.",
     "`digit_field` is a bare Figma instance with no captured properties at all, and its relationship to `digit_input` is explicitly uninvestigated — so no multi-cell OTP layout is invented for it.",
   ],
   usageExample: `import { InputField } from "@shikho/ui";
@@ -156,7 +156,7 @@ export function EmailField() {
     {
       title: "Dropdown, Textarea and DigitInput",
       description:
-        "None of these were deep-audited — they reuse Field's confirmed baseline styling.",
+        "All three now independently confirmed via their own get_design_context pulls, each with real interactivity — Dropdown is keyboard-focusable, Textarea/DigitInput are real editable elements, and state derives from actual focus/hover/value when left unset.",
       layout: "stack",
       render: () => (
         <>

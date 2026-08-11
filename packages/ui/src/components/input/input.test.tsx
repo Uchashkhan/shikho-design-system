@@ -201,6 +201,35 @@ describe("Dropdown — confirmed per-state chrome, shared with InputField (§14)
     expect(el.style.backgroundColor).toBe("rgb(244, 244, 246)");
     expect(el.style.color).toBe("rgb(195, 198, 204)");
   });
+
+  it("confirmed (§15): default/hover/default_dark text is gray-950, not InputField's lighter gray-700 — a genuine divergence found on a full re-pull of the component set", () => {
+    const { rerender } = render(<Dropdown state="default">Select an option</Dropdown>);
+    expect(screen.getByRole("button").style.color).toBe("rgb(10, 12, 17)"); // gray-950
+    rerender(<Dropdown state="hover">Select an option</Dropdown>);
+    expect(screen.getByRole("button").style.color).toBe("rgb(10, 12, 17)");
+  });
+
+  it("confirmed (§15): brand has its own primary-tinted fill+text — previously silently fell back to plain default gray", () => {
+    render(<Dropdown state="brand">Select an option</Dropdown>);
+    const el = screen.getByRole("button");
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)");
+    expect(el.style.color).toBe("rgb(59, 78, 227)"); // primary-600
+  });
+
+  it("confirmed (§15): active_no_focus is white + an outer elevation shadow, no border, no ring — a distinct look, not \"active minus its ring\" as previously assumed", () => {
+    render(<Dropdown state="active_no_focus">Select an option</Dropdown>);
+    const el = screen.getByRole("button");
+    expect(el.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(el.style.border).not.toContain("solid"); // no border color/width applied
+    expect(el.style.boxShadow).not.toContain("inset"); // no ring, no inner shadow — only the outer one
+  });
+
+  it("confirmed (§15): field padding is 12px uniform and gap is 6px — previously 8px/10px padding and a 4px gap", () => {
+    render(<Dropdown state="default">Select an option</Dropdown>);
+    const el = screen.getByRole("button");
+    expect(el.style.padding).toBe("0.75rem");
+    expect(el.style.gap).toBe("0.375rem");
+  });
 });
 
 describe("Dropdown — real interactivity (previously not keyboard-focusable at all, and state was static)", () => {
@@ -285,6 +314,18 @@ describe("remaining Input family members render their confirmed state vocabulary
     rerender(<Textarea state="active" aria-label="Message" />);
     expect(textarea.style.backgroundColor).toBe("rgb(255, 255, 255)"); // smoke_base / white
     expect(textarea.style.border).toContain("246, 129, 215"); // secondary/300 ring border
+  });
+
+  it("Textarea: confirmed own radius/padding via a live get_design_context pull on its own component set (§15) — distinct from Field's", () => {
+    render(<Textarea aria-label="Message" />);
+    const textarea = screen.getByRole("textbox", { name: "Message" });
+    expect(textarea.style.borderRadius).toBe("16px"); // radius/border_radius_lg, not field's 10px
+    expect(textarea.style.padding).toBe("0.75rem 1rem"); // py-12/px-16, not field's 8px/10px
+  });
+
+  it("Textarea: confirmed error reddens the input text itself (danger-500) — a genuine divergence from InputField's error, which keeps gray-700 text", () => {
+    render(<Textarea state="error" aria-label="Message" />);
+    expect(screen.getByRole("textbox", { name: "Message" }).style.color).toBe("rgb(240, 61, 61)");
   });
 
   it("Textarea: with no `state` prop, real focus/blur/hover/value drive it", () => {

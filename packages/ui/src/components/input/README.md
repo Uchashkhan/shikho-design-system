@@ -9,8 +9,18 @@ A third pass found that visual fidelity (§14) had been thoroughly re-confirmed,
 - **`Field`'s `default`/`advanced_with_buttons` types now render a real `<input>`, and `textarea` a real `<textarea>`**, for their editable content. `textContent` still works exactly as before for every existing caller (it now maps to the input's `defaultValue`, uncontrolled) — but genuinely accepts typing. New `value`/`onChange`/`placeholder`/`name`/`id`/`readOnly`/`disabled`/`inputRef` props support controlled usage.
 - **`InputField`/`DigitInput`/`Textarea` now derive `state` from real interaction when left unset**: focus → `active`, a non-empty value → `filled`, pointer hover → `hover`, otherwise `default`. An explicit `state` (Storybook/playground controls) still overrides — the same pointer/focus-driven-state pattern already applied to `SidebarItem`/`SwitcherItem`/`TabNavItem`/`Link`. `error` and `disabled` can only ever be forced; there's no way to auto-derive a validation error, and disabling is a producer decision.
 - **`Dropdown` gained `tabIndex={0}`** (previously completely unreachable by keyboard) and the same real hover/focus-driven `state` resolution for `hover`/`active`.
-- **`Textarea`'s `state` prop now actually changes its rendering** — it was previously accepted and stored in `data-state` but never read by any style, so every state looked identical to `field`'s bare default. It now shares `InputField`'s own confirmed chrome table.
+- **`Textarea`'s `state` prop now actually changes its rendering** — it was previously accepted and stored in `data-state` but never read by any style, so every state looked identical to `field`'s bare default.
 - **`DatePicker`'s footer date fields** (the one place in this codebase that fed a Figma-derived, re-rendering value into `Field`) were switched from `textContent` (which only sets the *initial* value — fine for static content, but doesn't resync on re-render) to `value` + `readOnly`, since they're a calendar-driven display rather than free text entry.
+
+## Re-audit pass: Textarea's and Dropdown's own component sets (§16)
+
+Asked directly whether `textarea`/`dropdown`/`digit_input` had gotten the same scrutiny as `input_field` — they hadn't. `textarea` (`66056:19282`) had never been independently pulled via `get_design_context` at all (only its `state` axis was confirmed via `get_metadata`; the implementation reused `field`'s derived default chrome). `dropdown` (`66056:19209`) had only 4 of its 9 states spot-checked. Pulling both fresh found real, confirmed divergences:
+
+- **`Textarea` has its own confirmed geometry**: `radius/border_radius_lg` (16px, not `field`'s 10px) and `py-12/px-16` padding (not `field`'s 8px/10px). Its `error` state reddens the input text itself (`danger-500`) — a genuine divergence from `InputField`'s `error`, which keeps `gray-700` text.
+- **`Dropdown`'s full 9-state chrome was resolved in a single fetch**, revealing it was never really identical to `InputField`'s chrome: `default`/`hover`/`default_dark` text is `gray-950` (`InputField`'s own default text is the lighter `gray-700`); `brand` has its own primary-tinted fill + `primary-600` text (previously silently fell back to plain default gray, since `brand` wasn't in the implementation's chrome lookup at all); `active_no_focus` is a genuinely distinct white-fill-plus-outer-shadow look, not "`active` minus its ring" as originally assumed. Padding is `spacing/12` uniform (12px, not 8px/10px); gap is `spacing/6` (6px, not 4px).
+- `DigitInput` was already fully confirmed in the original pass and needed no further correction.
+
+`Dropdown` now has its own dedicated chrome table instead of reusing `InputField`'s — forcing one shared table to serve both components was the direct cause of the `brand`/`active_no_focus`/text-color bugs found here.
 
 | Component | Figma set | Confirmed properties |
 |---|---|---|
@@ -18,8 +28,8 @@ A third pass found that visual fidelity (§14) had been thoroughly re-confirmed,
 | `InputHint` | `input_hint` | `size`: sm, md; booleans `hintText`, `leftIcon`, `supportText` (all default `true`) |
 | `Field` | `field` | `size`: xl, lg, md, sm (each with its own confirmed metrics, §14); `type`: default, textarea, advanced_with_buttons (each with its own confirmed structure, §14); 9 booleans (`image` default `false`, the other 8 default `true`); instance-swap `selectLeftIcon`/`selectRightIcon` |
 | `InputField` | `input_field` | `state`: default, default_dark, hover, filled, active, error, disabled — all 7 now render their own confirmed chrome (§14); booleans `label`, `hint` (default `true`) |
-| `Dropdown` | `dropdown` | `state`: 9 values (naked, disabled, error, active, brand, active_no_focus, hover, default_dark, default) — 6 confirmed directly, `naked` confirmed distinct, 2 derived (§14); `autoLayout` |
-| `Textarea` | `textarea` | `state`: same 7-value vocabulary as `input_field` |
+| `Dropdown` | `dropdown` | `state`: 9 values (naked, disabled, error, active, brand, active_no_focus, hover, default_dark, default) — all 9 now confirmed via a single fetch and rendered with their own dedicated chrome table (§16) |
+| `Textarea` | `textarea` | `state`: 7-value vocabulary; own confirmed radius/padding/error-text-color, distinct from `field`'s (§16) |
 | `DigitInput` | `digit_input` | `state`: same 7-value vocabulary, its own confirmed typography and per-state colors (§14) |
 | ~~`DigitField`~~ | `digit_field` | **Not exported in v0.1.0** — Figma has only a bare instance with no confirmed structure |
 
