@@ -48,8 +48,28 @@ function ControlGroup({
   );
 }
 
+/**
+ * Thin wrapper so every `:slug` gets a genuinely fresh `ComponentDetailPageContent` instance.
+ *
+ * Root cause of a real bug found while investigating intermittent blank pages: React Router
+ * reuses the same component instance across navigations that match the same route pattern
+ * (`/components/:slug` → `/components/:slug`), so without this `key`, `ComponentDetailPageContent`'s
+ * own `useState(initialValues)` below only ever ran on the very first mount — switching from one
+ * component's detail page to another left `values` holding the PREVIOUS component's control state
+ * (e.g. `{ type: "selected" }` from Chip) while rendering the NEW component's `playground.render`.
+ * Several `@shikho/ui` button families look up their `type` prop in a fixed table with no
+ * fallback for an unrecognized key (see `rampEmphasisStyle` in `packages/ui`, fixed separately to
+ * degrade instead of crash) — an unrecognized leftover string reaching one of those was enough to
+ * throw during render and, with no error boundary at the time, blank the entire app. `key={slug}`
+ * makes React unmount and remount this component on every genuine navigation, so its local state
+ * always starts clean for whichever component is actually being viewed.
+ */
 export function ComponentDetailPage() {
   const { slug = "" } = useParams();
+  return <ComponentDetailPageContent key={slug} slug={slug} />;
+}
+
+function ComponentDetailPageContent({ slug }: { slug: string }) {
   const entry = getComponent(slug);
   const page = entry ? getPageConfig(entry.slug) : undefined;
 

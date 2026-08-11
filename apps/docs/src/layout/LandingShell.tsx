@@ -1,11 +1,14 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { TopNav } from "./TopNav";
+import { ErrorBoundary } from "../ui/ErrorBoundary";
 
 /**
  * Full-width shell for the marketing/landing homepage — the same shared `TopNav` as the docs
  * shell, but no documentation sidebar, so the hero can breathe edge to edge.
  */
 export function LandingShell() {
+  const { pathname } = useLocation();
+
   return (
     <div className="sk-shell lp-page">
       {/* One full-page decorative layer, a SIBLING of the sticky nav rather than an ancestor or a
@@ -20,7 +23,9 @@ export function LandingShell() {
       </div>
       <TopNav />
       <main className="sk-landing">
-        <Outlet />
+        <ErrorBoundary label="landing-shell" resetKey={pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   );

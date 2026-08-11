@@ -169,3 +169,25 @@ describe("NewPinkButton", () => {
     expect(screen.getByRole("button", { name: "Upgrade" }).style.backgroundColor).toBe("rgb(226, 0, 141)"); // secondary/500
   });
 });
+
+describe("regression: an unrecognized `type` must render, not throw", () => {
+  // A consumer widening a string through `as SomeButtonType` (exactly what the docs site's
+  // playground does) can hand these components a `type` outside their own union at runtime,
+  // even though TypeScript can't see it. Before this fix, `rampEmphasisStyle`/`iconButtonStyle`
+  // fell through their switch with no `default` and returned `undefined`, and `ButtonShell`'s
+  // unconditional `"filter" in resolved` threw a TypeError on that — which, with no error
+  // boundary above it, unmounted the entire React tree instead of just this one button.
+  it("NewBlueButton with a bogus type renders instead of throwing", () => {
+    // @ts-expect-error — deliberately passing a value outside `NewBlueType` to reproduce the bug.
+    expect(() => render(<NewBlueButton type="bogus">Continue</NewBlueButton>)).not.toThrow();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeInTheDocument();
+  });
+
+  it("IconButton with a bogus type renders instead of throwing", () => {
+    render(
+      // @ts-expect-error — deliberately passing a value outside `IconButtonType`.
+      <IconButton type="bogus" icon={<span aria-hidden>i</span>} aria-label="Info" />,
+    );
+    expect(screen.getByRole("button", { name: "Info" })).toBeInTheDocument();
+  });
+});

@@ -149,19 +149,26 @@ export function rampEmphasisStyle(ramp: ColorRamp, emphasis: Emphasis, phase: Bu
         boxShadow: OUTER_SHADOW_PARTIAL,
         insetShadow: SECONDARY_INSET,
       };
+    case "text":
+      return {
+        background: color.white[950],
+        border: "none",
+        textColor: ramp[600],
+      };
     case "outline":
+    default:
+      // `default` guards against an `emphasis` value outside the `Emphasis` union reaching here
+      // at runtime (e.g. a consumer passing an unvalidated string through a type-widening cast) —
+      // falling through to `outline`'s recipe rather than returning `undefined`. An unrecognized
+      // `type` should render as an unstyled-but-functional button, never throw and take down
+      // whatever tree this button is mounted in (`ButtonShell` does `"filter" in resolved`
+      // unconditionally, which throws a TypeError on `undefined`).
       return {
         background: color.white[950],
         border: `1px solid ${ramp[500]}`,
         textColor: ramp[600],
         boxShadow: OUTER_SHADOW_PARTIAL,
         insetShadow: SECONDARY_INSET,
-      };
-    case "text":
-      return {
-        background: color.white[950],
-        border: "none",
-        textColor: ramp[600],
       };
   }
 }
@@ -283,6 +290,11 @@ export function iconButtonStyle(type: IconButtonType, phase: ButtonPhase): Resol
       return { background: hover ? `${color.primary[500]}33` : `${color.primary[500]}1f`, border: "none", textColor: color.primary[600] };
     case "tertiary_light":
       return { background: hover ? color.gray[50] : "transparent", border: "none", textColor: color.gray[600] };
+    default:
+      // Same reasoning as `rampEmphasisStyle`'s `default` — an unrecognized `type` at runtime
+      // must still return a valid style, not `undefined` (which crashes `ButtonShell`'s
+      // unconditional `"filter" in resolved`). Falls back to `tertiary`'s own recipe above.
+      return { background: color.white[950], border: `1px solid ${color.black[50]}`, textColor: color.gray[700], boxShadow: OUTER_SHADOW_PARTIAL, insetShadow: SECONDARY_INSET };
   }
 }
 

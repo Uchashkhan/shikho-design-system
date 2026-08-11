@@ -175,4 +175,27 @@ describe("component detail page content", () => {
 
     expect(within(preview as HTMLElement).getByRole("switch")).not.toBeChecked();
   });
+
+  it("regression: navigating between components sharing a playground control name doesn't blank the page", async () => {
+    // Chip's and Button's playgrounds both key a control as `prop: "type"`, but with completely
+    // disjoint value sets (Chip: "selected"/"unselected"/… vs Button: "Primary"/"Outline"/…).
+    // `/components/:slug` reuses the same `ComponentDetailPage` React instance across a client-side
+    // navigation from one slug to another (only the param changes, not the route pattern) — so
+    // this reproduces the exact scenario that used to leak Chip's leftover `type` value into
+    // Button's `playground.render`, crash inside @shikho/ui's button internals, and (with no error
+    // boundary at the time) blank the whole app. Real link click, not `renderAt`, so the same
+    // component instance persists across the navigation the way it does for a real user.
+    const user = userEvent.setup();
+    renderAt("/components/chip");
+    expect(screen.getByRole("heading", { level: 1, name: "Chip" })).toBeInTheDocument();
+
+    const sidebar = screen.getByRole("complementary");
+    await user.click(within(sidebar).getByRole("link", { name: "Button" }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Button" })).toBeInTheDocument();
+    // The default state for Button's own `type` control ("Primary") must win — not Chip's
+    // leftover "selected" — proving the per-slug state actually reset.
+    const preview = document.querySelector(".sk-preview") as HTMLElement;
+    expect(within(preview).getByRole("button", { name: "Button" })).toBeInTheDocument();
+  });
 });

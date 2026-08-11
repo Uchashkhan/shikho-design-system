@@ -52,7 +52,18 @@ export const ButtonShell = forwardRef<HTMLButtonElement, ButtonShellProps>(
     ref,
   ) => {
     const metrics = sizeMetrics(size);
-    const filter = "filter" in resolved ? resolved.filter : undefined;
+    // Defense in depth: every family's own style resolver (rampEmphasisStyle, iconButtonStyle,
+    // etc.) is now guaranteed to return a real style rather than `undefined` for an unrecognized
+    // variant value, but this unconditional `"filter" in resolved` is exactly the line that threw
+    // (a TypeError on `undefined`, unmounting the whole app) when one of them didn't — so it gets
+    // its own fallback too, rather than relying solely on every current and future caller getting
+    // that right.
+    const safeResolved: ResolvedButtonStyle | ResolvedAiButtonStyle = resolved ?? {
+      background: "transparent",
+      border: "1px solid currentColor",
+      textColor: "inherit",
+    };
+    const filter = "filter" in safeResolved ? safeResolved.filter : undefined;
 
     const rootStyle: CSSProperties = {
       display: "flex",
@@ -63,9 +74,9 @@ export const ButtonShell = forwardRef<HTMLButtonElement, ButtonShellProps>(
       width: iconOnly !== undefined ? metrics.height : undefined,
       padding: metrics.padding,
       borderRadius: metrics.radius,
-      background: resolved.background,
-      border: resolved.border,
-      boxShadow: resolved.boxShadow,
+      background: safeResolved.background,
+      border: safeResolved.border,
+      boxShadow: safeResolved.boxShadow,
       filter,
       position: "relative",
       overflow: "hidden",
@@ -74,7 +85,7 @@ export const ButtonShell = forwardRef<HTMLButtonElement, ButtonShellProps>(
       fontSize: metrics.fontSize,
       lineHeight: metrics.lineHeight,
       fontWeight: 600,
-      color: resolved.textColor,
+      color: safeResolved.textColor,
       ...style,
     };
 
@@ -108,7 +119,7 @@ export const ButtonShell = forwardRef<HTMLButtonElement, ButtonShellProps>(
             {rightIcon && <span style={iconStyle}>{selectRightIcon}</span>}
           </>
         )}
-        {resolved.insetShadow && (
+        {safeResolved.insetShadow && (
           <span
             aria-hidden
             style={{
@@ -116,7 +127,7 @@ export const ButtonShell = forwardRef<HTMLButtonElement, ButtonShellProps>(
               inset: 0,
               pointerEvents: "none",
               borderRadius: "inherit",
-              boxShadow: resolved.insetShadow,
+              boxShadow: safeResolved.insetShadow,
             }}
           />
         )}
