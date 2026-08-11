@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes, forwardRef } from "react";
+import { type ChangeEvent, type FocusEvent, type InputHTMLAttributes, type MouseEvent as ReactMouseEvent, forwardRef, useState } from "react";
 import { color, radius } from "@shikho/tokens";
 import { innerShadow } from "./shared";
 
@@ -14,6 +14,9 @@ export type DigitInputState =
   | "disabled";
 
 export interface DigitInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size" | "type"> {
+  /** Forces a specific state (used by Storybook/playground controls to preview a state without
+   * real interaction). Left unset, the real `<input>` drives it: focus → `active`, a non-empty
+   * value → `filled`, pointer hover → `hover`, otherwise `default`. `error` can only be forced. */
   state?: DigitInputState;
 }
 
@@ -75,9 +78,66 @@ const PLACEHOLDER: Record<DigitInputState, string> = {
  * `field`'s own default-only chrome, regardless of `state`.
  */
 export const DigitInput = forwardRef<HTMLInputElement, DigitInputProps>(
-  ({ state = "default", disabled, maxLength = 1, className, style, placeholder, ...props }, ref) => {
-    const isDisabled = disabled || state === "disabled";
-    const hasRing = state === "active" || state === "error";
+  (
+    {
+      state,
+      disabled,
+      maxLength = 1,
+      className,
+      style,
+      placeholder,
+      value,
+      defaultValue,
+      onChange,
+      onFocus,
+      onBlur,
+      onMouseEnter,
+      onMouseLeave,
+      ...props
+    },
+    ref,
+  ) => {
+    const [pointerHover, setPointerHover] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
+    const [hasValue, setHasValue] = useState(() => Boolean((value ?? defaultValue ?? "").toString().length > 0));
+
+    // `state` left unset (the normal case for real usage) → the real input drives it, the same
+    // fix already applied to InputField. `error` can only ever be forced.
+    const resolvedState: DigitInputState =
+      state ??
+      (disabled
+        ? "disabled"
+        : isFocused
+          ? "active"
+          : hasValue
+            ? "filled"
+            : pointerHover
+              ? "hover"
+              : "default");
+
+    const isDisabled = disabled || resolvedState === "disabled";
+    const hasRing = resolvedState === "active" || resolvedState === "error";
+
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+      setHasValue(event.target.value.length > 0);
+      onChange?.(event);
+    };
+    const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
+      setIsFocused(true);
+      onFocus?.(event);
+    };
+    const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
+      setIsFocused(false);
+      onBlur?.(event);
+    };
+    const handleMouseEnter = (event: ReactMouseEvent<HTMLInputElement>) => {
+      setPointerHover(true);
+      onMouseEnter?.(event);
+    };
+    const handleMouseLeave = (event: ReactMouseEvent<HTMLInputElement>) => {
+      setPointerHover(false);
+      onMouseLeave?.(event);
+    };
 
     return (
       <input
@@ -85,9 +145,16 @@ export const DigitInput = forwardRef<HTMLInputElement, DigitInputProps>(
         type="text"
         inputMode="numeric"
         maxLength={maxLength}
-        data-state={state}
+        data-state={resolvedState}
         disabled={isDisabled}
-        placeholder={placeholder ?? PLACEHOLDER[state]}
+        value={value}
+        defaultValue={defaultValue}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        placeholder={placeholder ?? PLACEHOLDER[resolvedState]}
         className={
           "outline-none text-center transition-colors disabled:cursor-not-allowed" +
           (className ? ` ${className}` : "")
@@ -97,10 +164,11 @@ export const DigitInput = forwardRef<HTMLInputElement, DigitInputProps>(
           height: 56,
           padding: 0,
           borderRadius: radius.md,
-          backgroundColor: FILL[state],
-          border: BORDER[state],
-          boxShadow: [hasRing ? undefined : innerShadow, hasRing ? RING : undefined].filter(Boolean).join(", ") || "none",
-          color: TEXT[state],
+          backgroundColor: FILL[resolvedState],
+          border: BORDER[resolvedState],
+          boxShadow:
+            [hasRing ? undefined : innerShadow, hasRing ? RING : undefined].filter(Boolean).join(", ") || "none",
+          color: TEXT[resolvedState],
           fontSize: 22,
           lineHeight: "32px",
           fontWeight: 600,

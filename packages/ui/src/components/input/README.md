@@ -2,6 +2,16 @@
 
 Implements the 7 Input component sets + 1 bare instance audited in `docs/audit/input.md`. Two nodes were originally deep-audited via `get_design_context` (`input_field/active` §8, `field/md/default` §9); a second re-audit pass (§14, ~14 more `get_design_context` calls) then confirmed the real per-size, per-type, and per-state visual construction that the first pass's implementation had been silently missing — see §14 for the full list of corrections.
 
+## Re-audit pass: real interactivity (§15)
+
+A third pass found that visual fidelity (§14) had been thoroughly re-confirmed, but `Field` — the primitive backing `InputField`, the flagship text input — rendered its editable content as static text inside a `<div>`, not a real `<input>`. Nothing could actually be typed into it. `Dropdown` had the same problem plus no `tabIndex`, making it unreachable by keyboard. `Textarea` accepted a `state` prop that was never actually applied to any style. All fixed:
+
+- **`Field`'s `default`/`advanced_with_buttons` types now render a real `<input>`, and `textarea` a real `<textarea>`**, for their editable content. `textContent` still works exactly as before for every existing caller (it now maps to the input's `defaultValue`, uncontrolled) — but genuinely accepts typing. New `value`/`onChange`/`placeholder`/`name`/`id`/`readOnly`/`disabled`/`inputRef` props support controlled usage.
+- **`InputField`/`DigitInput`/`Textarea` now derive `state` from real interaction when left unset**: focus → `active`, a non-empty value → `filled`, pointer hover → `hover`, otherwise `default`. An explicit `state` (Storybook/playground controls) still overrides — the same pointer/focus-driven-state pattern already applied to `SidebarItem`/`SwitcherItem`/`TabNavItem`/`Link`. `error` and `disabled` can only ever be forced; there's no way to auto-derive a validation error, and disabling is a producer decision.
+- **`Dropdown` gained `tabIndex={0}`** (previously completely unreachable by keyboard) and the same real hover/focus-driven `state` resolution for `hover`/`active`.
+- **`Textarea`'s `state` prop now actually changes its rendering** — it was previously accepted and stored in `data-state` but never read by any style, so every state looked identical to `field`'s bare default. It now shares `InputField`'s own confirmed chrome table.
+- **`DatePicker`'s footer date fields** (the one place in this codebase that fed a Figma-derived, re-rendering value into `Field`) were switched from `textContent` (which only sets the *initial* value — fine for static content, but doesn't resync on re-render) to `value` + `readOnly`, since they're a calendar-driven display rather than free text entry.
+
 | Component | Figma set | Confirmed properties |
 |---|---|---|
 | `InputLabel` | `input_label` | `size`: sm, md |

@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { DigitInput } from "./digit_input";
 import { Dropdown } from "./dropdown";
 import { Field } from "./field";
@@ -30,7 +30,22 @@ describe("Field", () => {
     const field = container.firstChild as HTMLElement;
     expect(field.style.borderRadius).toBe("10px");
     expect(field.style.backgroundColor).toBe("rgb(244, 244, 246)"); // #f4f4f6
-    expect(screen.getByText("Input text")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Input text")).toBeInTheDocument();
+  });
+
+  it("is a genuine editable <input> — not decorative static text", () => {
+    const onChange = vi.fn();
+    render(<Field textContent="Input text" onChange={onChange} />);
+    const input = screen.getByDisplayValue("Input text") as HTMLInputElement;
+    expect(input.tagName).toBe("INPUT");
+    fireEvent.change(input, { target: { value: "Input text updated" } });
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  it("supports controlled usage via value + onChange, taking precedence over textContent", () => {
+    render(<Field textContent="ignored" value="controlled" onChange={() => {}} />);
+    expect(screen.getByDisplayValue("controlled")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("ignored")).not.toBeInTheDocument();
   });
 
   it("hides the left icon slot when leftLead is false", () => {
@@ -65,7 +80,8 @@ describe("Field", () => {
 
   it("confirmed: type=textarea renders a single text row with a resizer glyph, not the default 3-slot layout", () => {
     const { container } = render(<Field type="textarea" textContent="Notes" />);
-    expect(screen.getByText("Notes")).toBeInTheDocument();
+    const textarea = screen.getByDisplayValue("Notes");
+    expect(textarea.tagName).toBe("TEXTAREA");
     expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument(); // the resizer glyph
   });
 
@@ -91,10 +107,10 @@ describe("InputField — confirmed per-state chrome (docs/audit/input.md §14)",
   });
 
   it("confirmed: hover darkens the fill AND lightens the text — a two-property shift, not a single fill change", () => {
-    const { container } = render(<InputField state="hover" fieldProps={{ textContent: "Input text" }} />);
-    const field = container.querySelector("[data-type='default']") as HTMLElement;
-    expect(field.style.backgroundColor).toBe("rgb(235, 236, 240)"); // smoke_high / gray[200]
-    expect(screen.getByText("Input text").style.color).toBe("rgb(140, 146, 156)"); // gray/600
+    render(<InputField state="hover" fieldProps={{ textContent: "Input text" }} />);
+    const container = screen.getByDisplayValue("Input text").closest("[data-type='default']") as HTMLElement;
+    expect(container.style.backgroundColor).toBe("rgb(235, 236, 240)"); // smoke_high / gray[200]
+    expect(screen.getByDisplayValue("Input text").style.color).toBe("rgb(140, 146, 156)"); // gray/600
   });
 
   it("confirmed: disabled recolors the label, field text, and hint all to gray/400 — not a straight dim/opacity", () => {
@@ -113,6 +129,56 @@ describe("InputField — confirmed per-state chrome (docs/audit/input.md §14)",
   it("hides label/hint when their booleans are false", () => {
     const { container } = render(<InputField label={false} hint={false} />);
     expect(container.querySelector("label")).not.toBeInTheDocument();
+  });
+});
+
+describe("InputField — real interactivity (previously state was static, and the field itself was a decorative <div>, not a real <input>)", () => {
+  it("is a genuine editable <input> — typing actually works", () => {
+    render(<InputField fieldProps={{ textContent: "" }} />);
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    expect(input.tagName).toBe("INPUT");
+    fireEvent.change(input, { target: { value: "hello@shikho.com" } });
+    expect(input.value).toBe("hello@shikho.com");
+  });
+
+  it("with no `state` prop, real focus drives it to `active` and blur returns it to `default`", () => {
+    render(<InputField fieldProps={{ textContent: "" }} />);
+    const input = screen.getByRole("textbox");
+    const wrapper = input.closest("[data-state]") as HTMLElement;
+    expect(wrapper).toHaveAttribute("data-state", "default");
+    fireEvent.focus(input);
+    expect(wrapper).toHaveAttribute("data-state", "active");
+    fireEvent.blur(input);
+    expect(wrapper).toHaveAttribute("data-state", "default");
+  });
+
+  it("with no `state` prop, typing a value drives it to `filled` once blurred", () => {
+    render(<InputField fieldProps={{ textContent: "" }} />);
+    const input = screen.getByRole("textbox");
+    const wrapper = input.closest("[data-state]") as HTMLElement;
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "hi" } });
+    fireEvent.blur(input);
+    expect(wrapper).toHaveAttribute("data-state", "filled");
+  });
+
+  it("with no `state` prop, real pointer hover drives it to `hover`", () => {
+    render(<InputField fieldProps={{ textContent: "" }} />);
+    const input = screen.getByRole("textbox");
+    const wrapper = input.closest("[data-state]") as HTMLElement;
+    const fieldRoot = input.closest("[data-type='default']") as HTMLElement;
+    fireEvent.mouseEnter(fieldRoot);
+    expect(wrapper).toHaveAttribute("data-state", "hover");
+    fireEvent.mouseLeave(fieldRoot);
+    expect(wrapper).toHaveAttribute("data-state", "default");
+  });
+
+  it("an explicit `state` prop overrides all real interaction", () => {
+    render(<InputField state="error" fieldProps={{ textContent: "" }} />);
+    const input = screen.getByRole("textbox");
+    const wrapper = input.closest("[data-state]") as HTMLElement;
+    fireEvent.focus(input);
+    expect(wrapper).toHaveAttribute("data-state", "error");
   });
 });
 
@@ -137,6 +203,38 @@ describe("Dropdown — confirmed per-state chrome, shared with InputField (§14)
   });
 });
 
+describe("Dropdown — real interactivity (previously not keyboard-focusable at all, and state was static)", () => {
+  it("is keyboard-focusable (previously missing tabIndex entirely)", () => {
+    render(<Dropdown>Select an option</Dropdown>);
+    expect(screen.getByRole("button")).toHaveAttribute("tabIndex", "0");
+  });
+
+  it("is not focusable when disabled", () => {
+    render(<Dropdown state="disabled">Select an option</Dropdown>);
+    expect(screen.getByRole("button")).not.toHaveAttribute("tabIndex");
+  });
+
+  it("with no `state` prop, real pointer hover and keyboard focus drive it", () => {
+    render(<Dropdown>Select an option</Dropdown>);
+    const trigger = screen.getByRole("button");
+    expect(trigger).toHaveAttribute("data-state", "default");
+    fireEvent.mouseEnter(trigger);
+    expect(trigger).toHaveAttribute("data-state", "hover");
+    fireEvent.mouseLeave(trigger);
+    fireEvent.focus(trigger);
+    expect(trigger).toHaveAttribute("data-state", "active");
+    fireEvent.blur(trigger);
+    expect(trigger).toHaveAttribute("data-state", "default");
+  });
+
+  it("an explicit `state` prop overrides real interaction", () => {
+    render(<Dropdown state="error">Select an option</Dropdown>);
+    const trigger = screen.getByRole("button");
+    fireEvent.mouseEnter(trigger);
+    expect(trigger).toHaveAttribute("data-state", "error");
+  });
+});
+
 describe("DigitInput — confirmed distinct typography and per-state colors (§14)", () => {
   it("uses the confirmed heading_1 typography (22px/32px), not body_1", () => {
     render(<DigitInput state="active" aria-label="Digit 1" />);
@@ -158,6 +256,20 @@ describe("DigitInput — confirmed distinct typography and per-state colors (§1
     expect(input.style.boxShadow).toContain("#e2008d3d");
     expect(input.style.border).toContain("246, 137, 137"); // danger/300, distinct from active's border
   });
+
+  it("with no `state` prop, real focus/blur/hover/value drive it, same fix as InputField", () => {
+    render(<DigitInput aria-label="Digit" />);
+    const input = screen.getByRole("textbox", { name: "Digit" });
+    expect(input).toHaveAttribute("data-state", "default");
+    fireEvent.mouseEnter(input);
+    expect(input).toHaveAttribute("data-state", "hover");
+    fireEvent.mouseLeave(input);
+    fireEvent.focus(input);
+    expect(input).toHaveAttribute("data-state", "active");
+    fireEvent.change(input, { target: { value: "5" } });
+    fireEvent.blur(input);
+    expect(input).toHaveAttribute("data-state", "filled");
+  });
 });
 
 describe("remaining Input family members render their confirmed state vocabulary", () => {
@@ -166,6 +278,28 @@ describe("remaining Input family members render their confirmed state vocabulary
     expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("hello");
   });
 
+  it("Textarea: state now actually changes styling — previously accepted but never applied", () => {
+    const { rerender } = render(<Textarea state="default" aria-label="Message" />);
+    const textarea = screen.getByRole("textbox", { name: "Message" });
+    expect(textarea.style.backgroundColor).toBe("rgb(244, 244, 246)"); // smoke_med / gray[100]
+    rerender(<Textarea state="active" aria-label="Message" />);
+    expect(textarea.style.backgroundColor).toBe("rgb(255, 255, 255)"); // smoke_base / white
+    expect(textarea.style.border).toContain("246, 129, 215"); // secondary/300 ring border
+  });
+
+  it("Textarea: with no `state` prop, real focus/blur/hover/value drive it", () => {
+    render(<Textarea aria-label="Message" />);
+    const textarea = screen.getByRole("textbox", { name: "Message" });
+    expect(textarea).toHaveAttribute("data-state", "default");
+    fireEvent.mouseEnter(textarea);
+    expect(textarea).toHaveAttribute("data-state", "hover");
+    fireEvent.mouseLeave(textarea);
+    fireEvent.focus(textarea);
+    expect(textarea).toHaveAttribute("data-state", "active");
+    fireEvent.change(textarea, { target: { value: "hello" } });
+    fireEvent.blur(textarea);
+    expect(textarea).toHaveAttribute("data-state", "filled");
+  });
 });
 
 // P1 repair pass — advanced_with_buttons per-size table. All four rows were independently
@@ -199,10 +333,9 @@ describe("Field type=advanced_with_buttons per-size metrics", () => {
       expect(lead.style.padding).toBe(leadPadding);
       expect(lead.style.borderRadius).toBe(leadRadius);
 
-      const textCol = Array.from(root.querySelectorAll("span")).find(
-        (el) => el.textContent === "Input text" && el.style.padding,
-      );
-      expect(textCol?.style.padding).toBe(textPad);
+      const textInput = screen.getByTestId("field-text") as HTMLInputElement;
+      expect(textInput.value).toBe("Input text");
+      expect(textInput.style.padding).toBe(textPad);
 
       expect(screen.getByTestId("field-trail").style.paddingRight).toBe(trailPad);
     },

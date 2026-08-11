@@ -534,7 +534,13 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
                 size="md"
                 leftGroup={false}
                 rightGroup={false}
-                textContent={draftValue.start ? formatFooterDate(draftValue.start) : "DD / MM / YYYY"}
+                // A calendar-driven display, not free text entry — `value` (not `textContent`,
+                // which only sets the initial `defaultValue`) so it stays in sync with
+                // `draftValue.start` on every re-render, and `readOnly` since date selection
+                // happens via the calendar grid, not typing.
+                value={draftValue.start ? formatFooterDate(draftValue.start) : "DD / MM / YYYY"}
+                readOnly
+                onChange={() => {}}
                 style={{ width: 120 }}
               />
               {type === "range" && (
@@ -554,7 +560,9 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
                     size="md"
                     leftGroup={false}
                     rightGroup={false}
-                    textContent={draftValue.end ? formatFooterDate(draftValue.end) : "DD / MM / YYYY"}
+                    value={draftValue.end ? formatFooterDate(draftValue.end) : "DD / MM / YYYY"}
+                    readOnly
+                    onChange={() => {}}
                     style={{ width: 120 }}
                   />
                 </>

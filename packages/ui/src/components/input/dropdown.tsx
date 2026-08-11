@@ -1,4 +1,4 @@
-import { type HTMLAttributes, forwardRef } from "react";
+import { type FocusEvent, type HTMLAttributes, type MouseEvent as ReactMouseEvent, forwardRef, useState } from "react";
 import { radius } from "@shikho/tokens";
 import { fieldChromeInnerShadow, fieldChromeStyle } from "./shared";
 
@@ -19,6 +19,11 @@ export type DropdownState =
   | "default";
 
 export interface DropdownProps extends HTMLAttributes<HTMLDivElement> {
+  /** Forces a specific state (used by Storybook/playground controls to preview a state without
+   * real interaction). Left unset, the real trigger drives it: keyboard/pointer focus → `active`,
+   * pointer hover → `hover`, otherwise `default`. The other states (`error`, `disabled`, `naked`,
+   * `brand`, `active_no_focus`) can only be forced — none of them are derivable from interaction
+   * alone. */
   state?: DropdownState;
   autoLayout?: boolean;
 }
@@ -35,21 +40,49 @@ const CHROME_STATES = new Set(["default", "default_dark", "hover", "error", "act
  * minus the ring, as the closest confirmed analogue — documented, not verified.
  */
 export const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
-  ({ state = "default", autoLayout = false, className, style, children, ...props }, ref) => {
-    const isDisabled = state === "disabled";
-    const chromeState = CHROME_STATES.has(state) ? (state as Parameters<typeof fieldChromeStyle>[0]) : "default";
+  ({ state, autoLayout = false, className, style, children, onMouseEnter, onMouseLeave, onFocus, onBlur, ...props }, ref) => {
+    const [pointerHover, setPointerHover] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
+
+    const resolvedState: DropdownState = state ?? (isFocused ? "active" : pointerHover ? "hover" : "default");
+    const isDisabled = resolvedState === "disabled";
+    const chromeState = CHROME_STATES.has(resolvedState)
+      ? (resolvedState as Parameters<typeof fieldChromeStyle>[0])
+      : "default";
     const chrome = fieldChromeStyle(chromeState);
 
-    const isNaked = state === "naked";
-    const dropsRing = state === "brand" || state === "active_no_focus";
+    const isNaked = resolvedState === "naked";
+    const dropsRing = resolvedState === "brand" || resolvedState === "active_no_focus";
+
+    const handleMouseEnter = (event: ReactMouseEvent<HTMLDivElement>) => {
+      setPointerHover(true);
+      onMouseEnter?.(event);
+    };
+    const handleMouseLeave = (event: ReactMouseEvent<HTMLDivElement>) => {
+      setPointerHover(false);
+      onMouseLeave?.(event);
+    };
+    const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
+      setIsFocused(true);
+      onFocus?.(event);
+    };
+    const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+      setIsFocused(false);
+      onBlur?.(event);
+    };
 
     return (
       <div
         ref={ref}
         role="button"
+        tabIndex={isDisabled ? undefined : 0}
         aria-disabled={isDisabled || undefined}
-        data-state={state}
+        data-state={resolvedState}
         data-auto-layout={autoLayout}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         className={
           "inline-flex items-center transition-colors outline-none disabled:cursor-not-allowed" +
           (className ? ` ${className}` : "")

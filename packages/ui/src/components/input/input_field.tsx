@@ -1,4 +1,4 @@
-import { type ReactNode, forwardRef } from "react";
+import { type ChangeEvent, type FocusEvent, type MouseEvent as ReactMouseEvent, type ReactNode, forwardRef, useState } from "react";
 import { Field, type FieldProps } from "./field";
 import { InputHint, type InputHintProps } from "./input_hint";
 import { InputLabel } from "./input_label";
@@ -10,6 +10,10 @@ import { fieldChromeInnerShadow, fieldChromeStyle, type FieldChromeState } from 
 export type InputFieldState = FieldChromeState;
 
 export interface InputFieldProps {
+  /** Forces a specific state (used by Storybook/playground controls to preview a state without
+   * real interaction). Left unset, the real `<input>` drives it: focus → `active`, a non-empty
+   * value → `filled`, pointer hover → `hover`, otherwise `default`. `error` can only be forced —
+   * there's no way to auto-derive a validation error from DOM interaction alone. */
   state?: InputFieldState;
   /** Confirmed component property, default true (§8). */
   label?: boolean;
@@ -34,14 +38,55 @@ export interface InputFieldProps {
  * gray/400 text throughout, including the hint.
  */
 export const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
-  ({ state = "default", label = true, hint = true, labelContent, hintProps, fieldProps }, ref) => {
-    const chrome = fieldChromeStyle(state);
-    const isDisabled = state === "disabled";
+  ({ state, label = true, hint = true, labelContent, hintProps, fieldProps }, ref) => {
+    const [pointerHover, setPointerHover] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
+    const [hasValue, setHasValue] = useState(() => {
+      const initial = fieldProps?.value ?? fieldProps?.textContent;
+      return Boolean(initial && initial.length > 0);
+    });
+
+    const isExplicitlyDisabled = Boolean(fieldProps?.disabled);
+    const resolvedState: InputFieldState =
+      state ??
+      (isExplicitlyDisabled
+        ? "disabled"
+        : isFocused
+          ? "active"
+          : hasValue
+            ? "filled"
+            : pointerHover
+              ? "hover"
+              : "default");
+
+    const chrome = fieldChromeStyle(resolvedState);
+    const isDisabled = resolvedState === "disabled";
+
+    const handleFocus = (event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setIsFocused(true);
+      fieldProps?.onFocus?.(event);
+    };
+    const handleBlur = (event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setIsFocused(false);
+      fieldProps?.onBlur?.(event);
+    };
+    const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setHasValue(event.target.value.length > 0);
+      fieldProps?.onChange?.(event);
+    };
+    const handleMouseEnter = (event: ReactMouseEvent<HTMLDivElement>) => {
+      setPointerHover(true);
+      fieldProps?.onMouseEnter?.(event);
+    };
+    const handleMouseLeave = (event: ReactMouseEvent<HTMLDivElement>) => {
+      setPointerHover(false);
+      fieldProps?.onMouseLeave?.(event);
+    };
 
     return (
       <div
         ref={ref}
-        data-state={state}
+        data-state={resolvedState}
         style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.25rem" }}
       >
         {label && (
@@ -50,11 +95,18 @@ export const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
         <Field
           {...fieldProps}
           textColor={chrome.textColor}
+          disabled={isDisabled}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onChange={handleChange}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           style={{
             width: "100%",
             backgroundColor: chrome.background,
             border: chrome.border,
-            boxShadow: [fieldChromeInnerShadow(state), chrome.boxShadow].filter(Boolean).join(", ") || "none",
+            boxShadow:
+              [fieldChromeInnerShadow(resolvedState), chrome.boxShadow].filter(Boolean).join(", ") || "none",
             ...fieldProps?.style,
           }}
           aria-disabled={isDisabled || undefined}

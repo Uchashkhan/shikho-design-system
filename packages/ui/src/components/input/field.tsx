@@ -1,4 +1,12 @@
-import { type HTMLAttributes, type ReactNode, forwardRef } from "react";
+import {
+  type ChangeEvent,
+  type FocusEvent,
+  type HTMLAttributes,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+  type Ref,
+  forwardRef,
+} from "react";
 import { color, radius } from "@shikho/tokens";
 import { NewPinkButton } from "../button/new_pink";
 import type { ButtonSizeScaleB } from "../button/shared";
@@ -15,7 +23,8 @@ import {
 export type { FieldSize };
 export type FieldType = "default" | "textarea" | "advanced_with_buttons";
 
-export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
+export interface FieldProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "onFocus" | "onBlur" | "onChange"> {
   size?: FieldSize;
   type?: FieldType;
   // The 9 confirmed boolean properties (§9), with their confirmed defaults.
@@ -31,7 +40,26 @@ export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, "childr
   // The confirmed instance-swap properties (§9) — React.ReactNode | null, default null.
   selectLeftIcon?: ReactNode | null;
   selectRightIcon?: ReactNode | null;
-  textContent?: ReactNode;
+  /** The field's actual editable content. Uncontrolled by default (behaves as the input's
+   * `defaultValue`) so every existing consumer that was already passing static display text keeps
+   * working, but the field is now a genuine editable `<input>`/`<textarea>` — not decorative
+   * static text. Pass `value` + `onChange` instead for controlled usage. */
+  textContent?: string;
+  /** Controlled value — takes precedence over `textContent` when supplied. */
+  value?: string;
+  onChange?: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onFocus?: (event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onBlur?: (event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onInputMouseEnter?: (event: ReactMouseEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onInputMouseLeave?: (event: ReactMouseEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  name?: string;
+  id?: string;
+  readOnly?: boolean;
+  disabled?: boolean;
+  /** Ref to the real underlying `<input>`/`<textarea>` element — distinct from the component's own
+   * `ref`, which points at the outer wrapper (unchanged, for backward compatibility). */
+  inputRef?: Ref<HTMLInputElement | HTMLTextAreaElement>;
   supportTextContent?: ReactNode;
   trailTextContent?: ReactNode;
   imageSrc?: string;
@@ -142,6 +170,18 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
       selectLeftIcon = null,
       selectRightIcon = null,
       textContent,
+      value,
+      onChange,
+      onFocus,
+      onBlur,
+      onInputMouseEnter,
+      onInputMouseLeave,
+      placeholder,
+      name,
+      id,
+      readOnly,
+      disabled,
+      inputRef,
       supportTextContent,
       trailTextContent,
       imageSrc,
@@ -155,6 +195,20 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
     ref,
   ) => {
     const metrics = FIELD_SIZE_METRICS[size];
+    const inputCommonProps = {
+      value,
+      defaultValue: value === undefined ? textContent : undefined,
+      onChange,
+      onFocus,
+      onBlur,
+      onMouseEnter: onInputMouseEnter,
+      onMouseLeave: onInputMouseLeave,
+      placeholder,
+      name,
+      id,
+      readOnly,
+      disabled,
+    };
 
     if (type === "textarea") {
       // docs/audit/input.md §14 — confirmed distinct structure: a single text row (no left/right
@@ -205,7 +259,22 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
               style={{ width: ta.image, height: ta.image, borderRadius: radius.full, objectFit: "cover", flexShrink: 0 }}
             />
           )}
-          {textGroup && text && <span style={{ color: fieldTextColorDefault, flex: "1 0 0" }}>{textContent}</span>}
+          {textGroup && text && (
+            <textarea
+              ref={inputRef as Ref<HTMLTextAreaElement>}
+              {...inputCommonProps}
+              style={{
+                color: fieldTextColorDefault,
+                flex: "1 0 0",
+                font: "inherit",
+                padding: 0,
+                border: "none",
+                outline: "none",
+                resize: "none",
+                background: "transparent",
+              }}
+            />
+          )}
           <span
             aria-hidden
             style={{ position: "absolute", bottom: 0, right: 0, width: ta.resizer, height: ta.resizer, color: color.gray[400] }}
@@ -274,16 +343,21 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
               {leadTextContent}
             </span>
           )}
-          <span
+          <input
+            ref={inputRef as Ref<HTMLInputElement>}
+            data-testid="field-text"
+            {...inputCommonProps}
             style={{
               flex: "1 0 0",
               minWidth: 1,
               padding: `0 ${adv.textPaddingX}px`,
               color: fieldTextColorDefault,
+              font: "inherit",
+              border: "none",
+              outline: "none",
+              background: "transparent",
             }}
-          >
-            {textContent}
-          </span>
+          />
           {trailText && (
             <span
               data-testid="field-trail"
@@ -352,7 +426,22 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
               padding: "0 0.125rem",
             }}
           >
-            {text && <span style={{ color: textColor ?? fieldTextColorDefault }}>{textContent}</span>}
+            {text && (
+              <input
+                ref={inputRef as Ref<HTMLInputElement>}
+                {...inputCommonProps}
+                style={{
+                  flex: "1 0 0",
+                  minWidth: 1,
+                  color: textColor ?? fieldTextColorDefault,
+                  font: "inherit",
+                  border: "none",
+                  outline: "none",
+                  background: "transparent",
+                  padding: 0,
+                }}
+              />
+            )}
             {supportText && <span style={{ color: fieldSupportTextColor }}>{supportTextContent}</span>}
           </span>
         )}

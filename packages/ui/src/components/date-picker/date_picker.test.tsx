@@ -270,18 +270,18 @@ describe("footer date-input visibility (docs/audit/date-picker-deep-audit.md §1
 
   it("shows the footer date field for type=single, size=lg", () => {
     render(<DatePicker type="single" size="lg" />);
-    expect(screen.getAllByText(/DD \/ MM \/ YYYY/).length).toBeGreaterThan(0);
+    expect(screen.getAllByDisplayValue(/DD \/ MM \/ YYYY/).length).toBeGreaterThan(0);
   });
 
   it("shows two footer date fields with a TO separator for type=range at any size", () => {
     render(<DatePicker type="range" size="md" />);
     expect(screen.getByText("TO")).toBeInTheDocument();
-    expect(screen.getAllByText(/DD \/ MM \/ YYYY/).length).toBe(2);
+    expect(screen.getAllByDisplayValue(/DD \/ MM \/ YYYY/).length).toBe(2);
   });
 
   it("can be overridden explicitly via showFooterInputs", () => {
     render(<DatePicker type="single" size="md" showFooterInputs />);
-    expect(screen.getAllByText(/DD \/ MM \/ YYYY/).length).toBe(1);
+    expect(screen.getAllByDisplayValue(/DD \/ MM \/ YYYY/).length).toBe(1);
   });
 });
 
