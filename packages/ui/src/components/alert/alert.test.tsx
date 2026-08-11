@@ -118,6 +118,17 @@ describe("confirmed default icons — previously missing entirely (docs/audit/al
     expect(closeButton.querySelector("svg")).toBeInTheDocument();
   });
 
+  // P8 repair — a fresh get_design_context re-pull on node 66071:28137 confirmed the "X" glyph
+  // sits inset 20.83% inside its 18px container, i.e. it renders at its native 10.5×10.5 size,
+  // not stretched to fill all 18px. Forcing size=18 made the X ~70% larger than confirmed.
+  it("renders the close icon at its confirmed native 10.5px size, not stretched to 18px", () => {
+    render(<Alert onCloseClick={() => {}} />);
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    const svg = closeButton.querySelector("svg") as SVGSVGElement;
+    expect(svg.style.width).toBe("10.5px");
+    expect(svg.style.height).toBe("10.5px");
+  });
+
   it("still allows overriding the default close icon via the closeIcon prop", () => {
     render(<Alert closeIcon={<span data-testid="custom-close" />} />);
     expect(screen.getByTestId("custom-close")).toBeInTheDocument();

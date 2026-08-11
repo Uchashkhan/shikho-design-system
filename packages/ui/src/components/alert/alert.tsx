@@ -228,7 +228,17 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
         {...props}
       >
         {leftIcon && (
-          <span style={{ width: 24, height: 24, flexShrink: 0, filter: iconShadowFilter }}>
+          <span
+            style={{
+              width: 24,
+              height: 24,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              filter: iconShadowFilter,
+            }}
+          >
             {icon ?? <InfoCircleIcon style={{ color: iconColorByState[state] }} />}
           </span>
         )}
@@ -317,7 +327,26 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
             cursor: "pointer",
           }}
         >
-          <span style={{ width: 18, height: 18, filter: iconShadowFilter }}>{closeIcon ?? <CloseIcon size={18} style={{ color: color.gray[700] }} />}</span>
+          <span
+            style={{
+              width: 18,
+              height: 18,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              filter: iconShadowFilter,
+            }}
+          >
+            {/* docs/audit/alerts.md — a fresh get_design_context re-pull on node 66071:28137
+                confirms the glyph ("vector") sits inset 20.83% inside this 18px box — i.e. it
+                renders at its native 10.5×10.5 size (CloseIcon's own confirmed viewBox), not
+                stretched to fill all 18px. Forcing size={18} rendered the X ~70% larger/bolder
+                than the confirmed glyph. */}
+            {/* `size` only accepts the fixed IconSize steps (14/16/18/...); the confirmed 10.5px
+                render size is achieved via an explicit CSS width/height override instead, which
+                takes precedence over the SVG's own size-driven width/height attributes. */}
+            {closeIcon ?? <CloseIcon style={{ width: 10.5, height: 10.5, color: color.gray[700] }} />}
+          </span>
         </button>
       </div>
     );
