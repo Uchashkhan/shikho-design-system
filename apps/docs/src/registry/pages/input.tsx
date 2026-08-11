@@ -6,11 +6,26 @@ import {
   InputHint,
   InputLabel,
   Textarea,
+  type DropdownState,
   type FieldSize,
   type FieldType,
   type InputFieldState,
+  type TextareaState,
 } from "@shikho/ui";
 import type { ComponentPageConfig } from "./types";
+
+const DROPDOWN_STATES: DropdownState[] = [
+  "default",
+  "default_dark",
+  "hover",
+  "brand",
+  "active",
+  "active_no_focus",
+  "error",
+  "disabled",
+  "naked",
+];
+const TEXTAREA_STATES: TextareaState[] = ["default", "hover", "filled", "active", "error", "disabled"];
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
@@ -154,20 +169,56 @@ export function EmailField() {
       ),
     },
     {
-      title: "Dropdown, Textarea and DigitInput",
+      title: "Dropdown — all 9 confirmed states",
       description:
-        "All three now independently confirmed via their own get_design_context pulls, each with real interactivity — Dropdown is keyboard-focusable, Textarea/DigitInput are real editable elements, and state derives from actual focus/hover/value when left unset.",
+        "Independently confirmed via its own get_design_context pull, not derived from Field/InputField. default/hover/default_dark text is gray-950 (darker than InputField's own gray-700 default); brand has its own primary-tinted fill; active_no_focus is white + an outer shadow, not \"active minus its ring.\" Shown side by side with forced state since the difference is otherwise easy to miss — hover/focus the default one to see it respond to a real pointer too.",
       layout: "stack",
       render: () => (
-        <>
-          <Dropdown state="default">Select an option</Dropdown>
-          <Textarea state="default" aria-label="Message" placeholder="Write something…" rows={3} />
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            {[0, 1, 2, 3].map((i) => (
-              <DigitInput key={i} aria-label={`Digit ${i + 1}`} />
-            ))}
-          </div>
-        </>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {DROPDOWN_STATES.map((state) => (
+            <div key={state} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 110, fontSize: 12, color: "#8c929c", flexShrink: 0 }}>{state}</span>
+              <Dropdown state={state} style={{ maxWidth: 260 }}>
+                Select an option
+              </Dropdown>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      title: "Textarea — all 6 reachable states",
+      description:
+        "Independently confirmed via its own get_design_context pull — its radius (16px) and padding are its own, distinct from Field's (10px/8px), and error reddens the input text itself (danger-500), unlike InputField's error which keeps gray-700 text.",
+      layout: "stack",
+      render: () => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {TEXTAREA_STATES.map((state) => (
+            <div key={state} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 70, fontSize: 12, color: "#8c929c", flexShrink: 0 }}>{state}</span>
+              <Textarea
+                state={state}
+                aria-label={`Message (${state})`}
+                defaultValue={state === "filled" || state === "active" || state === "error" ? "Write something…" : undefined}
+                placeholder="Write something…"
+                rows={2}
+                style={{ width: 260 }}
+              />
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      title: "DigitInput — real, focusable cells",
+      description: "Each cell is a genuine <input> — click one and type a digit.",
+      layout: "stack",
+      render: () => (
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          {[0, 1, 2, 3].map((i) => (
+            <DigitInput key={i} aria-label={`Digit ${i + 1}`} />
+          ))}
+        </div>
       ),
     },
   ],
