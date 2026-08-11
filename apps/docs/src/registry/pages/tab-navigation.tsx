@@ -69,6 +69,11 @@ function Tabs() {
     // A State control was previously missing here — inactive/hover is a real, confirmed, distinct
     // treatment (text darkens gray-600 → gray-700), but had no interactive control on this page at
     // all, the same gap found and fixed on the Switcher page.
+    //
+    // Type defaults to "inactive", not "active": active has no confirmed hover treatment at all
+    // (§1 above), so with "active" as the starting type, the very first thing a visitor tries —
+    // flipping State to Hover — is the one combination guaranteed to show no visible change,
+    // reading as a broken/missing hover rather than a confirmed absence.
     controls: [
       {
         prop: "size",
@@ -79,7 +84,7 @@ function Tabs() {
       {
         prop: "type",
         label: "Type",
-        defaultValue: "active",
+        defaultValue: "inactive",
         options: TYPES.map((v) => ({ label: v, value: v })),
       },
       {
