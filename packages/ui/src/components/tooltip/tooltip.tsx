@@ -1,4 +1,4 @@
-import { type CSSProperties, type HTMLAttributes, type ReactNode, forwardRef } from "react";
+import { type CSSProperties, type HTMLAttributes, type ReactNode, forwardRef, useState } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
 
 // docs/audit/tooltips.md §2, §14 — tooltip: exactly one Figma variant property, `direction` (8
@@ -113,33 +113,68 @@ const DIRECTION_LAYOUT: Record<TooltipDirection, DirectionLayout> = {
 // placements (top_*/botom_*/bottom_center) use a 16×8 pointer; horizontal placements
 // (left_center/right_center) use the same shape rotated to 8×16. `top_*` points up, `botom_*`/
 // `bottom_center` points down, `left_center` points left, `right_center` points right.
-function Pointer({ axis, pointsTowardStart }: { axis: Axis; pointsTowardStart: boolean }) {
-  const width = axis === "vertical" ? 16 : 8;
-  const height = axis === "vertical" ? 8 : 16;
+//
+// P12 repair — a fresh get_design_context re-pull on all 4 corner directions (top_left,
+// top_right, botom_left, botom_right) found their pointer's real SVG asset is NOT a bare 16×8
+// triangle: it's a 48×8 box with the 16px-wide triangle offset within it — at x:32-48 (near the
+// far edge) for the two "_left" directions, at x:0-16 (near the near edge) for the two "_right"
+// directions. The 4 center directions (top_center/bottom_center/left_center/right_center) keep
+// the plain 16×8 (or 8×16) box with no offset, confirmed unchanged. Reproduced here as an outer
+// sizing box (matching Figma's own invisible-bounds construction) with the visible triangle
+// absolutely positioned inside it, rather than baking 3 separate hand-shifted path variants.
+function Pointer({
+  axis,
+  pointsTowardStart,
+  isCorner,
+  glyphOffset,
+}: {
+  axis: Axis;
+  pointsTowardStart: boolean;
+  isCorner: boolean;
+  glyphOffset: number;
+}) {
+  const glyphWidth = axis === "vertical" ? 16 : 8;
+  const glyphHeight = axis === "vertical" ? 8 : 16;
+  const boxWidth = axis === "vertical" ? (isCorner ? 48 : 16) : 8;
+  const boxHeight = axis === "vertical" ? 8 : 16;
   // Confirmed path (bottom_center, pointing down): rotate/flip for the other 3 orientations.
   const rotation = axis === "vertical" ? (pointsTowardStart ? 180 : 0) : pointsTowardStart ? 90 : -90;
   return (
-    <svg
-      aria-hidden
-      width={width}
-      height={height}
-      viewBox="0 0 16 8"
-      fill="none"
-      style={{ flexShrink: 0, transform: `rotate(${rotation}deg)` }}
-    >
-      <path
-        d="M3.13511 3.13511C5.04057 5.04057 5.99331 5.99331 7.12743 6.24681C7.70205 6.37526 8.29795 6.37526 8.87257 6.24681C10.0067 5.99331 10.9594 5.04057 12.8649 3.1351L16 0H0L3.13511 3.13511Z"
-        fill={color.white[950]}
-      />
-    </svg>
+    <div data-name="pointer" style={{ position: "relative", width: boxWidth, height: boxHeight, flexShrink: 0 }}>
+      <svg
+        aria-hidden
+        width={glyphWidth}
+        height={glyphHeight}
+        viewBox="0 0 16 8"
+        fill="none"
+        style={{
+          position: "absolute",
+          left: axis === "vertical" ? glyphOffset : 0,
+          top: 0,
+          transform: `rotate(${rotation}deg)`,
+        }}
+      >
+        <path
+          d="M3.13511 3.13511C5.04057 5.04057 5.99331 5.99331 7.12743 6.24681C7.70205 6.37526 8.29795 6.37526 8.87257 6.24681C10.0067 5.99331 10.9594 5.04057 12.8649 3.1351L16 0H0L3.13511 3.13511Z"
+          fill={color.white[950]}
+        />
+      </svg>
+    </div>
   );
 }
 
 // docs/audit/tooltips.md §14 — the confirmed system-wide "special_drop" 2-layer inset, reused
 // exactly as-is from Chip/Tags/DatePicker/Modal/Pagination/SidebarItem/TopNavItem/TableCell.
-const restingInsetShadow = `inset 0px 1px 3px -2px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.07)`;
+// P12 repair — a fresh get_design_context re-pull found this was missing its confirmed OUTER
+// drop-shadow entirely (`0px 1px 1px -0.5px black-50`, a single-layer e1); only the inset pair
+// was ever implemented.
+const restingButtonShadow = `0px 1px 1px -0.5px ${color.black[50]}, inset 0px 1px 3px -2px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.07)`;
 // docs/audit/tooltips.md §14 — confirmed exact effect on the primary "Got it"-style button.
-const primaryButtonInsetShadow = `inset 0px 3px 4px -3px ${color.white[600]}, inset 0px 0px 8px -2px ${color.white[500]}`;
+// P12 repair — same gap as the secondary button: the confirmed 2-layer OUTER shadow
+// (elevation/e2) was missing, only the inset pair was implemented.
+const primaryButtonShadow = `0px 1px 1px -0.5px ${color.black[50]}, 0px 3px 3px -1.5px ${color.black[50]}, inset 0px 3px 4px -3px ${color.white[600]}, inset 0px 0px 8px -2px ${color.white[500]}`;
+const secondaryButtonHoverBg = color.gray[200]; // one step darker, same convention used library-wide
+const primaryButtonHoverBg = color.primary[600]; // one step darker on the ramp — derived, hover itself unconfirmed
 
 // docs/audit/tooltips.md §14 — confirmed: the wrapper's own drop-shadow is elevation/e3 (a
 // 3-layer stack), expressed as a `filter: drop-shadow()` chain rather than `boxShadow` because it
@@ -167,6 +202,10 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
   ({ direction, heading, description, secondaryAction, primaryAction, style, ...props }, ref) => {
     const layout = DIRECTION_LAYOUT[direction];
     const showActions = !!(secondaryAction || primaryAction);
+    // P12 repair — neither action button responded to a real pointer at all, the same
+    // missing-interactivity defect already fixed across every other component this session.
+    const [secondaryHover, setSecondaryHover] = useState(false);
+    const [primaryHover, setPrimaryHover] = useState(false);
 
     const borderStyle: CSSProperties = {
       borderTop: layout.omitBorder === "top" ? "none" : `1px solid ${color.gray[100]}`,
@@ -210,14 +249,20 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
               <button
                 type="button"
                 onClick={secondaryAction.onClick}
+                onMouseEnter={() => setSecondaryHover(true)}
+                onMouseLeave={() => setSecondaryHover(false)}
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
                   flex: "1 0 0",
                   height: 32,
                   padding: 8,
                   border: "none",
                   borderRadius: radius.sm,
-                  background: color.gray[100],
-                  boxShadow: restingInsetShadow,
+                  background: secondaryHover ? secondaryButtonHoverBg : color.gray[100],
+                  boxShadow: restingButtonShadow,
                   fontSize: 12,
                   lineHeight: "16px",
                   fontWeight: 600,
@@ -225,21 +270,30 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
                   cursor: "pointer",
                 }}
               >
-                {secondaryAction.label}
+                {/* Figma's confirmed "text_wrap" nests the label in its own px-[spacing/4,4px]
+                    padding on top of the button's own 8px padding — mirroring the same gap
+                    already found and fixed on alert.tsx/toast.tsx's own action buttons. */}
+                <span style={{ padding: "0 0.25rem" }}>{secondaryAction.label}</span>
               </button>
             )}
             {primaryAction && (
               <button
                 type="button"
                 onClick={primaryAction.onClick}
+                onMouseEnter={() => setPrimaryHover(true)}
+                onMouseLeave={() => setPrimaryHover(false)}
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
                   flex: "1 0 0",
                   height: 32,
                   padding: 8,
                   border: `1px solid ${color.black[150]}`,
                   borderRadius: radius.sm,
-                  background: color.primary[500],
-                  boxShadow: primaryButtonInsetShadow,
+                  background: primaryHover ? primaryButtonHoverBg : color.primary[500],
+                  boxShadow: primaryButtonShadow,
                   fontSize: 12,
                   lineHeight: "16px",
                   fontWeight: 600,
@@ -247,7 +301,7 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
                   cursor: "pointer",
                 }}
               >
-                {primaryAction.label}
+                <span style={{ padding: "0 0.25rem" }}>{primaryAction.label}</span>
               </button>
             )}
           </div>
@@ -255,7 +309,20 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
       </div>
     );
 
-    const pointer = <Pointer axis={layout.axis} pointsTowardStart={layout.pointerFirst} />;
+    // P12 repair — corner directions (crossAlign flex-start/flex-end on the vertical axis) use
+    // the confirmed widened 48px pointer box; the glyph sits offset 32px from the tip-aligned
+    // edge for "_left" directions, flush at 0 for "_right" directions (§ above the Pointer
+    // component). Center directions render the plain, un-widened box as before.
+    const isCorner = layout.axis === "vertical" && layout.crossAlign !== "center";
+    const glyphOffset = layout.crossAlign === "flex-start" ? 32 : 0;
+    const pointer = (
+      <Pointer
+        axis={layout.axis}
+        pointsTowardStart={layout.pointerFirst}
+        isCorner={isCorner}
+        glyphOffset={glyphOffset}
+      />
+    );
 
     return (
       <div
