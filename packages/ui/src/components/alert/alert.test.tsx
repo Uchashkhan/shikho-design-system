@@ -156,6 +156,26 @@ describe("confirmed corrections to root/corner styling (docs/audit/alerts.md §1
   });
 });
 
+// P6 repair — the composed ButtonDanger/ButtonSuccess defaulted leftIcon/rightIcon to true,
+// rendering two empty 18px icon slots that don't exist on the confirmed Figma instance (only a
+// text_wrap label), making "Learn more" visibly wider on danger/success than on Default/warning/
+// info/Dismiss. Fixed by passing leftIcon={false} rightIcon={false} and giving the hand-rolled
+// buttons the same confirmed text_wrap 4px label padding.
+describe("primary action button has no icon slots, matching the confirmed text-only instance (P6 repair)", () => {
+  it("ButtonDanger renders with no icon slot spans", () => {
+    render(<Alert state="danger" primaryActionContent="Learn more" />);
+    const button = screen.getByRole("button", { name: "Learn more" });
+    // Only the label span (plus the inset-shadow overlay) should remain — no 18px icon slots.
+    expect(button.querySelector('[style*="18px"]')).not.toBeInTheDocument();
+  });
+
+  it("ButtonSuccess renders with no icon slot spans", () => {
+    render(<Alert state="success" primaryActionContent="Learn more" />);
+    const button = screen.getByRole("button", { name: "Learn more" });
+    expect(button.querySelector('[style*="18px"]')).not.toBeInTheDocument();
+  });
+});
+
 describe("no unsupported variant is exported", () => {
   it("rejects a state value outside the confirmed enum at the type level", () => {
     // @ts-expect-error - "neutral" is not a confirmed alert state (only Default/danger/success/warning/info exist, §2)

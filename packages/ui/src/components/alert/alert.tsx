@@ -138,10 +138,17 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
 
     const primaryButton =
       state === "danger" ? (
+        // P6 repair — a fresh get_design_context re-pull on node 66071:28147 confirmed the
+        // nested instance has only a `text_wrap` label, no icon slots at all. ButtonDanger
+        // defaults leftIcon/rightIcon to true, so without this it rendered two empty 18px icon
+        // slots, inflating the button ~54px wider than the neutral buttons on the other
+        // severities — the inconsistency was real, not just a color mismatch.
         <ButtonDanger
           size="md"
           type="Secondary"
           state={primaryHover ? "hover" : "default"}
+          leftIcon={false}
+          rightIcon={false}
           onClick={onPrimaryActionClick}
           onMouseEnter={() => setPrimaryHover(true)}
           onMouseLeave={() => setPrimaryHover(false)}
@@ -153,6 +160,8 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
           size="md"
           type="Secondary"
           state={primaryHover ? "hover" : "default"}
+          leftIcon={false}
+          rightIcon={false}
           onClick={onPrimaryActionClick}
           onMouseEnter={() => setPrimaryHover(true)}
           onMouseLeave={() => setPrimaryHover(false)}
@@ -186,7 +195,11 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
             cursor: "pointer",
           }}
         >
-          {primaryActionContent}
+          {/* Figma's "text_wrap" nests the label in its own px-[spacing/4,4px] padding on every
+              confirmed action button (this one and the composed ButtonDanger/ButtonSuccess
+              alike) — previously only applied here via the outer button's own padding, which
+              left this button narrower than the composed ones for the same label. */}
+          <span style={{ padding: "0 0.25rem" }}>{primaryActionContent}</span>
         </button>
       );
 
@@ -266,7 +279,8 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
                 cursor: "pointer",
               }}
             >
-              {dismissContent}
+              {/* Same confirmed text_wrap 4px padding as the primary neutral button above. */}
+              <span style={{ padding: "0 0.25rem" }}>{dismissContent}</span>
             </button>
           </div>
         </div>
