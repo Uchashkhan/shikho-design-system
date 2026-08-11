@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type ReactNode, forwardRef } from "react";
+import { type HTMLAttributes, type MouseEvent as ReactMouseEvent, type ReactNode, forwardRef, useState } from "react";
 import { color, elevation } from "@shikho/tokens";
 import { tv } from "tailwind-variants";
 import { Checkbox, type CheckboxProps } from "../checkbox";
@@ -117,6 +117,10 @@ const listStyles = tv({
 
 export interface ListProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   size?: ListSize;
+  /** Forces a specific state (used by Storybook/playground controls to preview `hover` without a
+   * pointer). Left unset, the real cursor drives it via onMouseEnter/onMouseLeave —
+   * `active_primary_accent` can only be forced, since no confirmed interaction (e.g. checking the
+   * row's checkbox) is documented to trigger it. */
   state?: ListState;
   /** Renders the nested Checkbox (§7 — the audit's own naming mismatch is preserved). */
   leadIcon?: boolean;
@@ -162,7 +166,7 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
   (
     {
       size = "lg",
-      state = "default",
+      state,
       leadIcon = true,
       leadItem = true,
       leadItemLg = false,
@@ -187,12 +191,29 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
       checkboxProps,
       className,
       style,
+      onMouseEnter,
+      onMouseLeave,
       ...props
     },
     ref,
   ) => {
-    const styles = listStyles({ size, state });
-    const visual = STATE_VISUAL[state];
+    // `state` left unset (the normal case for real usage) → hover is driven by the actual
+    // pointer. An explicit `state` (Storybook/playground controls) always wins. See
+    // sidebar_item.tsx for the identical fix and its rationale.
+    const [pointerHover, setPointerHover] = useState(false);
+    const resolvedState: ListState = state ?? (pointerHover ? "hover" : "default");
+
+    const handleMouseEnter = (event: ReactMouseEvent<HTMLDivElement>) => {
+      setPointerHover(true);
+      onMouseEnter?.(event);
+    };
+    const handleMouseLeave = (event: ReactMouseEvent<HTMLDivElement>) => {
+      setPointerHover(false);
+      onMouseLeave?.(event);
+    };
+
+    const styles = listStyles({ size, state: resolvedState });
+    const visual = STATE_VISUAL[resolvedState];
     const metrics = SIZE_METRICS[size];
     const mainTextStyle = { ...metrics.mainText, fontWeight: TEXT_WEIGHT };
     const descriptionStyle = { ...metrics.description, fontWeight: TEXT_WEIGHT };
@@ -201,8 +222,10 @@ export const List = forwardRef<HTMLDivElement, ListProps>(
       <div
         ref={ref}
         data-size={size}
-        data-state={state}
+        data-state={resolvedState}
         className={styles.root({ className })}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         style={{
           gap: ROOT_GAP,
           padding: metrics.padding,

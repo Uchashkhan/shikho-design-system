@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import * as uiRoot from "../../index";
 import { Checkbox } from "../checkbox";
 import { List } from "./list";
@@ -194,6 +194,38 @@ describe("boolean slots", () => {
   it("does not render leadItem/leadItemLg images without a src (no invented placeholder asset)", () => {
     const { container } = render(<List textContent="Main text" />);
     expect(container.querySelectorAll("img")).toHaveLength(0);
+  });
+});
+
+describe("interactivity", () => {
+  it("with no `state` prop, the real pointer drives hover (previously a static swatch)", () => {
+    const { container } = render(<List textContent="List item" />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.backgroundColor).toBe("");
+    fireEvent.mouseEnter(root);
+    expect(root.style.backgroundColor).toBe("rgb(244, 244, 246)");
+    fireEvent.mouseLeave(root);
+    expect(root.style.backgroundColor).toBe("");
+  });
+
+  it("an explicit `state` prop overrides the pointer", () => {
+    const { container } = render(<List state="default" textContent="List item" />);
+    const root = container.firstChild as HTMLElement;
+    fireEvent.mouseEnter(root);
+    expect(root.style.backgroundColor).toBe("");
+  });
+
+  it("still fires a caller's own onMouseEnter/onMouseLeave alongside the internal hover tracking", () => {
+    const onMouseEnter = vi.fn();
+    const onMouseLeave = vi.fn();
+    const { container } = render(
+      <List textContent="List item" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />,
+    );
+    const root = container.firstChild as HTMLElement;
+    fireEvent.mouseEnter(root);
+    fireEvent.mouseLeave(root);
+    expect(onMouseEnter).toHaveBeenCalledTimes(1);
+    expect(onMouseLeave).toHaveBeenCalledTimes(1);
   });
 });
 
