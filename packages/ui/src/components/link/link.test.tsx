@@ -125,6 +125,44 @@ describe("confirmed absence of a focus state (§5)", () => {
   });
 });
 
+describe("interactivity", () => {
+  it("with no `state` prop, the real pointer drives hover (previously a static swatch)", () => {
+    render(<Link type="primary">Link</Link>);
+    const anchor = screen.getByRole("link");
+    expect(anchor.style.color).toBe("rgb(84, 104, 255)");
+    fireEvent.mouseEnter(anchor);
+    expect(anchor.style.color).toBe("rgb(59, 78, 227)");
+    fireEvent.mouseLeave(anchor);
+    expect(anchor.style.color).toBe("rgb(84, 104, 255)");
+  });
+
+  it("an explicit `state` prop overrides the pointer", () => {
+    render(
+      <Link type="primary" state="default">
+        Link
+      </Link>,
+    );
+    const anchor = screen.getByRole("link");
+    fireEvent.mouseEnter(anchor);
+    expect(anchor.style.color).toBe("rgb(84, 104, 255)");
+  });
+
+  it("still fires a caller's own onMouseEnter/onMouseLeave alongside the internal hover tracking", () => {
+    const onMouseEnter = vi.fn();
+    const onMouseLeave = vi.fn();
+    render(
+      <Link onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        Link
+      </Link>,
+    );
+    const anchor = screen.getByRole("link");
+    fireEvent.mouseEnter(anchor);
+    fireEvent.mouseLeave(anchor);
+    expect(onMouseEnter).toHaveBeenCalledTimes(1);
+    expect(onMouseLeave).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("disabled behavior", () => {
   it("marks aria-disabled and blocks pointer interaction when state=disabled", () => {
     const onClick = vi.fn();

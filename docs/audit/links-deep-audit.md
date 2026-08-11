@@ -63,6 +63,12 @@ Both types follow the same confirmed pattern: hover moves to a strictly darker s
 - The real icon glyph content — no `@shikho/icons` glyphs exist yet, so `leftIcon`/`rightIcon` render as empty `ReactNode` slots unless a consumer supplies content via `selectLeftIcon`/`selectRightIcon`.
 - Default variant configuration — not confirmed.
 
-## 6. Implementation decision
+## 6. Colors re-verified, interactivity fixed (re-audit pass)
+
+Re-confirmed all 4 non-disabled color/weight combinations plus `disabled` directly against their recorded node IDs (`66080:30611`, `66080:30607`, `66080:30599`, `66080:30595`, `66080:30603`) via a live `get_design_context` pull — every value already matched the implementation exactly. No color bugs found here, unlike `SidebarItem`/`SwitcherItem`/`TopNavItem`'s per-size or per-type geometry.
+
+The one real bug: `state` was a static prop with no `onMouseEnter`/`onMouseLeave` — hovering a link did nothing regardless of color correctness, the same interactivity gap already found and fixed on every other nav/interactive component in this library. Left unset, the real cursor now drives `hover`; an explicit `state` (Storybook/playground controls, or forcing `"disabled"`) still overrides it.
+
+## 7. Implementation decision
 
 `Link` is implemented as a real anchor-capable component: it renders a native `<a>` when `href` is supplied, or a `<span>` otherwise (e.g. for a `role="link"` + `onClick` pattern) — a functional necessity for a component whose entire purpose is navigation, not a Figma-confirmed detail (Figma's own export never distinguishes an anchor element from any other container, per every prior audit in this series). `disabled` is expressed via `aria-disabled` + `pointer-events: none`, the standard pattern for a non-native-disableable element like `<a>`, and consistent with `state=disabled`'s confirmed color treatment.

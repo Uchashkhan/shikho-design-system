@@ -2,9 +2,11 @@ import {
   type AnchorHTMLAttributes,
   type CSSProperties,
   type HTMLAttributes,
+  type MouseEvent,
   type ReactNode,
   type Ref,
   forwardRef,
+  useState,
 } from "react";
 import { color, elevation } from "@shikho/tokens";
 
@@ -62,6 +64,8 @@ const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[0].color}) dr
 export interface LinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "color"> {
   size?: LinkSize;
   type?: LinkType;
+  /** Forces a specific state (used by Storybook/playground controls to preview `hover`/`disabled`
+   * without a pointer). Left unset, the real cursor drives `hover` via onMouseEnter/onMouseLeave. */
   state?: LinkState;
   /** The 3 confirmed boolean slots (§2), all default `true`. */
   leftIcon?: boolean;
@@ -99,13 +103,17 @@ function IconSlot({ size, children }: { size: number; children?: ReactNode }) {
  * **Confirmed absent: a `focus` state** — unlike every other interactive component audited so
  * far, `link` has no distinct focus treatment and no focus-ring token anywhere in its export.
  * This relies on the browser's native `:focus-visible` outline rather than inventing one.
+ *
+ * `state` left unset lets the real cursor drive `hover` via onMouseEnter/onMouseLeave — the same
+ * fix already applied to `SidebarItem`/`SwitcherItem`/`TabNavItem`. An explicit `state` (Storybook/
+ * playground controls, or `"disabled"`) always overrides the pointer.
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
   (
     {
       size = "md",
       type = "primary",
-      state = "default",
+      state,
       leftIcon = true,
       rightIcon = true,
       text = true,
@@ -114,12 +122,29 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
       children,
       style,
       onClick,
+      onMouseEnter,
+      onMouseLeave,
       ...props
     },
     ref,
   ) => {
     const { gap, iconSize, fontSize, lineHeight } = SIZE_CONFIG[size];
-    const isDisabled = state === "disabled";
+
+    // `state` left unset (the normal case for real usage) → hover is driven by the actual
+    // pointer. An explicit `state` (Storybook/playground controls, or "disabled") always wins.
+    // See sidebar_item.tsx for the identical fix and its rationale.
+    const [pointerHover, setPointerHover] = useState(false);
+    const resolvedState: LinkState = state ?? (pointerHover ? "hover" : "default");
+    const isDisabled = resolvedState === "disabled";
+
+    const handleMouseEnter = (event: MouseEvent<HTMLAnchorElement>) => {
+      setPointerHover(true);
+      onMouseEnter?.(event);
+    };
+    const handleMouseLeave = (event: MouseEvent<HTMLAnchorElement>) => {
+      setPointerHover(false);
+      onMouseLeave?.(event);
+    };
 
     const computedStyle: CSSProperties = {
       display: "inline-flex",
@@ -130,7 +155,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
       fontSize,
       lineHeight,
       fontWeight: FONT_WEIGHT[type],
-      color: TEXT_COLOR[type][state],
+      color: TEXT_COLOR[type][resolvedState],
       textDecoration: "none",
       cursor: isDisabled ? "not-allowed" : "pointer",
       pointerEvents: isDisabled ? "none" : "auto",
@@ -149,10 +174,12 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
     const sharedProps = {
       "data-size": size,
       "data-type": type,
-      "data-state": state,
+      "data-state": resolvedState,
       "aria-disabled": isDisabled || undefined,
       style: computedStyle,
       onClick: isDisabled ? undefined : onClick,
+      onMouseEnter: handleMouseEnter,
+      onMouseLeave: handleMouseLeave,
     } as const;
 
     // A plain <a> with no href has no implicit accessible "link" role, isn't keyboard reachable,
