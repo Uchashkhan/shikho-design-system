@@ -176,6 +176,27 @@ describe("primary action button has no icon slots, matching the confirmed text-o
   });
 });
 
+// P7 repair — both icon slots wired their confirmed elevation/e2 shadow as a CSS `box-shadow`
+// (a rectangle around the transparent span) instead of `filter: drop-shadow(...)` (which follows
+// the glyph's own silhouette, the pattern every other icon in this library uses). The mismatch
+// made the corner close "X" look smudged/heavier than the confirmed glyph.
+describe("icon shadows follow the glyph silhouette, not a rectangular box (P7 repair)", () => {
+  it("applies the confirmed e2 shadow as filter: drop-shadow, not box-shadow, on the close icon", () => {
+    render(<Alert onCloseClick={() => {}} />);
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    const iconSlot = closeButton.querySelector("svg")?.parentElement as HTMLElement;
+    expect(iconSlot.style.filter).toContain("drop-shadow");
+    expect(iconSlot.style.boxShadow).toBe("");
+  });
+
+  it("applies the same filter-based shadow on the left severity icon", () => {
+    const { container } = render(<Alert state="danger" />);
+    const iconSlot = container.querySelector('[data-state="danger"] > span:first-child') as HTMLElement;
+    expect(iconSlot.style.filter).toContain("drop-shadow");
+    expect(iconSlot.style.boxShadow).toBe("");
+  });
+});
+
 describe("no unsupported variant is exported", () => {
   it("rejects a state value outside the confirmed enum at the type level", () => {
     // @ts-expect-error - "neutral" is not a confirmed alert state (only Default/danger/success/warning/info exist, §2)

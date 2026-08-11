@@ -15,7 +15,12 @@ const shadowToCss = (layers: readonly { x: number; y: number; blur: number; spre
 
 const rootShadow = shadowToCss(elevation.e5); // confirmed exact, root — §11
 const cornerButtonShadow = shadowToCss(elevation.e3); // confirmed exact, icon_button — §11
-const iconShadow = shadowToCss(elevation.e2); // confirmed exact, both icon sizes — §11
+// P7 repair — this was wired as a CSS `box-shadow` on the icon's transparent span, which paints
+// a rectangular shadow around the box itself rather than following the glyph's silhouette. Every
+// other component in the library applies this exact e2 pair as `filter: drop-shadow(...)`
+// instead (see list.tsx's `iconShadowFilter`) — the mismatch made both icons, especially the
+// corner close "X", look smudged/heavier than the confirmed glyph.
+const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[1].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
 // docs/audit/alerts.md §14 — confirmed on the plain neutral button (Default/warning/info's first
 // action): an outer single-layer drop shadow (elevation/e2's smaller layer) PLUS the confirmed
 // system-wide "special_drop" 2-layer inset — the same construction already used by
@@ -223,7 +228,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
         {...props}
       >
         {leftIcon && (
-          <span style={{ width: 24, height: 24, flexShrink: 0, boxShadow: iconShadow }}>
+          <span style={{ width: 24, height: 24, flexShrink: 0, filter: iconShadowFilter }}>
             {icon ?? <InfoCircleIcon style={{ color: iconColorByState[state] }} />}
           </span>
         )}
@@ -312,7 +317,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
             cursor: "pointer",
           }}
         >
-          <span style={{ width: 18, height: 18, boxShadow: iconShadow }}>{closeIcon ?? <CloseIcon size={18} style={{ color: color.gray[700] }} />}</span>
+          <span style={{ width: 18, height: 18, filter: iconShadowFilter }}>{closeIcon ?? <CloseIcon size={18} style={{ color: color.gray[700] }} />}</span>
         </button>
       </div>
     );
