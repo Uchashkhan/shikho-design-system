@@ -61,11 +61,14 @@ function Tabs() {
   props: [
     { name: "size", type: "xs | sm | md | lg | xl", defaultValue: "md", description: "Confirmed heights; icon size interpolated beyond the confirmed md anchor." },
     { name: "type", type: "inactive | active", defaultValue: "inactive", description: "The smallest type vocabulary of any nav component in this library." },
-    { name: "state", type: "default | hover", defaultValue: "default", description: "No focus state exists. active ignores state entirely — confirmed no active+hover variant." },
+    { name: "state", type: "default | hover", description: "Left unset, the real cursor drives it. No focus state exists. active ignores state entirely — confirmed no active+hover variant." },
     { name: "leftIcon / rightIcon / text", type: "boolean", defaultValue: "true", description: "The 3 confirmed boolean slots." },
   ],
   preview: () => <InteractivePreview />,
   playground: {
+    // A State control was previously missing here — inactive/hover is a real, confirmed, distinct
+    // treatment (text darkens gray-600 → gray-700), but had no interactive control on this page at
+    // all, the same gap found and fixed on the Switcher page.
     controls: [
       {
         prop: "size",
@@ -79,10 +82,16 @@ function Tabs() {
         defaultValue: "active",
         options: TYPES.map((v) => ({ label: v, value: v })),
       },
+      {
+        prop: "state",
+        label: "State",
+        defaultValue: "default",
+        options: STATES.map((v) => ({ label: v, value: v })),
+      },
     ],
     render: (v) => (
       <div style={{ borderBottom: "1px solid #f4f4f6" }}>
-        <TabNavItem size={v.size as TabNavItemSize} type={v.type as TabNavItemType}>
+        <TabNavItem size={v.size as TabNavItemSize} type={v.type as TabNavItemType} state={v.state as TabNavItemState}>
           Nav item
         </TabNavItem>
       </div>

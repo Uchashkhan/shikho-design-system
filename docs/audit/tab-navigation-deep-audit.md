@@ -20,9 +20,19 @@ This confirms `tab_nav_item` is genuinely simpler in its hover mechanism than ev
 
 Both `left_icon`/`right_icon` are confirmed `18×18` at `size=md`; padding is confirmed `pt-4 pb-12` (asymmetric, to accommodate the active indicator's `border-bottom` sitting flush at the box edge), `px-0` (no horizontal padding — inter-tab spacing comes entirely from the parent's own `gap`, confirmed in `tab-navigation.md` §11 for `nav_bar_header`'s nested `tab_nav`).
 
-## 2. Confirmed vs. derived per-size scaling
+## 2. Confirmed per-size scaling (re-confirmed via a live `get_design_context` pull on `66081:32109` — all 5 sizes, not just `md`)
 
-Only `size=md` was directly deep-audited for icon size. `tab-navigation.md` §7 confirms a 5-step `sizing/icon/14,16,18,20,24` token set exists — the same ramp already used to interpolate `SwitcherItem`'s and `SidebarItem`'s per-size icon scale — applied here identically: `xs`=14, `sm`=16, `md`=18 (confirmed), `lg`=20, `xl`=24. Padding (`pt-4 pb-12`) is applied uniformly across all 5 sizes, since no per-size padding data was confirmed and this is the least-invented option (reusing the one confirmed value), the same reasoning already applied to `SwitcherItem`'s per-size padding.
+Unlike `SwitcherItem`'s and `TopNavItem`'s per-size geometry (both of which turned out to have real bugs from generalizing a single sampled size to all five), `tab_nav_item`'s per-size values were re-checked directly against all 5 size samples and the existing implementation matches exactly — no bugs found here:
+
+| size | gap | padding (top/—/bottom) | icon | font/line-height |
+|---|---|---|---|---|
+| xs | `spacing/4` (4px) | 2px / 0 / 8px | 14px | `caption_1` 11/16 |
+| sm | `spacing/6` (6px) | 4px / 0 / 8px | 16px | `caption_2` 12/16 |
+| md | `spacing/8` (8px) | 4px / 0 / 12px | 18px | `body_1` 13/20 |
+| lg | `spacing/8` (8px) | 6px / 0 / 16px | 20px | `body_1` 13/20 |
+| xl | `spacing/12` (12px) | 8px / 0 / 20px | 24px | `title_2` 18/24 |
+
+Text color and the `active` border-bottom are also confirmed identical across all 5 sizes (no per-size color variation, unlike some other components' shadow treatment).
 
 ## 3. Confirmed active-indicator mechanism (reconfirms `tab-navigation.md` §11)
 
@@ -31,6 +41,8 @@ The active tab's `border-bottom: 2px solid outline/b` is the entire indicator me
 ## 4. Confirmed vs. still-unresolved
 
 **Newly confirmed:** the standalone `tab_nav_item` component set's own `type`×`state` color/border matrix (§1) — the original audit only observed this indirectly through `nav_bar_header`'s nested instances.
+
+**Also fixed:** `state` was previously a static prop with no `onMouseEnter`/`onMouseLeave` — hovering an `inactive` tab did nothing regardless of color correctness, the same interactivity gap already found and fixed on `sidebar_item`/`switcher_item`. Left unset, the real cursor now drives it; an explicit `state` (Storybook/playground controls) still overrides it.
 
 **Still not confirmed, not invented** (all carried over from `tab-navigation.md`):
 - Why no `active`+`hover` variant exists.

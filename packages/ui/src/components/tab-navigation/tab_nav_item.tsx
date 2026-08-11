@@ -1,4 +1,4 @@
-import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from "react";
+import { type ButtonHTMLAttributes, type MouseEvent, type ReactNode, forwardRef, useState } from "react";
 import { color, elevation } from "@shikho/tokens";
 
 // docs/audit/tab-navigation-deep-audit.md §1 — tab_nav_item: size (xl, lg, md, sm, xs), type
@@ -52,6 +52,8 @@ export interface TabNavItemProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
   size?: TabNavItemSize;
   type?: TabNavItemType;
+  /** Forces a specific state (used by Storybook/playground controls to preview `hover` without a
+   * pointer). Left unset, the real cursor drives it via onMouseEnter/onMouseLeave. */
   state?: TabNavItemState;
   /** The 3 confirmed boolean slots, all default `true`. */
   leftIcon?: boolean;
@@ -74,7 +76,7 @@ export const TabNavItem = forwardRef<HTMLButtonElement, TabNavItemProps>(
     {
       size = "md",
       type = "inactive",
-      state = "default",
+      state,
       leftIcon = true,
       rightIcon = true,
       text = true,
@@ -82,15 +84,33 @@ export const TabNavItem = forwardRef<HTMLButtonElement, TabNavItemProps>(
       selectRightIcon = null,
       children,
       style,
+      onMouseEnter,
+      onMouseLeave,
       ...props
     },
     ref,
   ) => {
     const iconSize = ICON_SIZE[size];
     const metrics = SIZE_METRICS[size];
+
+    // `state` left unset (the normal case for real usage) → hover is driven by the actual
+    // pointer. An explicit `state` (Storybook/playground controls) always wins. See
+    // sidebar_item.tsx for the identical fix and its rationale.
+    const [pointerHover, setPointerHover] = useState(false);
+    const resolvedState: TabNavItemState = state ?? (pointerHover ? "hover" : "default");
+
+    const handleMouseEnter = (event: MouseEvent<HTMLButtonElement>) => {
+      setPointerHover(true);
+      onMouseEnter?.(event);
+    };
+    const handleMouseLeave = (event: MouseEvent<HTMLButtonElement>) => {
+      setPointerHover(false);
+      onMouseLeave?.(event);
+    };
+
     // Confirmed: active never has a hover variant — the default text color is used regardless of
-    // the `state` prop when type="active".
-    const textColor = type === "active" ? TEXT_COLOR.active.default : TEXT_COLOR.inactive[state];
+    // the resolved state when type="active".
+    const textColor = type === "active" ? TEXT_COLOR.active.default : TEXT_COLOR.inactive[resolvedState];
 
     return (
       <button
@@ -98,7 +118,9 @@ export const TabNavItem = forwardRef<HTMLButtonElement, TabNavItemProps>(
         type="button"
         data-size={size}
         data-type={type}
-        data-state={state}
+        data-state={resolvedState}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         style={{
           display: "flex",
           alignItems: "center",

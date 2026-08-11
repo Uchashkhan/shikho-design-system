@@ -75,6 +75,34 @@ describe("interactivity", () => {
     fireEvent.click(screen.getByRole("button"));
     expect(onClick).toHaveBeenCalled();
   });
+
+  it("with no `state` prop, the real pointer drives hover on inactive (previously a static swatch)", () => {
+    render(<TabNavItem type="inactive">Nav item</TabNavItem>);
+    const el = screen.getByRole("button");
+    expect(screen.getByText("Nav item").style.color).toBe("rgb(140, 146, 156)");
+    fireEvent.mouseEnter(el);
+    expect(screen.getByText("Nav item").style.color).toBe("rgb(91, 97, 109)");
+    fireEvent.mouseLeave(el);
+    expect(screen.getByText("Nav item").style.color).toBe("rgb(140, 146, 156)");
+  });
+
+  it("an explicit `state` prop overrides the pointer", () => {
+    render(
+      <TabNavItem type="inactive" state="default">
+        Nav item
+      </TabNavItem>,
+    );
+    const el = screen.getByRole("button");
+    fireEvent.mouseEnter(el);
+    expect(screen.getByText("Nav item").style.color).toBe("rgb(140, 146, 156)");
+  });
+
+  it("active ignores the pointer too — text color never changes on hover", () => {
+    render(<TabNavItem type="active">Nav item</TabNavItem>);
+    const el = screen.getByRole("button");
+    fireEvent.mouseEnter(el);
+    expect(screen.getByText("Nav item").style.color).toBe("rgb(10, 12, 17)");
+  });
 });
 
 // P1 repair pass — per-size gap/padding/typography replace md-only extrapolation.
