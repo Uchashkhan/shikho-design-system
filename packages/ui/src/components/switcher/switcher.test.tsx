@@ -59,15 +59,25 @@ describe("size propagation", () => {
   });
 });
 
-// P1 one-off repairs — confirmed container geometry.
-describe("container geometry (P1 repair)", () => {
-  it("uses radius/custom/md (10px) and a 6px gap, not 12px/8px", () => {
+// Container gap/radius genuinely vary per size — re-confirmed via a live get_design_context pull
+// on all 5 of the container's own size samples. Previously hardcoded to a single 6px/radius.md
+// (10px) pair regardless of size (a stale "P1 repair" that was itself only confirmed at one size).
+describe("confirmed per-size container gap/radius", () => {
+  const rows = [
+    ["xs", "0.375rem", "10px"],
+    ["sm", "0.5rem", "12px"],
+    ["md", "0.375rem", "12px"], // gap is genuinely non-monotonic — confirmed, not a typo
+    ["lg", "0.75rem", "16px"],
+    ["xl", "1rem", "16px"],
+  ] as const;
+
+  it.each(rows)("size=%s → gap %s, radius %s", (size, gap, borderRadius) => {
     const { container } = render(
-      <Switcher options={[{ label: "One", value: "one" }, { label: "Two", value: "two" }]} />,
+      <Switcher size={size} options={[{ label: "One", value: "one" }, { label: "Two", value: "two" }]} />,
     );
     const root = container.firstChild as HTMLElement;
-    expect(root.style.borderRadius).toBe("10px");
-    expect(root.style.gap).toBe("0.375rem");
+    expect(root.style.gap).toBe(gap);
+    expect(root.style.borderRadius).toBe(borderRadius);
     expect(root.style.padding).toBe("0.25rem");
   });
 });

@@ -55,12 +55,58 @@ describe("confirmed type x state=default matrix (§2)", () => {
   });
 });
 
-describe("confirmed default -> hover transition for active_primary_accent (§2)", () => {
-  it("intensifies from 12% to 20% alpha", () => {
+describe("confirmed default -> hover transitions (§2, re-confirmed via get_design_context on 66065:22392)", () => {
+  it("active_primary_accent intensifies from 12% to 20% alpha", () => {
     const { rerender } = render(<SwitcherItem type="active_primary_accent" state="default">Nav item</SwitcherItem>);
     expect(screen.getByRole("button").style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)");
     rerender(<SwitcherItem type="active_primary_accent" state="hover">Nav item</SwitcherItem>);
     expect(screen.getByRole("button").style.backgroundColor).toBe("rgba(84, 104, 255, 0.2)");
+  });
+
+  it("active_primary moves from primary_med_em to primary_base (previously a static swatch — same fill both states)", () => {
+    const { rerender } = render(<SwitcherItem type="active_primary" state="default">Nav item</SwitcherItem>);
+    expect(screen.getByRole("button").style.backgroundColor).toBe("rgb(133, 164, 255)");
+    rerender(<SwitcherItem type="active_primary" state="hover">Nav item</SwitcherItem>);
+    expect(screen.getByRole("button").style.backgroundColor).toBe("rgb(84, 104, 255)");
+  });
+
+  it("active_neutral moves from solid black to ~88% opaque black (previously a static swatch)", () => {
+    const { rerender } = render(<SwitcherItem type="active_neutral" state="default">Nav item</SwitcherItem>);
+    expect(screen.getByRole("button").style.backgroundColor).toBe("rgb(0, 0, 0)");
+    rerender(<SwitcherItem type="active_neutral" state="hover">Nav item</SwitcherItem>);
+    expect(screen.getByRole("button").style.backgroundColor).toBe("rgba(0, 0, 0, 0.88)");
+  });
+
+  it("active moves from white (smoke_em) to smoke_med gray", () => {
+    const { rerender } = render(<SwitcherItem type="active" state="default">Nav item</SwitcherItem>);
+    expect(screen.getByRole("button").style.backgroundColor).toBe("rgb(255, 255, 255)");
+    rerender(<SwitcherItem type="active" state="hover">Nav item</SwitcherItem>);
+    expect(screen.getByRole("button").style.backgroundColor).toBe("rgb(244, 244, 246)");
+  });
+
+  it("inactive gains a subtle gray-50 fill only on hover", () => {
+    const { rerender } = render(<SwitcherItem type="inactive" state="default">Nav item</SwitcherItem>);
+    expect(screen.getByRole("button").style.backgroundColor).toBe("transparent");
+    rerender(<SwitcherItem type="inactive" state="hover">Nav item</SwitcherItem>);
+    expect(screen.getByRole("button").style.backgroundColor).toBe("rgb(249, 249, 250)");
+  });
+});
+
+describe("confirmed per-size radius (previously hardcoded to radius.lg at every size)", () => {
+  it("xs/sm/md use radius.sm (8px)", () => {
+    for (const size of ["xs", "sm", "md"] as const) {
+      const { container } = render(<SwitcherItem size={size}>Nav item</SwitcherItem>);
+      const root = container.firstChild as HTMLElement;
+      expect(root.style.borderRadius).toBe("8px");
+    }
+  });
+
+  it("lg/xl use radius.lg (12px)", () => {
+    for (const size of ["lg", "xl"] as const) {
+      const { container } = render(<SwitcherItem size={size}>Nav item</SwitcherItem>);
+      const root = container.firstChild as HTMLElement;
+      expect(root.style.borderRadius).toBe("12px");
+    }
   });
 });
 
@@ -86,6 +132,27 @@ describe("interactivity", () => {
     render(<SwitcherItem onClick={onClick}>Nav item</SwitcherItem>);
     fireEvent.click(screen.getByRole("button"));
     expect(onClick).toHaveBeenCalled();
+  });
+
+  it("with no `state` prop, the real pointer drives hover (previously a static swatch)", () => {
+    render(<SwitcherItem type="active_primary_accent">Nav item</SwitcherItem>);
+    const el = screen.getByRole("button");
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)");
+    fireEvent.mouseEnter(el);
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.2)");
+    fireEvent.mouseLeave(el);
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)");
+  });
+
+  it("an explicit `state` prop overrides the pointer", () => {
+    render(
+      <SwitcherItem type="active_primary_accent" state="default">
+        Nav item
+      </SwitcherItem>,
+    );
+    const el = screen.getByRole("button");
+    fireEvent.mouseEnter(el);
+    expect(el.style.backgroundColor).toBe("rgba(84, 104, 255, 0.12)");
   });
 });
 

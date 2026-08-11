@@ -19,6 +19,18 @@ switcher — bg Color/gray-100, border 1px Color/gray-100, radius/custom/lg (12p
 
 `Switcher` is implemented as a real composed component here (a segmented-control container rendering multiple items), the same treatment already given to `ButtonGroup` — not a demo, in contrast to `sidebar_nav`.
 
+**Container `gap`/`radius` re-confirmed at all 5 sizes** (a prior "P1 repair" pass only sampled one size and hardcoded that value everywhere — itself incomplete):
+
+| size | gap | radius |
+|---|---|---|
+| xs | `spacing/6` (6px) | `radius/custom/md` (10px) |
+| sm | `spacing/8` (8px) | `radius/custom/lg` (12px) |
+| md | `spacing/6` (6px) | `radius/custom/lg` (12px) |
+| lg | `spacing/12` (12px) | `radius/custom/xl` (16px) |
+| xl | `spacing/16` (16px) | `radius/custom/xl` (16px) |
+
+`gap` is genuinely non-monotonic (`md` drops back to 6px between `sm`'s 8px and `lg`'s 12px) — confirmed as-is via `get_design_context` on each size's own sample frame, not smoothed into a ramp.
+
 ## 2. Confirmed `switcher_item` type × state=default color/typography matrix
 
 All at `size=lg`, root `h-48`, `flex items-center justify-center`, `px-16 py-12`, `gap-8`, `radius.lg` (12px):
@@ -33,7 +45,16 @@ All at `size=lg`, root `h-48`, `flex items-center justify-center`, `px-16 py-12`
 
 **Confirmed genuine difference from `sidebar_item`** (despite the near-identical `type` vocabulary): `switcher_item`'s `inactive` is **SemiBold** at `text/gray-600`; `sidebar_item`'s `inactive` is **Medium** at `text/gray-700` — two structurally similar sibling components with a confirmed, real typography/color divergence at the one type they'd most likely be expected to match.
 
-**Confirmed `default → hover`:** only `active_primary_accent` was directly re-audited at both states (12% → 20% alpha, identical mechanism to `sidebar_item`). The other 4 types' hover treatment is derived by the same pattern, not independently confirmed.
+**Confirmed `default → hover`** (all 5 types, re-audited via a live `get_design_context` pull on `66065:22392`):
+- `active_primary_accent`: fill intensifies `primary_base_em_alpha` (12%) → `primary_low_em_alpha` (20%) — identical mechanism to `sidebar_item`.
+- `active_primary`: `Color/primary_med_em` (`#85a4ff`, primary/400) → `Color/primary_base` (`#5468ff`, primary/500).
+- `active`: `Color/smoke_em` (white) → `Color/smoke_med` (`#f4f4f6`).
+- `active_neutral`: `Color/inverse_white_neutral` (solid black) → `rgba(0,0,0,0.88)` (`neutral_transparent_black/alpha_88`).
+- `inactive`: transparent → `Color/gray-50` (`#f9f9fa`).
+
+The previous implementation had `active_primary` and `active_neutral` statically duplicating their default fill as the hover fill (an unconfirmed guess, not a real transition) — both now match the confirmed values above.
+
+**Confirmed per-size radius** (also re-confirmed via the same pull): `xs`/`sm`/`md` use `radius.sm` (8px); `lg`/`xl` use `radius.lg` (12px). The previous implementation hardcoded `radius.lg` at every size.
 
 ## 3. Confirmed internal structure
 

@@ -12,6 +12,10 @@ const options = [
   { label: "Month", value: "month" },
 ];
 
+const dot = (
+  <span style={{ display: "block", width: "100%", height: "100%", borderRadius: 999, background: "currentColor" }} />
+);
+
 function InteractivePreview() {
   const [value, setValue] = useState("day");
   return <Switcher options={options} value={value} onChange={setValue} />;
@@ -23,12 +27,11 @@ export const pageConfig: ComponentPageConfig = {
   variants: [
     { name: "size (SwitcherItem)", values: SIZES, note: "Only lg and sm were directly confirmed for icon size/typography; xs/md/xl are interpolated using the confirmed 5-step icon-size token ramp." },
     { name: "type (SwitcherItem)", values: TYPES, note: "5 confirmed types. inactive is confirmed SemiBold at gray-600, genuinely different from SidebarItem's Medium at gray-700 despite near-identical type vocabulary." },
-    { name: "state (SwitcherItem)", values: STATES, note: "Only active_primary_accent's hover transition was directly re-confirmed (12% → 20% alpha)." },
+    { name: "state (SwitcherItem)", values: STATES, note: "Left unset, the real cursor drives it. All 5 types' hover transitions are confirmed via a live get_design_context pull." },
   ],
   states: STATES,
   gaps: [
     "Only size=lg was directly deep-audited for icon size, typography, and padding. The switcher container's own size=sm nested sample additionally confirms 16px icons and caption_2 typography at that size — xs/md/xl are interpolated, not independently audited.",
-    "Hover fill for active_primary, active, and active_neutral is derived by the same \"intensify one step\" pattern confirmed for active_primary_accent.",
     "No disabled state exists on switcher_item at all — confirmed absence.",
     "SwitcherItem has no tag slot — confirmed simpler than SidebarItem, which does have one.",
   ],
@@ -56,6 +59,13 @@ function ViewToggle() {
   ],
   preview: () => <InteractivePreview />,
   playground: {
+    // Explores the standalone SwitcherItem's full confirmed space (size x type x state) directly
+    // — the same treatment Sidebar Navigation's page gives SidebarItem. The composed Switcher
+    // above only ever uses 2 of the 5 confirmed types (active_primary_accent for the selected
+    // segment, inactive for the rest), so active_primary/active/active_neutral were previously
+    // unreachable from any interactive control on this page — only visible in the static
+    // "All five confirmed SwitcherItem types" showcase below, which doesn't respond to State at
+    // all. This control set makes every confirmed type x state combination directly explorable.
     controls: [
       {
         prop: "size",
@@ -63,14 +73,30 @@ function ViewToggle() {
         defaultValue: "lg",
         options: SIZES.map((v) => ({ label: v, value: v })),
       },
+      {
+        prop: "type",
+        label: "Type",
+        defaultValue: "active_primary_accent",
+        options: TYPES.map((v) => ({ label: v, value: v })),
+      },
+      {
+        prop: "state",
+        label: "State",
+        defaultValue: "default",
+        options: STATES.map((v) => ({ label: v, value: v })),
+      },
     ],
-    render: (v) => {
-      function Demo() {
-        const [value, setValue] = useState("day");
-        return <Switcher size={v.size as SwitcherSize} options={options} value={value} onChange={setValue} />;
-      }
-      return <Demo />;
-    },
+    render: (v) => (
+      <SwitcherItem
+        size={v.size as SwitcherSize}
+        type={v.type as SwitcherItemType}
+        state={v.state as SwitcherItemState}
+        selectLeftIcon={dot}
+        selectRightIcon={dot}
+      >
+        Nav item
+      </SwitcherItem>
+    ),
   },
   showcases: [
     {
@@ -101,7 +127,7 @@ function ViewToggle() {
     },
     {
       title: "All five confirmed SwitcherItem types",
-      description: "inactive is SemiBold at gray-600 — confirmed different from SidebarItem's Medium at gray-700.",
+      description: "inactive is SemiBold at gray-600 — confirmed different from SidebarItem's Medium at gray-700. Use the playground above to explore each type's hover state too.",
       render: () => (
         <div style={{ display: "flex", gap: 8, background: "#222732", padding: 16, borderRadius: 12 }}>
           {TYPES.map((type) => (

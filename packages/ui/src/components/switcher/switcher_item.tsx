@@ -1,4 +1,4 @@
-import { type ButtonHTMLAttributes, type CSSProperties, type ReactNode, forwardRef } from "react";
+import { type ButtonHTMLAttributes, type CSSProperties, type MouseEvent, type ReactNode, forwardRef, useState } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
 
 // docs/audit/switcher-deep-audit.md §2-§4 — switcher_item: size (xs, sm, md, lg, xl), type
@@ -18,6 +18,15 @@ export type SwitcherItemState = "default" | "hover";
 // sizing/icon/14,16,18,20,24 token ramp — the least-invented mapping available.
 const HEIGHT: Record<SwitcherItemSize, number> = { xs: 24, sm: 32, md: 40, lg: 48, xl: 56 };
 const ICON_SIZE: Record<SwitcherItemSize, number> = { xs: 14, sm: 16, md: 18, lg: 20, xl: 24 };
+// Confirmed via a live get_design_context pull on 66065:22392 — xs/sm/md use radius.sm (8px),
+// lg/xl use radius.lg (12px). Previously hardcoded to radius.lg at every size.
+const RADIUS: Record<SwitcherItemSize, number> = {
+  xs: radius.sm,
+  sm: radius.sm,
+  md: radius.sm,
+  lg: radius.lg,
+  xl: radius.lg,
+};
 // Confirmed lg=body_1 (13/20 SemiBold), sm=caption_2 (12/16 SemiBold); xs shares sm's smaller
 // scale, md/xl share lg's — derived, not independently confirmed at every step.
 const TYPOGRAPHY: Record<SwitcherItemSize, { fontSize: number; lineHeight: string }> = {
@@ -48,13 +57,12 @@ interface TypeStyle {
   shadow?: string;
 }
 
-// docs/audit/switcher-deep-audit.md §2 — the confirmed type x state=default matrix, all 5
-// types. Only active_primary_accent's hover was directly re-audited (12%->20% alpha); the other
-// 4 types' hover fill is derived by the same "intensify one step" pattern.
+// docs/audit/switcher-deep-audit.md §2, re-confirmed against a live get_design_context pull on
+// 66065:22392 (all 5 types x both states x all 5 sizes) — the full type x state matrix.
 const TYPE_STYLE: Record<SwitcherItemType, TypeStyle> = {
   active_primary: {
     defaultFill: color.primary[400], // Color/primary_med_em
-    hoverFill: color.primary[400],
+    hoverFill: color.primary[500], // Color/primary_base — confirmed via get_design_context
     border: `1px solid ${color.black[150]}`,
     textColor: color.white[950],
     shadow: "0px 1px 1px -0.5px rgba(0,0,0,0.04), 0px 3px 3px -1.5px rgba(0,0,0,0.04)",
@@ -66,19 +74,19 @@ const TYPE_STYLE: Record<SwitcherItemType, TypeStyle> = {
   },
   active: {
     defaultFill: color.white[950], // Color/smoke_em
-    hoverFill: color.gray[100], // derived, one step darker
+    hoverFill: color.gray[100], // Color/smoke_med — confirmed via get_design_context
     textColor: color.gray[950],
     shadow: "0px 1px 1px -0.5px rgba(0,0,0,0.04), 0px 3px 3px -1.5px rgba(0,0,0,0.04)",
   },
   active_neutral: {
     defaultFill: color.black[950], // Color/inverse_white_neutral
-    hoverFill: color.black[950], // unconfirmed hover — kept static, derived
+    hoverFill: color.black[900], // alpha_88 (~88% opaque black) — confirmed via get_design_context
     textColor: color.white[950],
     shadow: "0px 1px 1px -0.5px rgba(0,0,0,0.04), 0px 3px 3px -1.5px rgba(0,0,0,0.04)",
   },
   inactive: {
     defaultFill: "transparent",
-    hoverFill: color.gray[50], // derived, matching sidebar_item's confirmed inactive hover pattern
+    hoverFill: color.gray[50], // Color/gray-50 — confirmed via get_design_context
     textColor: color.gray[600], // confirmed — text/gray-600, SemiBold (differs from sidebar_item's gray-700 Medium)
   },
 };
@@ -87,6 +95,8 @@ export interface SwitcherItemProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
   size?: SwitcherItemSize;
   type?: SwitcherItemType;
+  /** Forces a specific state (used by Storybook/playground controls to preview `hover` without a
+   * pointer). Left unset, the real cursor drives it via onMouseEnter/onMouseLeave. */
   state?: SwitcherItemState;
   /** The 3 confirmed boolean slots (§3), all default `true`. No `tag` slot exists — a confirmed
    * simpler structure than `SidebarItem`. */
@@ -110,7 +120,7 @@ export const SwitcherItem = forwardRef<HTMLButtonElement, SwitcherItemProps>(
     {
       size = "lg",
       type = "inactive",
-      state = "default",
+      state,
       leftIcon = true,
       rightIcon = true,
       text = true,
@@ -118,6 +128,8 @@ export const SwitcherItem = forwardRef<HTMLButtonElement, SwitcherItemProps>(
       selectRightIcon = null,
       children,
       style,
+      onMouseEnter,
+      onMouseLeave,
       ...props
     },
     ref,
@@ -125,7 +137,21 @@ export const SwitcherItem = forwardRef<HTMLButtonElement, SwitcherItemProps>(
     const typeStyle = TYPE_STYLE[type];
     const typography = TYPOGRAPHY[size];
     const iconSize = ICON_SIZE[size];
-    const isHover = state === "hover";
+
+    // `state` left unset (the normal case for real usage, including Switcher's own items) →
+    // hover is driven by the actual pointer. An explicit `state` (Storybook/playground controls)
+    // always wins. See sidebar_item.tsx for the identical fix and its rationale.
+    const [pointerHover, setPointerHover] = useState(false);
+    const isHover = state ? state === "hover" : pointerHover;
+
+    const handleMouseEnter = (event: MouseEvent<HTMLButtonElement>) => {
+      setPointerHover(true);
+      onMouseEnter?.(event);
+    };
+    const handleMouseLeave = (event: MouseEvent<HTMLButtonElement>) => {
+      setPointerHover(false);
+      onMouseLeave?.(event);
+    };
 
     const computedStyle: CSSProperties = {
       display: "flex",
@@ -135,7 +161,7 @@ export const SwitcherItem = forwardRef<HTMLButtonElement, SwitcherItemProps>(
       gap: "0.5rem",
       padding: PADDING[size],
       border: typeStyle.border ?? "none",
-      borderRadius: radius.lg,
+      borderRadius: RADIUS[size],
       backgroundColor: isHover ? typeStyle.hoverFill : typeStyle.defaultFill,
       boxShadow: typeStyle.shadow,
       cursor: "pointer",
@@ -144,7 +170,17 @@ export const SwitcherItem = forwardRef<HTMLButtonElement, SwitcherItemProps>(
     };
 
     return (
-      <button ref={ref} type="button" data-size={size} data-type={type} data-state={state} style={computedStyle} {...props}>
+      <button
+        ref={ref}
+        type="button"
+        data-size={size}
+        data-type={type}
+        data-state={isHover ? "hover" : "default"}
+        style={computedStyle}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        {...props}
+      >
         {leftIcon && (
           <span style={{ width: iconSize, height: iconSize, flexShrink: 0, filter: iconShadowFilter }}>
             {selectLeftIcon}
