@@ -5,6 +5,7 @@ import {
   forwardRef,
   useEffect,
   useRef,
+  useState,
 } from "react";
 import { createPortal } from "react-dom";
 import { color, elevation, radius } from "@shikho/tokens";
@@ -31,15 +32,23 @@ const shellShadow: Record<ModalType, string> = {
 const restingInsetShadow = `inset 0px 1px 3px -2px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.07)`;
 const primaryInsetShadow = `inset 0px 3px 4px -3px ${color.white[600]}, inset 0px 0px 8px -2px ${color.white[500]}`;
 const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[0].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
+const closeButtonHoverBg = color.gray[100]; // white -> gray-100, the neutral icon-button hover convention used library-wide
+const secondaryButtonHoverBg = color.gray[200]; // one step darker, same convention as alert.tsx/toast.tsx/tooltip.tsx
+const primaryButtonHoverBg = color.primary[600];
 
 // docs/audit/modal-deep-audit.md §5 — confirmed gradient stops for the feature-icon container.
 const featureIconGradient = `linear-gradient(180deg, ${color.primary[500]}1f, ${color.primary[500]}33)`;
 
 function CloseButton({ onClick, label }: { onClick?: () => void; label: string }) {
+  // P13 repair — this button never responded to a real pointer, the same missing-interactivity
+  // defect already fixed across every other component this session.
+  const [hover, setHover] = useState(false);
   return (
     <button
       type="button"
       onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       aria-label={label}
       style={{
         position: "absolute",
@@ -53,14 +62,26 @@ function CloseButton({ onClick, label }: { onClick?: () => void; label: string }
         padding: "0.5rem",
         border: `1px solid ${color.black[50]}`,
         borderRadius: radius.full,
-        backgroundColor: color.white[950],
+        backgroundColor: hover ? closeButtonHoverBg : color.white[950],
         boxShadow: `0px 1px 1px -0.5px rgba(0,0,0,0.04), ${restingInsetShadow}`,
         cursor: "pointer",
       }}
     >
-      <span style={{ width: 18, height: 18, filter: iconShadowFilter }}>
-        {/* P2: was a hand-drawn stroke approximation of the same "X"; now the real shared glyph. */}
-        <CloseIcon size={18} />
+      {/* P13 repair — a fresh get_design_context re-pull confirms the "X" glyph ("vector") sits
+          inset 20.83% inside this 18px slot, i.e. it renders at its native 10.5×10.5 size (the
+          same fix already made on alert.tsx/toast.tsx/tooltip.tsx's own close buttons) — not
+          stretched to fill all 18px like size={18} forced it to. */}
+      <span
+        style={{
+          width: 18,
+          height: 18,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          filter: iconShadowFilter,
+        }}
+      >
+        <CloseIcon style={{ width: 10.5, height: 10.5 }} />
       </span>
     </button>
   );
@@ -97,17 +118,26 @@ function ActionButtons({
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
 }) {
+  // P13 repair — neither button responded to a real pointer at all, the same
+  // missing-interactivity defect already fixed across every other component this session.
+  const [secondaryHover, setSecondaryHover] = useState(false);
+  const [primaryHover, setPrimaryHover] = useState(false);
   return (
     <div style={{ display: "flex", gap: "1rem", width: "100%" }}>
       <button
         type="button"
         onClick={onSecondaryAction}
+        onMouseEnter={() => setSecondaryHover(true)}
+        onMouseLeave={() => setSecondaryHover(false)}
         style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           flex: "1 0 0",
           padding: "0.75rem 1rem",
           borderRadius: radius.lg,
           border: "none",
-          backgroundColor: color.gray[100],
+          backgroundColor: secondaryHover ? secondaryButtonHoverBg : color.gray[100],
           boxShadow: `0px 1px 1px -0.5px rgba(0,0,0,0.04), ${restingInsetShadow}`,
           color: color.gray[700],
           fontSize: 13,
@@ -116,17 +146,25 @@ function ActionButtons({
           cursor: "pointer",
         }}
       >
-        {secondaryActionContent}
+        {/* Figma's confirmed "text_wrap" nests the label in its own px-[spacing/4,4px] padding
+            on top of the button's own 16px padding — mirroring the same gap already found and
+            fixed on alert.tsx/toast.tsx/tooltip.tsx's own action buttons. */}
+        <span style={{ padding: "0 0.25rem" }}>{secondaryActionContent}</span>
       </button>
       <button
         type="button"
         onClick={onPrimaryAction}
+        onMouseEnter={() => setPrimaryHover(true)}
+        onMouseLeave={() => setPrimaryHover(false)}
         style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           flex: "1 0 0",
           padding: "0.75rem 1rem",
           borderRadius: radius.lg,
           border: `1px solid ${color.black[150]}`,
-          backgroundColor: color.primary[500],
+          backgroundColor: primaryHover ? primaryButtonHoverBg : color.primary[500],
           boxShadow: `0px 1px 1px -0.5px rgba(0,0,0,0.04), 0px 3px 3px -1.5px rgba(0,0,0,0.04), ${primaryInsetShadow}`,
           color: color.white[950],
           fontSize: 13,
@@ -135,7 +173,7 @@ function ActionButtons({
           cursor: "pointer",
         }}
       >
-        {primaryActionContent}
+        <span style={{ padding: "0 0.25rem" }}>{primaryActionContent}</span>
       </button>
     </div>
   );

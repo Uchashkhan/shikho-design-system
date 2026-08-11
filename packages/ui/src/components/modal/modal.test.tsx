@@ -165,6 +165,46 @@ describe("portal rendering", () => {
   });
 });
 
+// P13 repair — a fresh get_design_context re-pull on the user-supplied node (16124:7815) found
+// the close button's "X" was forced to size=18 (stretching it across the whole 18px icon slot),
+// but the confirmed glyph ("vector") sits inset 20.83% inside that slot — i.e. its real ink size
+// is 10.5×10.5, the same fix already made on alert.tsx/toast.tsx/tooltip.tsx's own close buttons.
+// Also found: neither action button had the confirmed text_wrap 4px label padding or flex
+// centering, and none of the modal's three buttons responded to a real pointer at all.
+describe("confirmed corrections (P13 repair)", () => {
+  it("the close icon renders at its confirmed native 10.5px size, not stretched to 18px", () => {
+    render(<Modal usePortal={false} onClose={() => {}} />);
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    const svg = closeButton.querySelector("svg") as SVGSVGElement;
+    expect(svg.style.width).toBe("10.5px");
+    expect(svg.style.height).toBe("10.5px");
+  });
+
+  it("real pointer hover darkens the close button from white to gray-100", () => {
+    render(<Modal usePortal={false} onClose={() => {}} />);
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    expect(closeButton.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    fireEvent.mouseEnter(closeButton);
+    expect(closeButton.style.backgroundColor).toBe("rgb(244, 244, 246)");
+    fireEvent.mouseLeave(closeButton);
+    expect(closeButton.style.backgroundColor).toBe("rgb(255, 255, 255)");
+  });
+
+  it("real pointer hover darkens both action buttons", () => {
+    render(
+      <Modal usePortal={false} secondaryActionContent="Cancel" primaryActionContent="Yes, continue" />,
+    );
+    const secondary = screen.getByRole("button", { name: "Cancel" });
+    const primary = screen.getByRole("button", { name: "Yes, continue" });
+    expect(secondary.style.backgroundColor).toBe("rgb(244, 244, 246)");
+    fireEvent.mouseEnter(secondary);
+    expect(secondary.style.backgroundColor).toBe("rgb(235, 236, 240)");
+    expect(primary.style.backgroundColor).toBe("rgb(84, 104, 255)");
+    fireEvent.mouseEnter(primary);
+    expect(primary.style.backgroundColor).not.toBe("rgb(84, 104, 255)");
+  });
+});
+
 describe("inline mode (docs/style-guide affordance, not a confirmed Figma variant)", () => {
   it("renders only the dialog card, with no fixed backdrop wrapper", () => {
     const { container } = render(<Modal inline title="Inline" />);
