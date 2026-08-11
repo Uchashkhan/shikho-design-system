@@ -85,6 +85,25 @@ describe("ButtonSuccess — confirmed disabled exception (§14.2)", () => {
   });
 });
 
+// P5 repair — re-checking Alert's `success` state against a fresh get_design_context pull
+// (node 66071:28159) found ButtonSuccess's Secondary type still fell through to the generic
+// ramp-derived soft green tint, unlike ButtonDanger which already had this exact override.
+describe("ButtonSuccess — confirmed Secondary exception, mirrors ButtonDanger (alerts.md §14)", () => {
+  it("resolves to the exact gray/100 + success-600 pair, not a tinted green fill", () => {
+    render(<ButtonSuccess type="Secondary" state="default">Learn more</ButtonSuccess>);
+    const button = screen.getByRole("button", { name: "Learn more" });
+    expect(button.style.backgroundColor).toBe("rgb(244, 244, 246)"); // gray/100
+    expect(button.style.color).toBe("rgb(42, 153, 25)"); // success/600
+  });
+
+  it("darkens one step to gray/200 on hover, text color unchanged", () => {
+    render(<ButtonSuccess type="Secondary" state="hover">Learn more</ButtonSuccess>);
+    const button = screen.getByRole("button", { name: "Learn more" });
+    expect(button.style.backgroundColor).toBe("rgb(235, 236, 240)"); // gray/200
+    expect(button.style.color).toBe("rgb(42, 153, 25)"); // success/600
+  });
+});
+
 describe("GreyscaleButton — confirmed primary=black[900], not gray[500] (§14.1 point 4)", () => {
   it("primary type fills with the near-black inverse color", () => {
     render(<GreyscaleButton type="primary">Cancel</GreyscaleButton>);
