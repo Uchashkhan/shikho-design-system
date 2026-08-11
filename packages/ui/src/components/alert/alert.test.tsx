@@ -174,6 +174,25 @@ describe("Dismiss button border (P1 repair)", () => {
   });
 });
 
+// P4 repair — a fresh get_design_context re-pull on node 66071:28148 confirmed the Dismiss
+// button shares the exact same h-[40px] fixed height and outer/inset shadow construction as the
+// primary action button; the code previously had neither, so the two buttons rendered at
+// different heights with the Dismiss button carrying no shadow at all.
+describe("Dismiss button matches the primary action button's confirmed size (P4 repair)", () => {
+  it("renders at the confirmed fixed 40px height", () => {
+    render(<Alert dismissContent="Dismiss" />);
+    const dismiss = screen.getByRole("button", { name: "Dismiss" });
+    expect(dismiss.style.height).toBe("40px");
+  });
+
+  it("carries the confirmed outer drop-shadow and inset highlight/shadow layers", () => {
+    render(<Alert dismissContent="Dismiss" />);
+    const dismiss = screen.getByRole("button", { name: "Dismiss" });
+    expect(dismiss.style.boxShadow).toContain("inset");
+    expect(dismiss.style.boxShadow.length).toBeGreaterThan(0);
+  });
+});
+
 // P3 repair — none of the alert's own buttons responded to a real pointer at all before this
 // fix; every fill was a static inline style regardless of hover, the same "no interactivity"
 // defect already fixed across every other component this session.

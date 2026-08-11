@@ -247,12 +247,17 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
               style={{
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center", // confirmed — re-pulled get_design_context, node 66071:28148
+                height: 40, // confirmed h-[40px] — same fixed height as the primary action button,
+                // previously missing here (the two buttons rendered at different heights)
                 padding: "0.5rem 0.75rem", // py-[spacing/8] px-[spacing/12] — §11
                 gap: "0.25rem", // gap-[spacing/4] — §11
                 borderRadius: radius.md, // radius/custom/md (10) — §11
-                // P1 repair: confirmed 1px `outline/black-50` border. The button's outer
-                // drop-shadow / inset effect remains unresolved and is deliberately untouched.
-                border: `1px solid ${color.black[50]}`,
+                border: `1px solid ${color.black[50]}`, // outline/black-50 — §11 (P1 repair)
+                // Re-pulled get_design_context confirms the same outer 1px drop-shadow + inset
+                // highlight/shadow pair already applied to the primary neutral button — previously
+                // missing here entirely.
+                boxShadow: neutralButtonShadow,
                 backgroundColor: dismissHover ? dismissButtonHoverBg : color.secondary[500], // confirmed — §11
                 color: color.white[950], // text/white-950 — §11
                 fontSize: 13,
