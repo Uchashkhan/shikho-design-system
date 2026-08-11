@@ -190,11 +190,13 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
             padding: "0.5rem 0.75rem",
             gap: "0.25rem",
             borderRadius: radius.md,
-            // P9 repair — a fresh get_design_context re-pull (node 66074:28508) confirms this
-            // button carries the same 1px outline/black-50 border in EVERY state (default was
-            // previously missing it entirely), and the same outer+inset shadow construction
-            // (previously explicitly disabled via `undefined` for state="default").
-            border: `1px solid ${color.black[50]}`,
+            // P10 correction — re-checking warning (66074:28544) and info (66074:28556) against
+            // default (66074:28508) found the border is NOT shared by every state as the P9 pass
+            // assumed: only default's secondary/500-filled button carries it (matching Alert's
+            // Dismiss button, which also has this border); warning/info's plain gray/100 button
+            // has no border class at all in Figma (matching Alert's own neutral "Learn more",
+            // which likewise has none). The outer+inset shadow IS shared by all three — unchanged.
+            border: state === "default" ? `1px solid ${color.black[50]}` : "none",
             // docs/audit/toasts.md §14 — confirmed: default's own action button uses
             // secondary/500 + white text (matching Alert's separate "Dismiss" styling), while
             // warning/info use the plain neutral gray/100 + gray-700 combination.

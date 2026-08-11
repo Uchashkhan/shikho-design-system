@@ -197,11 +197,26 @@ describe("real interactivity and confirmed sizing, mirroring Alert's fixes (P9 r
     expect(button.style.height).toBe("40px");
   });
 
-  it("the neutral action button (state=default) carries the confirmed border and shadow", () => {
+  it("state=default's action button carries the confirmed border and shadow", () => {
     render(<Toast state="default" actionContent="UNDO" />);
     const button = screen.getByRole("button", { name: "UNDO" });
     expect(button.style.border).toContain("rgba(0, 0, 0, 0.04)");
     expect(button.style.boxShadow.length).toBeGreaterThan(0);
+  });
+
+  // P10 correction — a re-pull of warning (66074:28544) and info (66074:28556) found the border
+  // is NOT shared by every neutral-branch state: only default's secondary/500 fill has it,
+  // matching Alert's Dismiss button; warning/info's plain gray/100 button has none, matching
+  // Alert's own neutral "Learn more". The shadow IS shared by all three.
+  it("warning/info's action button has no border, unlike state=default's", () => {
+    for (const state of ["warning", "info"] as const) {
+      const { unmount } = render(<Toast state={state} actionContent="UNDO" />);
+      const button = screen.getByRole("button", { name: "UNDO" });
+      // jsdom serializes `border: "none"` as an empty string on the shorthand read.
+      expect(button.style.border).not.toContain("solid");
+      expect(button.style.boxShadow.length).toBeGreaterThan(0);
+      unmount();
+    }
   });
 
   it("real pointer hover darkens the dismiss button from transparent to gray-100", () => {
