@@ -9,13 +9,17 @@ describe("package root exports", () => {
     expect(tokens).toHaveProperty("elevation");
   });
 
-  it("does not export unresolved categories (typography, spacing, gradients, subject colors)", () => {
+  it("does not export unresolved categories (typography, spacing, gradients)", () => {
     expect(Object.keys(tokens)).toEqual(["color", "radius", "elevation"]);
     expect(tokensPackage).not.toHaveProperty("typography");
     expect(tokensPackage).not.toHaveProperty("spacing");
     expect(tokensPackage).not.toHaveProperty("gradient");
     expect(tokensPackage).not.toHaveProperty("gradients");
-    expect(tokensPackage).not.toHaveProperty("subjectColor");
-    expect(tokensPackage).not.toHaveProperty("subjectColors");
+  });
+
+  it("exports the 32 confirmed subject colors as a named export, not bundled into `tokens`", () => {
+    expect(tokensPackage).toHaveProperty("subjectColor");
+    expect(Object.keys(tokensPackage.subjectColor)).toHaveLength(32);
+    expect(tokens).not.toHaveProperty("subjectColor");
   });
 });

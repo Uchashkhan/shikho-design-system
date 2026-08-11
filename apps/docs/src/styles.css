@@ -637,7 +637,40 @@ a.sk-card:focus-visible {
 }
 
 .sk-swatch__chip {
+  display: block;
+  position: relative;
+  width: 100%;
   height: 56px;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+
+.sk-swatch__copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--sk-radius-sm);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 1px rgba(10, 12, 17, 0.08);
+  color: var(--sk-text);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.sk-swatch__chip:hover .sk-swatch__copy,
+.sk-swatch__chip:focus-visible .sk-swatch__copy {
+  opacity: 1;
+}
+
+.sk-swatch__chip:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--sk-brand-border);
 }
 
 .sk-swatch__meta {

@@ -237,17 +237,55 @@ Also present in this subtree: `Text/Warning 500` = `#fcbf04` (semantic alias, sa
 
 ## 5. Subject colors that were successfully retrieved
 
-Each subject uses a `Main / Dark / Light` triad. **Only 5 of the ~35 subjects visible in the layer tree returned bound variables** via `get_variable_defs`:
+Each subject uses a `Main / Dark / Light` triad (Figma's own spec sheet, see below, labels these "Regular / Dark / Light" — a naming inconsistency, flagged not corrected, same treatment as the black/white ramp note in §4). Originally, **only 5 of the ~35 subjects visible in the layer tree returned bound variables** via `get_variable_defs`.
+
+**Superseded 2026-08-11.** The user supplied a direct link to a second, full spec-sheet frame — `color/neutrals` (node `64529:21195`), same file — that renders every subject as a labeled card with its hex printed as visible text, independent of whether the fill is a bound variable. `get_design_context` was run on each of its 32 "Cards" sub-frames, resolving all 32 subjects named in the original layer tree (the 27 that had previously failed to resolve, plus the 5 already known — all 5 came back byte-identical, cross-confirming both methods).
+
+**3 swatches had a printed label that did not match their own rendered fill** — evidently a stale copy-pasted text layer left over from duplicating another subject's card. The table below uses the actual rendered fill in every case (confirmed by reading the Tailwind `bg-[...]` value the design-to-code tool emits, which reflects the real computed background, not the text annotation):
+
+| Subject | Fill shown | Label printed | Used |
+|---|---|---|---|
+| Chemistry / Light | `#dff6ff` | `#fdeaee` (Bengali's light) | `#dff6ff` |
+| Economics / Light | `#e2f6fd` | `#fce5fa` (Business Studies') | `#e2f6fd` |
+| Psychology / Light | `#ffece4` | `#f7f4dc` (Sociology's) | `#ffece4` |
+| General Knowledge / Regular | `#ff5165` | `#ffe6f4` (its own Light) | `#ff5165` (already matched the original 5-subject audit) |
 
 | Subject | Main | Dark | Light |
 |---|---|---|---|
-| `Subject Colors/Bangladesh & Global Studies` | `#c07129` | `#54210d` | `#f7deba` |
-| `Subject Colors/General Knowledge` | `#ff5165` | `#c70017` | `#ffe6f4` |
-| `Subject Colors/Spoken English` | `#5c84d9` | `#234796` | `#e2e9f8` |
-| `Subject Colors/Practical AI` | `#e46c67` | `#b2433e` | `#f8d7d5` |
-| `Subject Colors/Quarter Final Exam` | `#ff934a` | `#d96e25` | `#fff4e3` |
+| Bengali | `#e74d4f` | `#c42325` | `#fdeaee` |
+| English | `#30c4d8` | `#1cb0c4` | `#e0f7fa` |
+| Physics | `#6070e9` | `#4757d0` | `#eaebfc` |
+| Chemistry | `#39bcf7` | `#21a4ee` | `#dff6ff` |
+| Biology | `#3bc78a` | `#29b578` | `#e6faef` |
+| General Math | `#ff7b33` | `#ec6820` | `#fff8e0` |
+| Higher Math | `#9736e3` | `#8322cf` | `#f2e5fb` |
+| General Science | `#5f9573` | `#4b815f` | `#e5f2ec` |
+| ICT | `#43d1b9` | `#2fbda5` | `#e1f7f4` |
+| Geography | `#5897e9` | `#5b8bca` | `#e6f2fc` |
+| Business Studies | `#e95ce7` | `#d84bd6` | `#fce5fa` |
+| Finance | `#ed4c67` | `#d93853` | `#fce5ed` |
+| Economics | `#3492ac` | `#207e98` | `#e2f6fd` |
+| History | `#357969` | `#2a6e5b` | `#e2f2f0` |
+| Accounting | `#f29f38` | `#e39029` | `#fef2e2` |
+| Statistics | `#7467eb` | `#6053d7` | `#eceafd` |
+| Islam & Noitik… *(verbatim Figma layer name, truncated with an ellipsis in-source)* | `#397077` | `#255c63` | `#ddf8fb` |
+| Marketing (বিপণন) | `#f56c9e` | `#e1588a` | `#fce6ee` |
+| Civics (পৌরনীতি) | `#22a6b3` | `#0e929f` | `#ddf2f4` |
+| Logic (যুক্তি বিদ্যা) | `#ac3095` | `#981c81` | `#f5e6f1` |
+| Business Org. & Management | `#3498db` | `#2185c8` | `#dff2ff` |
+| Production Management & Marketing | `#407093` | `#2f5f82` | `#e3f0fa` |
+| Business Math | `#6b51ff` | `#4f37d5` | `#eae6ff` |
+| Agriculture | `#7acb4e` | `#69b143` | `#ecf9e5` |
+| Sociology | `#bfb03f` | `#a5972e` | `#f7f4dc` |
+| Social Work | `#cb4e8f` | `#b2457d` | `#fbe8f1` |
+| Psychology | `#bf643f` | `#a65231` | `#ffece4` |
+| Bangladesh & Global Studies | `#c07129` | `#54210d` | `#f7deba` |
+| General Knowledge | `#ff5165` | `#c70017` | `#ffe6f4` |
+| Spoken English | `#5c84d9` | `#234796` | `#e2e9f8` |
+| Practical AI | `#e46c67` | `#b2433e` | `#f8d7d5` |
+| Quarter Final Exam | `#ff934a` | `#d96e25` | `#fff4e3` |
 
-See §8 for the remaining ~30 subjects that did not resolve.
+All 32 now exported from `@shikho/tokens` as `subjectColor` and shown on the docs site's Colors foundation page. The original audit's "and others" phrasing implies up to ~3 more subjects may exist that were never named in any layer tree at all — those remain a genuine unknown, not stubbed.
 
 ---
 
@@ -304,7 +342,7 @@ No stop colors, stop positions, or angle data were retrievable for any of these.
 
 ## 8. Missing or inconsistent variable usage
 
-- **Subject Colors coverage gap:** the layer tree lists ~35 subject names (Accounting, Agriculture, Bengali, Biology, Business Math, Business Org. & Management, Business Studies, Chemistry, Civics (পৌরনীতি), Economics, English, Finance, General Math, General Science, Geography, Higher Math, History, ICT, Islam & Noitik…, Logic (যুক্তি বিদ্যা), Marketing (বিপণন), Physics, Production Management & Marketing, Psychology, Social Work, Sociology, Statistics, and others), but only the 5 subjects listed in §5 returned bound variables. The rest are either using hardcoded (non-variable) fills, or are bound to variables outside the audited subtree. This should be confirmed with the design team before assuming parity across all subject swatches.
+- **Subject Colors coverage gap — resolved 2026-08-11 for named subjects:** the layer tree originally listed ~35 subject names, of which only 5 returned bound variables via `get_variable_defs`. All 32 named subjects (the original 5 plus 27 more) are now resolved via a second spec-sheet frame (§5) that renders every subject's hex as visible text, independent of variable binding. The "and others" phrasing in the original layer-tree pass implies up to ~3 more subjects may exist with no name captured anywhere — those remain unconfirmed and are not stubbed.
 - **Inconsistent capitalization/naming across brand ramps:** `Color/primary` (lowercase) vs. `Color/Secondary` (capitalized) vs. `Color/secondary_2` (lowercase + suffix) vs. `Color/Shikho AI` (spaced, capitalized) — four different naming conventions for what are conceptually equivalent "brand ramp" tokens. Not corrected per instructions.
 - **Duplicate radius token:** `radius/custom/xl` and `radius/border_radius_lg` both resolved to `16` — appears to be a duplicate/legacy alias, not confirmed which is canonical.
 - **Two incompatible opacity-numbering systems** for the black/white ramps — see the flag in §4.
@@ -316,5 +354,5 @@ No stop colors, stop positions, or angle data were retrievable for any of these.
 - **Variable Collection names and Modes** — `get_variable_defs` returns a flat `name → value` map with no collection or mode metadata. Cannot confirm whether Light/Dark or Web/Mobile modes exist for these color variables.
 - **Gradient stop data** (see §7).
 - **Whether base `Color/*` primitives are literals or themselves aliases** to some deeper token — the flat export doesn't distinguish "raw value" from "value inherited via alias" except where a separate semantic name exists pointing at the same value (as shown in §6). Cannot confirm the reverse direction (i.e., whether `Color/primary/500` is itself an alias to something else).
-- **Full Subject Colors set** beyond the 5 resolved (see §8).
+- **Up to ~3 more Subject Colors** beyond the 32 resolved (see §5/§8) — subjects with no name captured in any layer-tree pass so far.
 - **Elevation and special-effect definitions beyond `elevation/e2` and `secondary_button_effect`** — `elevation/e1`, `e3`–`e6`, `primary_button_effect`, `input_inner_shadow`, `special_drop`, and the focus-ring tokens were seen by name in the layer tree during the earlier structural pass but did not resolve as variables within the Colors subtree query used for this audit.

@@ -248,3 +248,67 @@ export const color = {
   black,
   white,
 };
+
+/**
+ * A single subject's `Main / Dark / Light` triad. Figma's own spec-sheet frame labels these
+ * "Regular / Dark / Light" (a naming inconsistency vs. the audit's "Main" — flagged, not
+ * corrected, same as the black/white ramp naming note above).
+ */
+export interface SubjectColorTriad {
+  main: string;
+  dark: string;
+  light: string;
+}
+
+/**
+ * Confirmed subject colors — docs/audit/colors.md §5/§8, superseded 2026-08-11 by a full,
+ * rendered spec sheet (`get_design_context` on node `64529:21195`, same file) that resolves all
+ * 32 subjects visible in the layer tree, not just the 5 that had bound Figma variables. Every
+ * value below is quoted verbatim from that sheet's actual rendered fill — cross-checked against
+ * the sheet's own printed hex label for each swatch (both sources agree except 4 flagged below).
+ *
+ * **3 swatches had a printed label that did not match their own rendered fill** — a stale
+ * copy-pasted text layer left over from duplicating another subject's card, confirmed by
+ * diffing the swatch's actual background color against its label text. The RENDERED FILL is
+ * used here (never the label) since that's what the design source of truth actually shows:
+ *   - Chemistry / light: fill `#dff6ff`, label incorrectly printed `#fdeaee` (Bengali's light)
+ *   - Economics / light: fill `#e2f6fd`, label incorrectly printed `#fce5fa` (Business Studies')
+ *   - Psychology / light: fill `#ffece4`, label incorrectly printed `#f7f4dc` (Sociology's)
+ * (General Knowledge / regular had the same kind of label bug — printed its own light value
+ * instead — but its fill, `#ff5165`, already matched the pre-existing 5-subject audit exactly,
+ * so no value here changed from that one.)
+ */
+export const subjectColor: Record<string, SubjectColorTriad> = {
+  bengali: { main: "#e74d4f", dark: "#c42325", light: "#fdeaee" },
+  english: { main: "#30c4d8", dark: "#1cb0c4", light: "#e0f7fa" },
+  physics: { main: "#6070e9", dark: "#4757d0", light: "#eaebfc" },
+  chemistry: { main: "#39bcf7", dark: "#21a4ee", light: "#dff6ff" },
+  biology: { main: "#3bc78a", dark: "#29b578", light: "#e6faef" },
+  generalMath: { main: "#ff7b33", dark: "#ec6820", light: "#fff8e0" },
+  higherMath: { main: "#9736e3", dark: "#8322cf", light: "#f2e5fb" },
+  generalScience: { main: "#5f9573", dark: "#4b815f", light: "#e5f2ec" },
+  ict: { main: "#43d1b9", dark: "#2fbda5", light: "#e1f7f4" },
+  geography: { main: "#5897e9", dark: "#5b8bca", light: "#e6f2fc" },
+  businessStudies: { main: "#e95ce7", dark: "#d84bd6", light: "#fce5fa" },
+  finance: { main: "#ed4c67", dark: "#d93853", light: "#fce5ed" },
+  economics: { main: "#3492ac", dark: "#207e98", light: "#e2f6fd" },
+  history: { main: "#357969", dark: "#2a6e5b", light: "#e2f2f0" },
+  accounting: { main: "#f29f38", dark: "#e39029", light: "#fef2e2" },
+  statistics: { main: "#7467eb", dark: "#6053d7", light: "#eceafd" },
+  islamAndNoitik: { main: "#397077", dark: "#255c63", light: "#ddf8fb" },
+  marketing: { main: "#f56c9e", dark: "#e1588a", light: "#fce6ee" },
+  civics: { main: "#22a6b3", dark: "#0e929f", light: "#ddf2f4" },
+  logic: { main: "#ac3095", dark: "#981c81", light: "#f5e6f1" },
+  businessOrgAndManagement: { main: "#3498db", dark: "#2185c8", light: "#dff2ff" },
+  productionManagementAndMarketing: { main: "#407093", dark: "#2f5f82", light: "#e3f0fa" },
+  businessMath: { main: "#6b51ff", dark: "#4f37d5", light: "#eae6ff" },
+  agriculture: { main: "#7acb4e", dark: "#69b143", light: "#ecf9e5" },
+  sociology: { main: "#bfb03f", dark: "#a5972e", light: "#f7f4dc" },
+  socialWork: { main: "#cb4e8f", dark: "#b2457d", light: "#fbe8f1" },
+  psychology: { main: "#bf643f", dark: "#a65231", light: "#ffece4" },
+  bangladeshAndGlobalStudies: { main: "#c07129", dark: "#54210d", light: "#f7deba" },
+  generalKnowledge: { main: "#ff5165", dark: "#c70017", light: "#ffe6f4" },
+  spokenEnglish: { main: "#5c84d9", dark: "#234796", light: "#e2e9f8" },
+  practicalAi: { main: "#e46c67", dark: "#b2433e", light: "#f8d7d5" },
+  quarterFinalExam: { main: "#ff934a", dark: "#d96e25", light: "#fff4e3" },
+};
