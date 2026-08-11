@@ -157,6 +157,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
           onClick={onPrimaryActionClick}
           onMouseEnter={() => setPrimaryHover(true)}
           onMouseLeave={() => setPrimaryHover(false)}
+          style={{ height: 40 }}
         >
           {primaryActionContent}
         </ButtonDanger>
@@ -170,6 +171,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
           onClick={onPrimaryActionClick}
           onMouseEnter={() => setPrimaryHover(true)}
           onMouseLeave={() => setPrimaryHover(false)}
+          style={{ height: 40 }}
         >
           {primaryActionContent}
         </ButtonSuccess>
@@ -262,7 +264,11 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "0.5rem" /* gap-[spacing/8] */ }}>
+          {/* items-center, confirmed §11 — was previously left as the default `stretch`, which
+              incidentally made the composed ButtonDanger/ButtonSuccess reach the confirmed 40px
+              height only because the Dismiss button's own explicit height stretched it; fixed
+              properly by giving the composed buttons their own explicit height below. */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" /* gap-[spacing/8] */ }}>
             {primaryButton}
             {/* Second action button — confirmed structurally identical across all 5 severities,
                 but not confirmed to be drawn from a named component set (§11), so it is

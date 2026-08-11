@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type ReactNode, forwardRef } from "react";
+import { type HTMLAttributes, type ReactNode, forwardRef, useState } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
 import { InfoCircleIcon, CloseIcon } from "@shikho/icons";
 import { ButtonDanger } from "../button/button_danger";
@@ -14,11 +14,18 @@ const shadowToCss = (layers: readonly { x: number; y: number; blur: number; spre
   layers.map((l) => `${l.x}px ${l.y}px ${l.blur}px ${l.spread}px ${l.color}`).join(", ");
 
 const rootShadow = shadowToCss(elevation.e6); // confirmed exact, root — §9/§12 (NOT e5, unlike alert)
-const iconShadow = shadowToCss(elevation.e2); // confirmed exact for the rendered icon slots — §9
+// P9 repair — re-checking against alerts.md's box-shadow/drop-shadow finding: this was wired as
+// a CSS box-shadow on the icon's transparent span (a rectangle around the box) rather than
+// filter: drop-shadow(...) (which follows the glyph's own silhouette, confirmed on every icon
+// slot in this component via a fresh get_design_context pull, node 66074:28508/66074:28520).
+const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[1].color}) drop-shadow(0px 3px 1.5px ${elevation.e2[0].color})`;
 // docs/audit/toasts.md §14 — confirmed on the plain neutral action button (warning/info): an
 // outer single-layer drop shadow (elevation/e2's smaller layer) PLUS the confirmed system-wide
 // "special_drop" 2-layer inset — same construction reused across this whole library.
 const neutralButtonShadow = `${shadowToCss([elevation.e2[1]])}, inset 0px 1px 3px -2px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.07)`;
+const neutralButtonHoverBg = color.gray[200]; // one step darker, same convention as alert.tsx
+const defaultActionHoverBg = color.secondary[600];
+const dismissButtonHoverBg = color.gray[100]; // transparent -> gray-100, the neutral icon-button convention
 
 // docs/audit/toasts.md §14 — confirmed via a fresh get_design_context on all 5 severities:
 // `default`'s border is `outline/gray-100` (#f4f4f6), NOT gray-200 as previously derived when
@@ -56,8 +63,15 @@ const iconColorByState: Record<ToastState, string> = {
 // drawn from a severity Button family member. `default`'s own action button is confirmed distinct
 // again: `Color/secondary/500` fill + white text (matching Alert's separate "Dismiss" button
 // styling), not the neutral gray/gray-700 combination warning/info use.
-const dangerActionFill = { backgroundColor: `${color.danger[500]}1f` }; // Color/danger/500_alpha_12
-const successActionFill = { backgroundColor: `${color.success[500]}1f` }; // Color/success/500_alpha_12
+// P9 repair — ButtonShell only sets an explicit `height` for icon-only buttons; text buttons
+// (like this one) derive their height from padding + line-height alone, which computes to 38px,
+// not the confirmed h-[40px] (node 66074:28530). Alert's equivalent button only happened to
+// render at 40px because it sits in a flex row with a sibling that forces align-items: stretch —
+// an accidental, fragile fix, not a real one. Both now get an explicit height here.
+// `background` (not `backgroundColor`) to match the shorthand ButtonShell's own rootStyle uses —
+// mixing the two across a rerender previously logged a React style-conflict warning.
+const dangerActionFill = { background: `${color.danger[500]}1f`, height: 40 }; // Color/danger/500_alpha_12
+const successActionFill = { background: `${color.success[500]}1f`, height: 40 }; // Color/success/500_alpha_12
 
 export interface ToastProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   state?: ToastState;
@@ -128,19 +142,46 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
     },
     ref,
   ) => {
+    // P9 repair — none of Toast's own buttons responded to a real pointer at all, the same
+    // missing-interactivity defect already fixed on Alert this session.
+    const [actionHover, setActionHover] = useState(false);
+    const [dismissHover, setDismissHover] = useState(false);
+
     const action =
       state === "danger" ? (
-        <ButtonDanger size="md" type="Secondary" state="default" onClick={onActionClick} style={dangerActionFill}>
+        <ButtonDanger
+          size="md"
+          type="Secondary"
+          state={actionHover ? "hover" : "default"}
+          leftIcon={false}
+          rightIcon={false}
+          onClick={onActionClick}
+          onMouseEnter={() => setActionHover(true)}
+          onMouseLeave={() => setActionHover(false)}
+          style={dangerActionFill}
+        >
           {actionContent}
         </ButtonDanger>
       ) : state === "success" ? (
-        <ButtonSuccess size="md" type="Secondary" state="default" onClick={onActionClick} style={successActionFill}>
+        <ButtonSuccess
+          size="md"
+          type="Secondary"
+          state={actionHover ? "hover" : "default"}
+          leftIcon={false}
+          rightIcon={false}
+          onClick={onActionClick}
+          onMouseEnter={() => setActionHover(true)}
+          onMouseLeave={() => setActionHover(false)}
+          style={successActionFill}
+        >
           {actionContent}
         </ButtonSuccess>
       ) : (
         <button
           type="button"
           onClick={onActionClick}
+          onMouseEnter={() => setActionHover(true)}
+          onMouseLeave={() => setActionHover(false)}
           style={{
             display: "flex",
             alignItems: "center",
@@ -149,20 +190,34 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
             padding: "0.5rem 0.75rem",
             gap: "0.25rem",
             borderRadius: radius.md,
-            border: "none",
+            // P9 repair — a fresh get_design_context re-pull (node 66074:28508) confirms this
+            // button carries the same 1px outline/black-50 border in EVERY state (default was
+            // previously missing it entirely), and the same outer+inset shadow construction
+            // (previously explicitly disabled via `undefined` for state="default").
+            border: `1px solid ${color.black[50]}`,
             // docs/audit/toasts.md §14 — confirmed: default's own action button uses
             // secondary/500 + white text (matching Alert's separate "Dismiss" styling), while
             // warning/info use the plain neutral gray/100 + gray-700 combination.
-            backgroundColor: state === "default" ? color.secondary[500] : color.gray[100],
+            backgroundColor:
+              state === "default"
+                ? actionHover
+                  ? defaultActionHoverBg
+                  : color.secondary[500]
+                : actionHover
+                  ? neutralButtonHoverBg
+                  : color.gray[100],
             color: state === "default" ? color.white[950] : color.gray[700],
-            boxShadow: state === "default" ? undefined : neutralButtonShadow,
+            boxShadow: neutralButtonShadow,
             fontSize: 13,
             lineHeight: "20px",
             fontWeight: 600,
             cursor: "pointer",
           }}
         >
-          {actionContent}
+          {/* Figma's confirmed "text_wrap" nests the label in its own px-[spacing/4,4px]
+              padding on top of the button's own 12px padding — previously missing here,
+              mirroring the same gap already found and fixed on alert.tsx's neutral button. */}
+          <span style={{ padding: "0 0.25rem" }}>{actionContent}</span>
         </button>
       );
 
@@ -189,7 +244,17 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
         {...props}
       >
         {leftIcon && (
-          <span style={{ width: 24, height: 24, flexShrink: 0, boxShadow: iconShadow }}>
+          <span
+            style={{
+              width: 24,
+              height: 24,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              filter: iconShadowFilter,
+            }}
+          >
             {icon ?? <InfoCircleIcon style={{ color: iconColorByState[state] }} />}
           </span>
         )}
@@ -200,8 +265,11 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
               width: 28,
               height: 28,
               flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               borderRadius: radius.lg, // radius/custom/lg (12) — §9, a token not seen in alert
-              boxShadow: iconShadow,
+              filter: iconShadowFilter,
             }}
           >
             {featureIconContent}
@@ -231,6 +299,8 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
           <button
             type="button"
             onClick={onDismissClick}
+            onMouseEnter={() => setDismissHover(true)}
+            onMouseLeave={() => setDismissHover(false)}
             aria-label={dismissButtonLabel}
             style={{
               display: "flex",
@@ -243,11 +313,26 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
               gap: "0.375rem", // gap-[spacing/6] — §9, same value as alert's corner button
               border: "none",
               borderRadius: radius.sm, // radius/custom/sm (8) — §9, confirmed different from alert's radius.full
-              backgroundColor: "transparent",
+              backgroundColor: dismissHover ? dismissButtonHoverBg : "transparent",
               cursor: "pointer",
             }}
           >
-            <span style={{ width: 18, height: 18, boxShadow: iconShadow }}>{dismissIcon ?? <CloseIcon size={18} style={{ color: color.gray[600] }} />}</span>
+            {/* P9 repair — a fresh get_design_context re-pull (node 66074:28519/66074:28531)
+                confirms the "X" glyph is inset 20.83% inside this 18px box, i.e. it renders at
+                its native 10.5×10.5 size, not stretched to fill 18px — the same fix already made
+                on alert.tsx's corner close button. */}
+            <span
+              style={{
+                width: 18,
+                height: 18,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                filter: iconShadowFilter,
+              }}
+            >
+              {dismissIcon ?? <CloseIcon style={{ width: 10.5, height: 10.5, color: color.gray[600] }} />}
+            </span>
           </button>
         )}
       </div>

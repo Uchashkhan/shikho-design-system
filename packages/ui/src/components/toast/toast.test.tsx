@@ -177,6 +177,60 @@ describe("confirmed correction to root styling (docs/audit/toasts.md §14)", () 
   });
 });
 
+// P9 repair — re-checking against Alert's fixes this session found Toast had the same set of
+// bugs: box-shadow instead of drop-shadow on icon slots, the close icon stretched to 18px instead
+// of its confirmed native 10.5px, the composed action button missing its confirmed 40px height,
+// the neutral action button missing its border/shadow for state="default", and zero real
+// pointer-driven hover anywhere.
+describe("real interactivity and confirmed sizing, mirroring Alert's fixes (P9 repair)", () => {
+  it("the close icon renders at its confirmed native 10.5px size, not stretched to 18px", () => {
+    render(<Toast />);
+    const dismissButton = screen.getByRole("button", { name: "Dismiss" });
+    const svg = dismissButton.querySelector("svg") as SVGSVGElement;
+    expect(svg.style.width).toBe("10.5px");
+    expect(svg.style.height).toBe("10.5px");
+  });
+
+  it("the composed action button renders at the confirmed 40px height", () => {
+    render(<Toast state="danger" actionContent="UNDO" />);
+    const button = screen.getByRole("button", { name: "UNDO" });
+    expect(button.style.height).toBe("40px");
+  });
+
+  it("the neutral action button (state=default) carries the confirmed border and shadow", () => {
+    render(<Toast state="default" actionContent="UNDO" />);
+    const button = screen.getByRole("button", { name: "UNDO" });
+    expect(button.style.border).toContain("rgba(0, 0, 0, 0.04)");
+    expect(button.style.boxShadow.length).toBeGreaterThan(0);
+  });
+
+  it("real pointer hover darkens the dismiss button from transparent to gray-100", () => {
+    render(<Toast onDismissClick={() => {}} />);
+    const dismissButton = screen.getByRole("button", { name: "Dismiss" });
+    expect(dismissButton.style.backgroundColor).toBe("transparent");
+    fireEvent.mouseEnter(dismissButton);
+    expect(dismissButton.style.backgroundColor).toBe("rgb(244, 244, 246)");
+    fireEvent.mouseLeave(dismissButton);
+    expect(dismissButton.style.backgroundColor).toBe("transparent");
+  });
+
+  it("real pointer hover drives the composed ButtonDanger to its hover state", () => {
+    render(<Toast state="danger" actionContent="UNDO" />);
+    const button = screen.getByRole("button", { name: "UNDO" });
+    expect(button).toHaveAttribute("data-state", "default");
+    fireEvent.mouseEnter(button);
+    expect(button).toHaveAttribute("data-state", "hover");
+    fireEvent.mouseLeave(button);
+    expect(button).toHaveAttribute("data-state", "default");
+  });
+
+  it("the composed action button has no icon slots, matching the confirmed text-only instance", () => {
+    render(<Toast state="danger" actionContent="UNDO" />);
+    const button = screen.getByRole("button", { name: "UNDO" });
+    expect(button.querySelector('[style*="18px"]')).not.toBeInTheDocument();
+  });
+});
+
 describe("no unsupported variant is exported", () => {
   it("rejects a state value outside the confirmed enum, and rejects Alert's capitalized Default", () => {
     // @ts-expect-error - "Default" (capitalized) is alert's baseline value, not toast's (§2, §11)
