@@ -25,10 +25,10 @@ describe("confirmed sizes (docs/audit/top-navigation-deep-audit.md §5)", () => 
 });
 
 describe("confirmed type x state=default matrix (§3)", () => {
-  it("active_primary: primary/400 fill, white text, black-100 border", () => {
+  it("active_primary: primary/500 fill (intentional deviation from Figma's confirmed primary/400), white text, black-100 border", () => {
     render(<TopNavItem type="active_primary">Nav item</TopNavItem>);
     const el = screen.getByRole("button");
-    expect(el.style.backgroundColor).toBe("rgb(133, 164, 255)");
+    expect(el.style.backgroundColor).toBe("rgb(84, 104, 255)");
     expect(el.style.border).toContain("rgba(0, 0, 0, 0.07)");
   });
 

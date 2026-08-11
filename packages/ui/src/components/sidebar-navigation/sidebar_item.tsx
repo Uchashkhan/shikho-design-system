@@ -63,8 +63,11 @@ interface TypeStyle {
 // get_design_context pull — the full type x state (default/hover) matrix for all 6 types.
 const TYPE_STYLE: Record<SidebarItemType, TypeStyle> = {
   active_primary: {
-    defaultFill: color.primary[400], // Color/primary_med_em
-    hoverFill: color.primary[500], // Color/primary_base — confirmed via get_design_context
+    // Intentional deviation from Figma's confirmed primary_med_em/primary_base pair (400/500),
+    // requested directly: bump the whole default/hover pair one ramp step so hover has real
+    // headroom to darken (500/600) instead of default already sitting at the base brand color.
+    defaultFill: color.primary[500],
+    hoverFill: color.primary[600],
     border: `1px solid ${color.black[150]}`,
     textColor: color.white[950], // text/inverse_black_neutral
     fontWeight: 600,

@@ -23,10 +23,10 @@ describe("confirmed sizes (docs/audit/sidebar-navigation-deep-audit.md §2)", ()
 });
 
 describe("confirmed type x state=default matrix (§2)", () => {
-  it("active_primary: primary_med_em fill, white SemiBold text, a black-150 border", () => {
+  it("active_primary: primary/500 fill (intentional deviation from Figma's primary_med_em), white SemiBold text, a black-150 border", () => {
     render(<SidebarItem type="active_primary">Nav item</SidebarItem>);
     const el = screen.getByRole("button");
-    expect(el.style.backgroundColor).toBe("rgb(133, 164, 255)"); // primary/400
+    expect(el.style.backgroundColor).toBe("rgb(84, 104, 255)"); // primary/500
     expect(el.style.border).toContain("rgba(0, 0, 0, 0.12)");
   });
 

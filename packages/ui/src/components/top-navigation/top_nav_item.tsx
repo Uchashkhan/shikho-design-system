@@ -57,20 +57,22 @@ interface StateStyle {
 // not an oversight (docs/audit/top-navigation.md §2/§11).
 const STYLE: Record<TopNavItemType, Partial<Record<TopNavItemState, StateStyle>>> = {
   active_primary: {
+    // Intentional deviation from Figma (see sidebar_item.tsx's identical note) — bumps the
+    // default/focus/hover trio one ramp step: 500/500/600 instead of the confirmed 400/400/500.
     default: {
-      backgroundColor: color.primary[400],
-      border: `1px solid ${color.black[100]}`,
-      textColor: color.white[950],
-      insetShadow: specialDropInset,
-    },
-    hover: {
       backgroundColor: color.primary[500],
       border: `1px solid ${color.black[100]}`,
       textColor: color.white[950],
       insetShadow: specialDropInset,
     },
+    hover: {
+      backgroundColor: color.primary[600],
+      border: `1px solid ${color.black[100]}`,
+      textColor: color.white[950],
+      insetShadow: specialDropInset,
+    },
     focus: {
-      backgroundColor: color.primary[400],
+      backgroundColor: color.primary[500],
       textColor: color.white[950],
       ring: `0 0 0 3px ${focusRingColor.primary}`,
     },

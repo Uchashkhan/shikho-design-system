@@ -23,8 +23,10 @@ interface TypeStyle {
 // get_design_context pull — shares sidebar_item's confirmed type x state mapping.
 const TYPE_STYLE: Record<SidebarItemType, TypeStyle> = {
   active_primary: {
-    defaultFill: color.primary[400],
-    hoverFill: color.primary[500], // Color/primary_base — confirmed via get_design_context
+    // Intentional deviation from Figma (see sidebar_item.tsx's identical note) — bumps the
+    // default/hover pair one ramp step: 500/600 instead of the confirmed 400/500.
+    defaultFill: color.primary[500],
+    hoverFill: color.primary[600],
     border: `1px solid ${color.black[150]}`,
     textColor: color.white[950],
     shadow: `0px 1px 1px -0.5px rgba(0,0,0,0.04), ${restingInsetShadow}`,

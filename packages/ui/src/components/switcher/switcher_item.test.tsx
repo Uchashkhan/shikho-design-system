@@ -25,10 +25,10 @@ describe("confirmed sizes (docs/audit/switcher-deep-audit.md §4)", () => {
 });
 
 describe("confirmed type x state=default matrix (§2)", () => {
-  it("active_primary: primary_med_em fill, white text, black-150 border", () => {
+  it("active_primary: primary/500 fill (intentional deviation from Figma's primary_med_em), white text, black-150 border", () => {
     render(<SwitcherItem type="active_primary">Nav item</SwitcherItem>);
     const el = screen.getByRole("button");
-    expect(el.style.backgroundColor).toBe("rgb(133, 164, 255)");
+    expect(el.style.backgroundColor).toBe("rgb(84, 104, 255)");
     expect(el.style.border).toContain("rgba(0, 0, 0, 0.12)");
   });
 
@@ -63,11 +63,11 @@ describe("confirmed default -> hover transitions (§2, re-confirmed via get_desi
     expect(screen.getByRole("button").style.backgroundColor).toBe("rgba(84, 104, 255, 0.2)");
   });
 
-  it("active_primary moves from primary_med_em to primary_base (previously a static swatch — same fill both states)", () => {
+  it("active_primary moves from primary/500 to primary/600 on hover (intentional deviation from Figma's confirmed primary_med_em/primary_base pair, bumped one ramp step)", () => {
     const { rerender } = render(<SwitcherItem type="active_primary" state="default">Nav item</SwitcherItem>);
-    expect(screen.getByRole("button").style.backgroundColor).toBe("rgb(133, 164, 255)");
-    rerender(<SwitcherItem type="active_primary" state="hover">Nav item</SwitcherItem>);
     expect(screen.getByRole("button").style.backgroundColor).toBe("rgb(84, 104, 255)");
+    rerender(<SwitcherItem type="active_primary" state="hover">Nav item</SwitcherItem>);
+    expect(screen.getByRole("button").style.backgroundColor).toBe("rgb(59, 78, 227)");
   });
 
   it("active_neutral moves from solid black to ~88% opaque black (previously a static swatch)", () => {

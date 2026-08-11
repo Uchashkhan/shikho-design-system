@@ -61,8 +61,10 @@ interface TypeStyle {
 // 66065:22392 (all 5 types x both states x all 5 sizes) — the full type x state matrix.
 const TYPE_STYLE: Record<SwitcherItemType, TypeStyle> = {
   active_primary: {
-    defaultFill: color.primary[400], // Color/primary_med_em
-    hoverFill: color.primary[500], // Color/primary_base — confirmed via get_design_context
+    // Intentional deviation from Figma (see sidebar_item.tsx's identical note) — bumps the
+    // default/hover pair one ramp step: 500/600 instead of the confirmed 400/500.
+    defaultFill: color.primary[500],
+    hoverFill: color.primary[600],
     border: `1px solid ${color.black[150]}`,
     textColor: color.white[950],
     shadow: "0px 1px 1px -0.5px rgba(0,0,0,0.04), 0px 3px 3px -1.5px rgba(0,0,0,0.04)",
