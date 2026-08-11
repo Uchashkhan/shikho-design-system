@@ -281,7 +281,21 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
         {/* alert_cell — confirmed flex-ROW here, unlike alert's flex-col (§9, §10): text and
             actions sit side-by-side, not stacked. */}
         <div style={{ display: "flex", alignItems: "center", flex: "1 0 0", gap: "1rem" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" /* gap-[spacing/4] — §9 */ }}>
+          {/* P11 repair — a fresh get_design_context re-pull confirms "text" itself carries
+              flex-[1_0_0] + min-w-px (node 66074:28512), which this lacked entirely. Without it,
+              neither this column nor the action button grow/shrink, so the button sat wherever
+              its own content happened to end — visibly ~75px left of where the confirmed layout
+              places it (flush against the row's end, pushed there by this column growing to fill
+              the remaining space). */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.25rem" /* gap-[spacing/4] — §9 */,
+              flex: "1 0 0",
+              minWidth: 1,
+            }}
+          >
             <div style={{ fontSize: 15, lineHeight: "24px", fontWeight: 600, color: color.gray[950] }}>
               {titleContent}
             </div>
@@ -292,7 +306,15 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
             )}
           </div>
 
-          {actionButton && action}
+          {/* P11 repair — confirmed wrapping "actions" container (node 66074:28517/28529/etc.),
+              previously missing: gap-[spacing/8] (only matters once >1 action button exists) and
+              shrink-0, which stops the action button itself from being compressed by a long
+              title/description now that the text column above legitimately grows to fill space. */}
+          {actionButton && (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}>
+              {action}
+            </div>
+          )}
         </div>
 
         {/* Inline rounded-square dismiss button — confirmed NOT absolutely positioned and NOT

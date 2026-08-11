@@ -219,6 +219,21 @@ describe("real interactivity and confirmed sizing, mirroring Alert's fixes (P9 r
     }
   });
 
+  // P11 repair — a fresh get_design_context re-pull confirmed the "text" column carries
+  // flex-[1_0_0] + min-w-px (node 66074:28512), which this component lacked entirely. Without
+  // it, the action button sat wherever its own content happened to end rather than being pushed
+  // flush against the row's end by the text column growing to fill the remaining space — visibly
+  // ~75px left of the confirmed position on a 528px-wide toast.
+  it("the text column grows to push the action button flush against the row's end", () => {
+    render(<Toast titleContent="Title" descriptionContent="Description" actionContent="UNDO" />);
+    const button = screen.getByRole("button", { name: "UNDO" });
+    const textColumn = screen.getByText("Title").parentElement as HTMLElement;
+    expect(textColumn.style.flex).toBe("1 0 0px"); // jsdom normalizes the `0` basis to `0px`
+    // The actions wrapper must not be compressible, so a long title/description compresses text
+    // wrapping instead of squeezing the button.
+    expect((button.parentElement as HTMLElement).style.flexShrink).toBe("0");
+  });
+
   it("real pointer hover darkens the dismiss button from transparent to gray-100", () => {
     render(<Toast onDismissClick={() => {}} />);
     const dismissButton = screen.getByRole("button", { name: "Dismiss" });
