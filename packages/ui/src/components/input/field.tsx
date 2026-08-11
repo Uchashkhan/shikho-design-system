@@ -8,6 +8,7 @@ import {
   forwardRef,
 } from "react";
 import { color, radius } from "@shikho/tokens";
+import { SelectChevronsIcon } from "@shikho/icons";
 import { NewPinkButton } from "../button/new_pink";
 import type { ButtonSizeScaleB } from "../button/shared";
 import {
@@ -65,6 +66,14 @@ export interface FieldProps
   imageSrc?: string;
   /** `type="advanced_with_buttons"` only (docs/audit/input.md §14) — confirmed lead chip slot (e.g. a country-code prefix). */
   leadTextContent?: ReactNode;
+  /** `type="advanced_with_buttons"` only — a fresh get_design_context re-pull (node 66056:19069)
+   * confirmed a THIRD boolean-gated glyph inside the lead chip, distinct from `leftLead`: a
+   * stacked up/down chevron pair marking the chip as a select/dropdown control (e.g. a
+   * country-code picker), rendered after the lead text. Renders the confirmed default
+   * `SelectChevronsIcon` unless overridden. Default `true`, matching Figma's confirmed default. */
+  leadChevron?: boolean;
+  /** Overrides the confirmed default chevron glyph in the lead chip. */
+  selectLeadChevron?: ReactNode;
   /** `type="advanced_with_buttons"` only — confirmed 1-3 solid pink action buttons, reusing `NewPinkButton`. */
   buttonLabels?: string[];
   /** Overrides the confirmed default input-text color (docs/audit/input.md §14) — used by
@@ -186,6 +195,8 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
       trailTextContent,
       imageSrc,
       leadTextContent,
+      leadChevron = true,
+      selectLeadChevron,
       buttonLabels = ["Button"],
       textColor,
       className,
@@ -341,6 +352,11 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
             >
               {selectLeftIcon && <IconSlot size={adv.leadIconSize}>{selectLeftIcon}</IconSlot>}
               {leadTextContent}
+              {leadChevron && (
+                <IconSlot size={24}>
+                  {selectLeadChevron ?? <SelectChevronsIcon style={{ color: color.gray[700] }} />}
+                </IconSlot>
+              )}
             </span>
           )}
           <input

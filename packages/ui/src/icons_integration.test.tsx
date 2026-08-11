@@ -1,8 +1,9 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, InfoCircleIcon } from "@shikho/icons";
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, InfoCircleIcon, SelectChevronsIcon } from "@shikho/icons";
 import { Alert } from "./components/alert";
 import { Checkbox } from "./components/checkbox";
+import { Field } from "./components/input";
 import { Modal } from "./components/modal";
 import { Pagination } from "./components/pagination";
 import { Toast } from "./components/toast";
@@ -19,6 +20,7 @@ describe("@shikho/icons renders through @shikho/ui", () => {
       [CloseIcon, "close", "0 0 10.5004 10.5002"],
       [InfoCircleIcon, "info-circle", "0 0 18 18"],
       [CheckIcon, "check", "0 0 20 16"],
+      [SelectChevronsIcon, "select-chevrons", "0 0 12 18"],
     ] as const;
 
     for (const [Icon, name, viewBox] of cases) {
@@ -49,6 +51,11 @@ describe("@shikho/icons renders through @shikho/ui", () => {
       "chevron-left",
     ],
     ["Checkbox", () => render(<Checkbox defaultChecked aria-label="c" />).container, "check"],
+    [
+      "Field (advanced_with_buttons)",
+      () => render(<Field type="advanced_with_buttons" leadTextContent="+1" textContent="t" />).container,
+      "select-chevrons",
+    ],
   ];
 
   it.each(consumers)("%s consumes the shared %s glyph", (_name, renderFn, icon) => {

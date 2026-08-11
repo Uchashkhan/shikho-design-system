@@ -70,7 +70,7 @@ export function EmailField() {
 }`,
   props: [
     { name: "size", type: "xl | lg | md | sm", defaultValue: "md", description: "`Field` only. Only `md` has confirmed layout data." },
-    { name: "type", type: "default | textarea | advanced_with_buttons", defaultValue: "default", description: "`Field` only. Only `default` has confirmed structure." },
+    { name: "type", type: "default | textarea | advanced_with_buttons", defaultValue: "default", description: "`Field` only — all three now render their own confirmed structure at every size (P1 repair pass)." },
     { name: "state", type: "default | default_dark | hover | filled | active | error | disabled", defaultValue: "default", description: "Interaction state. Only `active` has a confirmed distinct visual." },
     { name: "label / hint", type: "boolean", defaultValue: "true", description: "`InputField` only — confirmed component booleans controlling the label and hint rows." },
     { name: "leftGroup, leftLead, rightGroup, rightIcon, supportText, text, textGroup, trailText", type: "boolean", defaultValue: "true", description: "`Field`'s eight confirmed slot booleans." },
@@ -154,6 +154,39 @@ export function EmailField() {
           <Field textContent="No left icon" leftLead={false} supportText={false} trailText={false} />
           <Field textContent="Text only" rightIcon={false} trailText={false} supportText={false} />
         </>
+      ),
+    },
+    {
+      title: "Field — type=advanced_with_buttons",
+      description:
+        "Independently re-confirmed at all 4 sizes via get_design_context (node 66056:19069 and siblings): a bordered lead chip (country-code-style prefix, with a real select-chevrons glyph rendered by default), a flex-1 text column, an optional trail label, and 1-3 real NewPinkButton actions. Shown at every size to demonstrate the confirmed per-size lead/button metrics.",
+      layout: "stack",
+      render: () => (
+        <>
+          {(["sm", "md", "lg", "xl"] as FieldSize[]).map((size) => (
+            <Field
+              key={size}
+              size={size}
+              type="advanced_with_buttons"
+              leadTextContent="+1"
+              textContent="Input text"
+              trailTextContent="Text"
+              buttonLabels={["Send"]}
+            />
+          ))}
+        </>
+      ),
+    },
+    {
+      title: "Field — advanced_with_buttons, up to 3 buttons",
+      description: "buttonLabels accepts 1-3 labels, each composing a real NewPinkButton — confirmed the max Figma exposes.",
+      render: () => (
+        <Field
+          type="advanced_with_buttons"
+          leadTextContent="+1"
+          textContent="Input text"
+          buttonLabels={["Copy", "Send"]}
+        />
       ),
     },
     {

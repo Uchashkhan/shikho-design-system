@@ -9,3 +9,4 @@ export { ChevronRightIcon } from "./icons/chevron_right";
 export { CloseIcon } from "./icons/close";
 export { InfoCircleIcon } from "./icons/info_circle";
 export { CheckIcon } from "./icons/check";
+export { SelectChevronsIcon } from "./icons/select_chevrons";

@@ -48,7 +48,8 @@ The first deep audit pass confirmed real layout for exactly 2 instances (`field/
 
 **Exactly confirmed** (`docs/audit/input.md` §8, §9, §14):
 - `Field`'s confirmed size ramp (sm/md/lg/xl — height, padding, gap, icon size, radius, typography) and its confirmed `default` construction at every size (fill `Color/smoke_med`, `input_inner_shadow`, the 9 booleans and their defaults, `selectLeftIcon`/`selectRightIcon`).
-- `Field`'s `textarea` and `advanced_with_buttons` type structures at `size="md"` (§14) — resizer glyph placement; lead-chip fill/inset-shadow/asymmetric-radius; the 1-3 solid-pink action buttons.
+- `Field`'s `textarea` and `advanced_with_buttons` type structures at ALL FOUR sizes (P1 repair pass, independently re-sampled — not just `size="md"`) — resizer glyph placement; lead-chip fill/inset-shadow/asymmetric-radius; the 1-3 solid-pink action buttons.
+- `advanced_with_buttons`' lead chip has a THIRD confirmed boolean-gated glyph beyond `leftLead`'s own icon slot (P14 — a fresh re-pull on node 66056:19069): a stacked up/down chevron pair (`leadChevron`, default `true`) marking the chip as a select/dropdown control, rendering the real downloaded glyph (`SelectChevronsIcon` in `@shikho/icons`) by default.
 - `InputField`'s full 7-state chrome (§14): `default`/`filled` fill; `hover`'s fill+text shift; `active`/`error`'s shared ring color with distinct border colors; `disabled`'s flat recolor across label, field text, and hint.
 - `Dropdown`'s `default`/`default_dark`/`hover`/`error`/`active`/`disabled` states (confirmed to share `InputField`'s exact chrome) and `naked`'s confirmed distinct fill-less/shadow-only treatment.
 - `DigitInput`'s confirmed `heading_1` typography and full per-state fill/text/border table, including the same active/error ring-sharing pattern.
@@ -56,7 +57,6 @@ The first deep audit pass confirmed real layout for exactly 2 instances (`field/
 - The confirmed naming inconsistency in `InputHint`: the prop is named `leftIcon`, but its Figma layer is literally named `right_icon` despite rendering as the row's leading icon (§10) — preserved and documented, not silently corrected.
 
 **Derived, not independently confirmed** (`docs/audit/input.md` §14.4-equivalent gaps):
-- `Field`'s `textarea`/`advanced_with_buttons` structures were only sampled at `size="md"`; `sm`/`lg`/`xl` reuse `md`'s proportions by rank.
 - `Dropdown`'s `brand`/`active_no_focus` states were not independently sampled; they reuse `active`'s confirmed chrome minus the ring, as the closest confirmed analogue.
 - The nested `advanced_with_buttons` action buttons (via `NewPinkButton`) are confirmed to match on fill/radius/text, but their outer-shadow depth is confirmed to differ slightly (single e1 layer vs. `new_pink`'s own confirmed full e2) — not overridden, since doing so would require reaching into Button's internals rather than Input's own component.
 - `Textarea` (the standalone `<textarea>` element) has no independent `get_design_context` audit and reuses `Field`'s confirmed default appearance — the least-invented available baseline.

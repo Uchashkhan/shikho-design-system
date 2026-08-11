@@ -89,6 +89,36 @@ describe("Field", () => {
     render(<Field type="advanced_with_buttons" textContent="Input text" buttonLabels={["Send"]} />);
     expect(screen.getByRole("button", { name: "Send" })).toBeInTheDocument();
   });
+
+  // P14 — a fresh get_design_context re-pull (node 66056:19069) found a third, previously
+  // missing boolean-gated glyph in the lead chip: a stacked up/down chevron pair marking it as a
+  // select/dropdown control, distinct from leftLead's own icon slot.
+  it("confirmed: type=advanced_with_buttons renders the default select-chevrons glyph in the lead chip", () => {
+    const { container } = render(
+      <Field type="advanced_with_buttons" leadTextContent="+1" textContent="Input text" />,
+    );
+    const lead = container.querySelector('[data-testid="field-lead"]') as HTMLElement;
+    expect(lead.querySelector("svg[data-icon='select-chevrons']")).toBeInTheDocument();
+  });
+
+  it("hides the chevron when leadChevron is false, and allows overriding it", () => {
+    const { container, rerender } = render(
+      <Field type="advanced_with_buttons" leadTextContent="+1" leadChevron={false} textContent="Input text" />,
+    );
+    let lead = container.querySelector('[data-testid="field-lead"]') as HTMLElement;
+    expect(lead.querySelector("svg[data-icon='select-chevrons']")).not.toBeInTheDocument();
+
+    rerender(
+      <Field
+        type="advanced_with_buttons"
+        leadTextContent="+1"
+        selectLeadChevron={<span data-testid="custom-chevron" />}
+        textContent="Input text"
+      />,
+    );
+    lead = container.querySelector('[data-testid="field-lead"]') as HTMLElement;
+    expect(lead.querySelector('[data-testid="custom-chevron"]')).toBeInTheDocument();
+  });
 });
 
 describe("InputField — confirmed per-state chrome (docs/audit/input.md §14)", () => {
