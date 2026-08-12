@@ -82,6 +82,22 @@ describe("previous/next month navigation", () => {
     expect(screen.getByText("Nov 2024")).toBeInTheDocument();
     expect(screen.getByText("Dec 2024")).toBeInTheDocument();
   });
+
+  // P17 repair — a fresh get_design_context re-pull confirmed the divider's total occupied
+  // width via frame math (744px "date" frame - 2x368px date_wrap panels = 8px), not the 17px
+  // (1px line + 8px margin each side) this previously rendered.
+  it("confirmed: the divider between range panels occupies exactly 8px total, not 17px", () => {
+    const { container } = render(
+      <DatePicker type="range" size="lg" defaultMonth={new Date(2024, 10, 1)} />,
+    );
+    const dividerBox = [...container.querySelectorAll('[aria-hidden="true"]')].find(
+      (el) => (el as HTMLElement).style.width === "8px",
+    ) as HTMLElement;
+    expect(dividerBox).toBeTruthy();
+    const line = dividerBox.firstElementChild as HTMLElement;
+    expect(line.style.width).toBe("1px");
+    expect(line.style.backgroundColor).toBe("rgb(244, 244, 246)"); // gray/100
+  });
 });
 
 describe("single-date selection", () => {

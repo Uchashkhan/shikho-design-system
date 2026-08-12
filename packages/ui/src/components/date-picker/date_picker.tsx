@@ -499,10 +499,24 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
 
             {type === "range" && (
               <>
+                {/* P17 repair — a fresh get_design_context re-pull on the user-supplied node
+                    (66181:16624) confirmed the divider's total occupied width via frame math:
+                    the "date" frame is 744px, both date_wrap panels are 368px (736px), leaving
+                    exactly 8px for the divider region — not the 17px (1px line + 8px margin each
+                    side) this previously rendered. The real SVG asset behind it confirms just a
+                    1px gray-100 stroke, centered within that 8px box. */}
                 <div
                   aria-hidden
-                  style={{ width: 1, alignSelf: "stretch", backgroundColor: color.gray[100], margin: "0 0.5rem" }}
-                />
+                  style={{
+                    width: 8,
+                    alignSelf: "stretch",
+                    display: "flex",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <div style={{ width: 1, alignSelf: "stretch", backgroundColor: color.gray[100] }} />
+                </div>
                 <CalendarPanel
                   month={addMonths(anchorMonth, 1)}
                   size={size}
