@@ -52,10 +52,11 @@ function IconButton({ onClick, disabled, label, children }: { onClick?: () => vo
         opacity: disabled ? 0.5 : 1,
       }}
     >
-      {/* Requested reduction: was 18px in a 32px button (the icon's own SVG intrinsic default),
-          reading as oversized. Reduced to 16px — the same icon-size change already made to the
-          compact variant below — while keeping the 32px clickable hit area untouched. */}
-      <span style={{ width: 16, height: 16, filter: iconShadowFilter }}>{children}</span>
+      {/* Requested reduction, in two rounds: Figma confirms 18px in a 32px button; reduced first
+          to 16px, then — on direct follow-up ("still a bit big") — to 14px. Both rounds are
+          deliberate code-only overrides below the confirmed value, not Figma corrections. The
+          32px clickable hit area is untouched throughout. */}
+      <span style={{ width: 14, height: 14, filter: iconShadowFilter }}>{children}</span>
     </button>
   );
 }
@@ -149,8 +150,9 @@ export const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
               opacity: currentPage <= 1 ? 0.5 : 1,
             }}
           >
-            <span style={{ width: 16, height: 16, filter: iconShadowFilter }}>
-              <ChevronLeftIcon size={16} />
+            {/* Requested reduction, in two rounds — see IconButton's own comment above. */}
+            <span style={{ width: 14, height: 14, filter: iconShadowFilter }}>
+              <ChevronLeftIcon size={14} />
             </span>
             Prev
           </button>
@@ -177,8 +179,8 @@ export const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
             }}
           >
             Next
-            <span style={{ width: 16, height: 16, filter: iconShadowFilter }}>
-              <ChevronRightIcon size={16} />
+            <span style={{ width: 14, height: 14, filter: iconShadowFilter }}>
+              <ChevronRightIcon size={14} />
             </span>
           </button>
         </div>
@@ -190,7 +192,7 @@ export const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
     const pagesRow = (
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         <IconButton onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1} label="Previous page">
-          <ChevronLeftIcon size={16} />
+          <ChevronLeftIcon size={14} />
         </IconButton>
         <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
           {pageWindow.map((item, index) =>
@@ -243,7 +245,7 @@ export const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
           )}
         </div>
         <IconButton onClick={() => onPageChange(currentPage + 1)} disabled={currentPage >= totalPages} label="Next page">
-          <ChevronRightIcon size={16} />
+          <ChevronRightIcon size={14} />
         </IconButton>
       </div>
     );

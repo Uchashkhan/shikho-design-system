@@ -164,26 +164,27 @@ describe("icon-button padding (P1 repair)", () => {
   });
 });
 
-// Requested reduction, not part of the original Figma audit — the chevron was 18px (the icon's
-// own intrinsic default) inside the 32px button, reading as oversized. Reduced to 16px, hit area
-// unchanged. Also fixes a real mismatch the reduction surfaced: ChevronLeftIcon/ChevronRightIcon
-// previously had no explicit size passed at all, so they rendered at their own 18px intrinsic
-// default regardless of the (16px, in the compact variant) wrapper span declaring a smaller box —
-// clipped/overflowing rather than actually smaller.
+// Requested reduction, not part of the original Figma audit, across two rounds — the chevron was
+// 18px (the icon's own intrinsic default) inside the 32px button, reading as oversized. Reduced
+// first to 16px (fixing a real mismatch that reduction surfaced along the way:
+// ChevronLeftIcon/ChevronRightIcon previously had no explicit size passed at all, so they
+// rendered at their own 18px intrinsic default regardless of the wrapper span declaring a
+// smaller box — clipped/overflowing rather than actually smaller). Then, on direct follow-up
+// ("still a bit big"), reduced again to 14px. Hit area (32px) unchanged throughout.
 describe("chevron icon size (requested reduction)", () => {
-  it("prev/next chevrons render at the reduced 16px, not the icon's own 18px default", () => {
+  it("prev/next chevrons render at the reduced 14px, not the icon's own 18px default", () => {
     render(<Pagination currentPage={2} totalPages={10} onPageChange={() => {}} />);
     const prevSvg = screen.getByRole("button", { name: "Previous page" }).querySelector("svg");
     const nextSvg = screen.getByRole("button", { name: "Next page" }).querySelector("svg");
-    expect(prevSvg).toHaveAttribute("width", "16");
-    expect(nextSvg).toHaveAttribute("width", "16");
+    expect(prevSvg).toHaveAttribute("width", "14");
+    expect(nextSvg).toHaveAttribute("width", "14");
   });
 
-  it("the compact variant's chevrons also render at 16px, matching their wrapper span (was a real size mismatch)", () => {
+  it("the compact variant's chevrons also render at 14px, matching their wrapper span (was a real size mismatch)", () => {
     render(<Pagination currentPage={2} totalPages={10} onPageChange={() => {}} compact />);
     const svgs = document.querySelectorAll("svg");
     for (const svg of svgs) {
-      expect(svg).toHaveAttribute("width", "16");
+      expect(svg).toHaveAttribute("width", "14");
     }
   });
 });

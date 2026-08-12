@@ -90,3 +90,15 @@ The progress-bar fill width in the audited instance is a fixed, tiny sliver (`8p
 Two components, not one, matching what's actually confirmed:
 - **`Pagination`** — the real numbered navigator (`first`/`center`/`last`/`mobile`/`less_pages` all map onto this single, properly parameterized component: `currentPage`, `totalPages`, `onPageChange`, a `compact` boolean for the `less_pages` treatment, a `layout: "horizontal" | "stacked"` for `mobile`, plus the confirmed optional go-to-page and results-per-page pieces).
 - **`LoadMorePagination`** — the confirmed, structurally unrelated load-more/progress widget, exported separately rather than forced into `Pagination`'s prop surface. Forcing both into one component, the way the Figma file's single `page` property does, would reproduce the exact non-orthogonal design flaw `pagination.md` itself flagged as the weakest architecture in the whole audit series.
+
+## 7. Requested: prev/next chevron icon size reduced — a deliberate code-only override
+
+User feedback: the left/right pagination icons were "bit big." Figma confirms the numbered variant's prev/next `icon_button` at **18px** icon in a 32×32 button (§2); the compact/`less_pages` variant is separately confirmed at **16px** (§3) — genuinely different sizes for the two variants, not a shared value.
+
+Reduced in two rounds, both deliberate deviations from what Figma actually shows (same category as the Input `active`-color and Chip/Tags padding overrides elsewhere):
+1. First round: both variants unified at 16px (the numbered variant's confirmed 18px reduced; the compact variant's confirmed 16px left as-is, since it was already at that value). This pass also fixed a real, independent bug it surfaced: `ChevronLeftIcon`/`ChevronRightIcon` had no explicit `size` prop passed anywhere, so they rendered at their own 18px intrinsic default regardless of the wrapper `<span>` declaring a smaller box — clipped/overflowing, not actually smaller.
+2. Direct follow-up ("still a bit big"): both variants reduced again to **14px**.
+
+Current: both the numbered pagination's icon-only prev/next buttons and the compact variant's "Prev"/"Next" text-button icons render at 14px. The 32×32 clickable hit area is untouched throughout — only the icon glyph shrank. The results-per-page dropdown's own chevron (a separate, `docs.meta.ts`-flagged "kept local" glyph, §5) was not part of this request and is unchanged.
+
+Tests updated in `pagination.test.tsx` to assert the current 14px size, called out inline as a requested override rather than a Figma value.
