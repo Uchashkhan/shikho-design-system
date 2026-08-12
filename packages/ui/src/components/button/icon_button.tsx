@@ -1,5 +1,5 @@
 import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from "react";
-import { iconButtonStyle, type ButtonPhase, type ButtonSizeScaleA, type IconButtonType as IconButtonTypeValue } from "./shared";
+import { iconButtonIconSize, iconButtonStyle, type ButtonPhase, type ButtonSizeScaleA, type IconButtonType as IconButtonTypeValue } from "./shared";
 import { ButtonShell } from "./button_shell";
 
 // docs/audit/buttons.md §2, §14.2 — icon_button: size xs/sm/md/lg/xl, type neutral/primary/
@@ -49,6 +49,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         size={size}
         resolved={resolved}
         iconOnly={icon}
+        iconSize={iconButtonIconSize(size)}
         disabled={phase === "disabled"}
         dataSize={size}
         dataType={type}

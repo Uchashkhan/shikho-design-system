@@ -24,6 +24,12 @@ export interface ButtonShellProps
   selectRightIcon?: ReactNode | null;
   /** icon_button mode: a single fixed-square icon-only slot, no label. */
   iconOnly?: ReactNode;
+  /**
+   * Overrides `sizeMetrics(size).iconSize` for the icon slot. `icon_button` is confirmed to use
+   * its own, independent icon-to-button-box ratio (docs/audit/buttons.md §14.1 point 10) —
+   * distinct from the shared icon size the other 7 (labeled) families use at the same `size` step.
+   */
+  iconSize?: number;
   dataSize: string;
   dataType: string;
   dataState: string;
@@ -40,6 +46,7 @@ export const ButtonShell = forwardRef<HTMLButtonElement, ButtonShellProps>(
       selectLeftIcon = null,
       selectRightIcon = null,
       iconOnly,
+      iconSize,
       dataSize,
       dataType,
       dataState,
@@ -90,10 +97,17 @@ export const ButtonShell = forwardRef<HTMLButtonElement, ButtonShellProps>(
     };
 
     const iconStyle: CSSProperties = {
-      width: metrics.iconSize,
-      height: metrics.iconSize,
+      width: iconSize ?? metrics.iconSize,
+      height: iconSize ?? metrics.iconSize,
       flexShrink: 0,
       filter: iconShadowFilter,
+      // The confirmed Figma structure centers the vector inside its icon slot via a symmetric
+      // inset (e.g. `inset-[12.5%]`) regardless of the vector's own size — anything short of
+      // filling 100% of the slot (like a small dot glyph) needs real centering here too, or it
+      // sits at the slot's top-left corner instead (plain block layout, not centered).
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
     };
 
     return (

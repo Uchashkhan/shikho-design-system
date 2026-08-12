@@ -219,6 +219,44 @@ describe("IconButton — confirmed 7-type mapping, correcting the secondary=pink
     expect(button.style.width).toBe("24px");
     expect(button.style.height).toBe("24px");
   });
+
+  // Confirmed via get_metadata on node 66050:8198's `icon` child instance at every size — an
+  // independent progression (16/18/22/24/28) from the shared iconSize the 7 labeled families use
+  // at the same steps (14/16/18/20/24), which the implementation previously (wrongly) reused.
+  it("uses its own confirmed icon size at every step, not the labeled families' shared iconSize", () => {
+    const expected: Record<"xs" | "sm" | "md" | "lg" | "xl", string> = {
+      xs: "16px",
+      sm: "18px",
+      md: "22px",
+      lg: "24px",
+      xl: "28px",
+    };
+    for (const [size, px] of Object.entries(expected) as [keyof typeof expected, string][]) {
+      const { unmount } = render(
+        <IconButton icon={<span data-testid="glyph" />} aria-label="Action" size={size} />,
+      );
+      expect(screen.getByTestId("glyph").parentElement?.style.width, size).toBe(px);
+      unmount();
+    }
+  });
+
+  // A small icon that doesn't fill its whole slot (e.g. a dot glyph) must still land in the
+  // center of the slot, matching Figma's confirmed symmetric inset — not pinned to the top-left
+  // corner via plain block layout, which is what the wrapper span did before it got its own
+  // `display:flex` centering.
+  it("centers an icon that doesn't fill its whole slot, not just full-size ones", () => {
+    render(
+      <IconButton
+        icon={<span data-testid="glyph" style={{ display: "block", width: 8, height: 8 }} />}
+        aria-label="Action"
+        size="md"
+      />,
+    );
+    const wrapper = screen.getByTestId("glyph").parentElement as HTMLElement;
+    expect(wrapper.style.display).toBe("flex");
+    expect(wrapper.style.alignItems).toBe("center");
+    expect(wrapper.style.justifyContent).toBe("center");
+  });
 });
 
 describe("NewPinkButton", () => {

@@ -42,6 +42,22 @@ export function sizeMetrics(size: ButtonSize): SizeMetrics {
   return SIZE_METRICS[size];
 }
 
+// docs/audit/buttons.md §14.1 point 10 — icon_button nests a smaller icon inside a larger fixed
+// square button; its icon size is independently confirmed at every step (node 66050:8198's `icon`
+// child instance width/height, sampled at xs/sm/md/lg/xl), NOT the same `iconSize` the 7 labeled
+// families share at the same `size` step (e.g. `md` is 22px here vs. 18px for labeled families).
+const ICON_BUTTON_ICON_SIZE: Record<ButtonSizeScaleA, number> = {
+  xs: 16,
+  sm: 18,
+  md: 22,
+  lg: 24,
+  xl: 28,
+};
+
+export function iconButtonIconSize(size: ButtonSizeScaleA): number {
+  return ICON_BUTTON_ICON_SIZE[size];
+}
+
 // docs/audit/buttons.md §14.2 — the confirmed icon-slot drop-shadow filter, identical to the
 // pattern already used system-wide (Sidebar/Switcher/Top Navigation/Table).
 export const iconShadowFilter =
