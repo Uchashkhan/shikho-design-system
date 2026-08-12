@@ -182,3 +182,11 @@ A systematic sweep (`get_metadata` on the full `tags` component set, node `66077
 
 - **`test_wrap`'s own internal horizontal padding is size-dependent and non-monotonic: `2px` at `sm`, `4px` at `md`, `2px` again at `lg`** (confirmed directly across `primary`, `tertiary`, `secondary`, `primary_outline`, `success`, and `Danger Filled` samples at every size). The implementation hardcoded a flat `2px` (`0 0.125rem`) for every size — correct by coincidence at `sm`/`lg`, wrong at `md` (rendering 2px too little padding around the label). Added `labelPadding` to `SizeMetrics`.
 - **`sm` has no icon slot at all.** `get_metadata` on every sampled `sm` instance (`primary`, `danger`, `secondary`, `info`, across `default`/`disabled` states) shows zero `left_icon`/`right_icon` child layers — not toggled off, structurally absent. The previous `iconSize: 12` for `sm` was explicitly flagged in §14's gaps as "derived by rank, not independently sampled" (guessed from the `14px@md`/`16px@lg` progression); it turns out the real answer is that icons never render at `sm` regardless of the `leftIcon`/`rightIcon` props, which now gate off at that size.
+
+## 16. Requested: `md`'s horizontal padding reduced — a deliberate code-only override
+
+Same user feedback and same shape as chips.md §14: `md`/`lg` Tags padding looked "a bit too much... looks like a button." Re-verified `md` (node `66077:29384`) and `lg` (node `66077:29324`) fresh against Figma first: **both confirmed byte-for-byte exact** — `md` is `px-6 py-4` (6px horizontal, 4px vertical), `lg` is `p-8` (8px uniform). Not a bug; the implementation already matched.
+
+Requested anyway, as a deliberate deviation: `md`'s horizontal padding reduced from the confirmed 6px to 4px (now uniform with its own 4px vertical padding). `lg` is unchanged — already uniform (8px horizontal = 8px vertical), no asymmetric "extra" to trim. `sm` untouched (not named). `PILL_PADDING` (the `shape="pill"` requested addition) was left as-is — not part of this request, and the pill shape already intentionally carries more horizontal padding than the default shape by design.
+
+Tests updated in `tags.test.tsx` to assert the new `md` padding, with the override called out inline rather than presented as a Figma value.

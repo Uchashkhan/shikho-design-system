@@ -199,7 +199,10 @@ describe("shape (requested addition)", () => {
     const { container } = render(<Tags size="md">Tag</Tags>);
     const root = container.firstChild as HTMLElement;
     expect(root.style.borderRadius).toBe("8px");
-    expect(root.style.padding).toBe("0.25rem 0.375rem");
+    // Horizontal padding requested down to 4px — a deliberate override, not the Figma-confirmed
+    // value (6px, node 66077:29384) — reduced because it read as button-like. See tags.tsx's own
+    // SIZE_METRICS comment.
+    expect(root.style.padding).toBe("0.25rem");
     expect(root).toHaveAttribute("data-shape", "default");
   });
 
@@ -207,7 +210,7 @@ describe("shape (requested addition)", () => {
     const { container } = render(<Tags size="md" shape="pill">Tag</Tags>);
     const root = container.firstChild as HTMLElement;
     expect(root.style.borderRadius).toBe("1000px");
-    expect(root.style.padding).toBe("0.25rem 0.5rem"); // was 0.25rem 0.375rem — vertical (0.25rem) unchanged
+    expect(root.style.padding).toBe("0.25rem 0.5rem"); // unchanged — PILL_PADDING wasn't part of this request
     expect(root).toHaveAttribute("data-shape", "pill");
   });
 });

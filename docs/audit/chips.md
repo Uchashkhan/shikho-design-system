@@ -189,3 +189,11 @@ The original audit above deep-audited exactly one instance (`selected`/md/`focus
 - **Icon slots carried no visual shadow at all** — the pre-rebuild code applied the confirmed `elevation/e2` drop-shadow as a CSS `boxShadow` on the icon's own (empty, transparent) bounding box, which draws a rectangular shadow rather than one following the icon glyph's silhouette. Every other component in this system implements the identical confirmed effect as `filter: drop-shadow()` — this was a genuine rendering bug, not a style choice.
 
 Every correction above is implemented in `packages/ui/src/components/chip/chip.tsx`'s `CHIP_VISUAL` table and cited inline; see `packages/ui/src/components/chip/README.md` for the consumer-facing confirmed-vs-derived summary. Not independently re-sampled in this pass: `selected`/`selected_neutral`'s own `drag` states (derived from `unselected`'s confirmed drag pattern) and `selected_neutral`'s `hover`/`disabled` states (derived from the same family pattern, keeping this type's own confirmed `gray/950` text).
+
+## 14. Requested: `lg`'s horizontal padding reduced — a deliberate code-only override
+
+User feedback: `md`/`lg` chip padding looked "a bit too much... looks like a button." Before changing anything, re-verified `md` (node `66075:28885`) and `lg` (node `66075:28800`) fresh against Figma: **both were confirmed byte-for-byte exact** — `md` is `p-8` (8px uniform), `lg` is `px-12 py-8` (12px horizontal, 8px vertical). This is not a bug like the earlier `Textarea`/`InputField` fixes; the implementation already matched Figma precisely.
+
+Requested anyway, as a deliberate deviation (same category as §18's `active`-color override in the Input audit): `lg`'s horizontal padding reduced from the confirmed 12px to 10px. `md` is unchanged — it was already uniform (8px horizontal = 8px vertical, matching its own confirmed value), so there was no "extra" asymmetric horizontal padding to trim there. `sm` untouched (not named in the request).
+
+Tests updated in `chip.test.tsx` to assert the new `lg` padding, with the override called out inline rather than presented as a Figma value.

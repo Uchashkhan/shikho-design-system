@@ -140,11 +140,14 @@ describe("no unsupported variant is exported", () => {
 });
 
 // P1 repair pass — per-size padding/gap/typography replace md-only extrapolation.
+// `lg`'s horizontal padding (10px) is a requested override, not the Figma-confirmed value (12px,
+// node 66075:28800) — reduced because it read as button-like. See chip.tsx's own SIZE_METRICS
+// comment.
 describe("per-size metrics are independent (P1 repair)", () => {
   const rows = [
     ["sm", "24px", "0.25rem 0.375rem", "0", "11px"],
     ["md", "32px", "0.5rem", "0.125rem", "12px"],
-    ["lg", "40px", "0.5rem 0.75rem", "0.25rem", "13px"],
+    ["lg", "40px", "0.5rem 0.625rem", "0.25rem", "13px"],
   ] as const;
 
   it.each(rows)("size=%s → height %s, padding %s, gap %s, font %s", (size, height, padding, gap, fontSize) => {

@@ -53,7 +53,11 @@ interface SizeMetrics {
 
 const SIZE_METRICS: Record<TagSize, SizeMetrics> = {
   sm: { height: 20, padding: "0 0.375rem", rootGap: 2, radius: radius.xs, iconSize: 12, fontSize: 11, lineHeight: "16px", labelPadding: 2 },
-  md: { height: 24, padding: "0.25rem 0.375rem", rootGap: 0, radius: radius.sm, iconSize: 14, fontSize: 11, lineHeight: "16px", labelPadding: 4 },
+  // `md`'s horizontal padding was confirmed exact against Figma (6px, node 66077:29384) but
+  // requested down to 4px anyway — a deliberate code-only override, not a Figma correction: at
+  // 6px vs. 4px vertical it read as button-like rather than a compact tag. `lg` stays as-is
+  // (already uniform 8px, matching its own confirmed vertical padding — no "extra" to trim).
+  md: { height: 24, padding: "0.25rem", rootGap: 0, radius: radius.sm, iconSize: 14, fontSize: 11, lineHeight: "16px", labelPadding: 4 },
   lg: { height: 32, padding: "0.5rem", rootGap: 2, radius: radius.md, iconSize: 16, fontSize: 12, lineHeight: "16px", labelPadding: 2 },
 };
 

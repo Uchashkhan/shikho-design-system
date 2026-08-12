@@ -30,7 +30,11 @@ interface ChipSizeMetrics {
 const SIZE_METRICS: Record<ChipSize, ChipSizeMetrics> = {
   sm: { height: 24, padding: "0.25rem 0.375rem", gap: "0", iconSize: 14, fontSize: 11, lineHeight: "16px" },
   md: { height: 32, padding: "0.5rem", gap: "0.125rem", iconSize: 16, fontSize: 12, lineHeight: "16px" },
-  lg: { height: 40, padding: "0.5rem 0.75rem", gap: "0.25rem", iconSize: 18, fontSize: 13, lineHeight: "20px" },
+  // `lg`'s horizontal padding was confirmed exact against Figma (12px, node 66075:28800) but
+  // requested down to 10px anyway — a deliberate code-only override, not a Figma correction: at
+  // 12px it read as button-like rather than a compact chip. `md` stays as-is (already uniform
+  // 8px, matching its own confirmed vertical padding — no "extra" horizontal to trim).
+  lg: { height: 40, padding: "0.5rem 0.625rem", gap: "0.25rem", iconSize: 18, fontSize: 13, lineHeight: "20px" },
 };
 
 const chipRadius = radius.full; // radius/border_radius_round (1000) — the ONLY radius token, §7/§9
