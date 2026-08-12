@@ -135,6 +135,38 @@ describe("AiRoundedButton — confirmed real gradients, and a true pill radius (
   });
 });
 
+// Confirmed via get_design_context on every `Disabled` variant of both component sets (node
+// 66050:9281 ai_rounded / 66050:9682 ai_regular, §14.3) — disabled is genuinely type-specific,
+// not the uniform gray[100]/gray[400] recipe originally guessed (§14.4).
+describe("AiRoundedButton/AiRegularButton disabled — type-specific recipe, not uniform gray (§14.3)", () => {
+  it("Primary disabled is a flat, muted secondary/100 fill with secondary/200 text, no gradient", () => {
+    render(<AiRoundedButton type="Primary" state="Disabled">Ask AI</AiRoundedButton>);
+    const button = screen.getByRole("button", { name: "Ask AI" });
+    expect(button.style.background).toBe("rgb(252, 227, 247)"); // secondary/100 #fce3f7
+    expect(button.style.color).toBe("rgb(247, 187, 233)"); // secondary/200 #f7bbe9
+  });
+
+  it("Green/blue gradient/Purple disabled keep their own gradient washed toward white, with white text", () => {
+    const washed: Record<"Green" | "blue gradient" | "Purple", string> = {
+      Green: "237, 245, 217",
+      "blue gradient": "204, 194, 247",
+      Purple: "230,222,254",
+    };
+    for (const type of ["Green", "blue gradient", "Purple"] as const) {
+      const { unmount } = render(<AiRoundedButton type={type} state="Disabled">Ask AI</AiRoundedButton>);
+      const button = screen.getByRole("button", { name: "Ask AI" });
+      expect(button.style.background, type).toContain(washed[type]);
+      expect(button.style.color, type).toBe("rgb(255, 255, 255)"); // white/950
+      unmount();
+    }
+  });
+
+  it("ai_regular's disabled follows the identical type-specific recipe as ai_rounded", () => {
+    render(<AiRegularButton type="Primary" state="Disabled">Ask AI</AiRegularButton>);
+    expect(screen.getByRole("button", { name: "Ask AI" }).style.background).toBe("rgb(252, 227, 247)");
+  });
+});
+
 describe("AiRegularButton — same confirmed gradients as ai_rounded, scale radius not pill", () => {
   it("purple (lowercase) shares ai_rounded's Purple gradient definition", () => {
     render(<AiRegularButton type="purple">Ask AI</AiRegularButton>);

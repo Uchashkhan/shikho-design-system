@@ -221,17 +221,56 @@ export interface ResolvedAiButtonStyle extends ResolvedButtonStyle {
   filter?: string;
 }
 
+// Confirmed directly via get_design_context on the `ai_rounded`/`ai_regular` component sets
+// (node 66050:9281 / 66050:9682, every `Disabled` variant at `md` sampled) — disabled is NOT the
+// uniform neutral-gray recipe previously guessed (§14.4). Two genuinely different treatments:
+// `Primary` disabled is a flat, muted recolor — solid `secondary/100` fill, `secondary/200` text,
+// no border, single-layer (e1) shadow, the secondary inset — matching the confirmed non-gradient
+// families' disabled recipe (§14.2). The other 3 types (`Green`, `blue gradient`, `Purple`)
+// instead keep their OWN gradient but visually washed toward white, white text, a light `black/50`
+// border, and the FULL e2 shadow + primary inset — "washed out", not "flattened". Figma renders
+// this as the base gradient plus a uniform 72%-opacity white overlay layer; that composites to
+// exactly `base * 0.28 + white * 0.72` at every stop, so rather than emitting a 2-layer CSS
+// `background` value (which real browsers render correctly, but jsdom's `cssstyle` parser cannot
+// parse as a `background` shorthand, silently dropping the whole declaration in tests) this
+// precomputes that composite into GRADIENTS' own confirmed stops as ordinary single-layer
+// gradients. (Figma's own `Purple`/`Disabled` swatch literally reuses `blue gradient`'s exact RGB
+// stops at every size sampled — a copy-paste artifact in the file, not a real Purple sample — so
+// this washes Purple's own confirmed default gradient instead of reproducing that anomaly.)
+const DISABLED_GRADIENTS: Record<Exclude<AiGradientType, "Primary">, string> = {
+  "blue gradient": "linear-gradient(42.88deg, rgb(204, 194, 247) 0.88%, rgb(218, 209, 255) 91.67%)",
+  Green: "linear-gradient(223.88deg, rgb(237, 245, 217) 3.93%, rgb(197, 222, 206) 96.62%)",
+  Purple:
+    "radial-gradient(circle, rgba(230,222,254,1) 0%, rgba(221,213,245,1) 25%, rgba(212,204,236,1) 50%, rgba(203,195,226,1) 75%, rgba(199,190,222,1) 87.5%, rgba(194,186,217,1) 100%)",
+};
+
 /**
  * docs/audit/buttons.md §14.2/§14.3 — gradient fill, `primary_button_effect`-equivalent shadow
  * treatment (all 4 ai_* types render the full effect in every sampled default instance), pill vs.
  * scale radius handled separately by each family file (§14.2's confirmed height/2 pill rule).
- * hover/disabled/focus were not independently sampled for the gradient types (§14.4) — this
- * applies the closest confirmed analogue (brightness shift on hover, ring-only on focus, the
- * universal disabled recipe) rather than inventing a new, unconfirmed gradient variant.
+ * hover/focus were not independently sampled for the gradient types (§14.4) — this applies the
+ * closest confirmed analogue (brightness shift on hover, ring-only on focus) rather than
+ * inventing a new, unconfirmed gradient variant. `disabled` WAS independently sampled — see
+ * `DISABLED_WASH_OVERLAY` above.
  */
 export function aiGradientStyle(type: AiGradientType, phase: ButtonPhase): ResolvedAiButtonStyle {
   if (phase === "disabled") {
-    return { background: color.gray[100], border: "none", textColor: color.gray[400], boxShadow: OUTER_SHADOW_PARTIAL, insetShadow: SECONDARY_INSET };
+    if (type === "Primary") {
+      return {
+        background: color.secondary[100],
+        border: "none",
+        textColor: color.secondary[200],
+        boxShadow: OUTER_SHADOW_PARTIAL,
+        insetShadow: SECONDARY_INSET,
+      };
+    }
+    return {
+      background: DISABLED_GRADIENTS[type],
+      border: `1px solid ${color.black[50]}`,
+      textColor: color.white[950],
+      boxShadow: OUTER_SHADOW_FULL,
+      insetShadow: PRIMARY_INSET,
+    };
   }
   if (phase === "focus") {
     return { background: GRADIENTS[type], border: "none", textColor: color.white[950], boxShadow: focusRingBoxShadow.primary };
