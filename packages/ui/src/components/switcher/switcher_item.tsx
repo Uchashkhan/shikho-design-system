@@ -12,6 +12,9 @@ export type SwitcherItemType =
   | "active_neutral"
   | "inactive";
 export type SwitcherItemState = "default" | "hover";
+/** Not part of the original Figma audit — a requested addition. `pill` uses a true stadium
+ * radius (`radius.full`) instead of the confirmed per-size rectangle radius below. */
+export type SwitcherShape = "default" | "pill";
 
 // docs/audit/switcher-deep-audit.md §4 — confirmed heights (size metadata); confirmed icon size
 // only at lg (20px) and sm (16px), interpolated for xs/md/xl using the confirmed 5-step
@@ -100,6 +103,9 @@ export interface SwitcherItemProps
   /** Forces a specific state (used by Storybook/playground controls to preview `hover` without a
    * pointer). Left unset, the real cursor drives it via onMouseEnter/onMouseLeave. */
   state?: SwitcherItemState;
+  /** Not part of the original Figma audit — a requested addition. Default keeps the confirmed
+   * per-size rectangle radius; `pill` uses a true stadium radius instead. */
+  shape?: SwitcherShape;
   /** The 3 confirmed boolean slots (§3), all default `true`. No `tag` slot exists — a confirmed
    * simpler structure than `SidebarItem`. */
   leftIcon?: boolean;
@@ -123,6 +129,7 @@ export const SwitcherItem = forwardRef<HTMLButtonElement, SwitcherItemProps>(
       size = "lg",
       type = "inactive",
       state,
+      shape = "default",
       leftIcon = true,
       rightIcon = true,
       text = true,
@@ -163,7 +170,7 @@ export const SwitcherItem = forwardRef<HTMLButtonElement, SwitcherItemProps>(
       gap: "0.5rem",
       padding: PADDING[size],
       border: typeStyle.border ?? "none",
-      borderRadius: RADIUS[size],
+      borderRadius: shape === "pill" ? radius.full : RADIUS[size],
       backgroundColor: isHover ? typeStyle.hoverFill : typeStyle.defaultFill,
       boxShadow: typeStyle.shadow,
       cursor: "pointer",
@@ -177,6 +184,7 @@ export const SwitcherItem = forwardRef<HTMLButtonElement, SwitcherItemProps>(
         type="button"
         data-size={size}
         data-type={type}
+        data-shape={shape}
         data-state={isHover ? "hover" : "default"}
         style={computedStyle}
         onMouseEnter={handleMouseEnter}

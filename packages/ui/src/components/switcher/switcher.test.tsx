@@ -81,3 +81,47 @@ describe("confirmed per-size container gap/radius", () => {
     expect(root.style.padding).toBe("0.25rem");
   });
 });
+
+// Requested additions, not part of the original Figma audit — selectedColor maps onto 3 of
+// SwitcherItemType's 5 already-confirmed values rather than inventing new colors.
+describe("selectedColor (requested addition)", () => {
+  it("defaults to accent (active_primary_accent), matching prior unconfigured behavior", () => {
+    render(<Switcher options={options} value="day" onChange={() => {}} />);
+    expect(screen.getByText("Day").closest("button")).toHaveAttribute("data-type", "active_primary_accent");
+  });
+
+  it("primary maps to active_primary, dark maps to active_neutral", () => {
+    const { rerender } = render(<Switcher options={options} value="day" onChange={() => {}} selectedColor="primary" />);
+    expect(screen.getByText("Day").closest("button")).toHaveAttribute("data-type", "active_primary");
+    rerender(<Switcher options={options} value="day" onChange={() => {}} selectedColor="dark" />);
+    expect(screen.getByText("Day").closest("button")).toHaveAttribute("data-type", "active_neutral");
+  });
+
+  it("never changes unselected segments' type", () => {
+    render(<Switcher options={options} value="day" onChange={() => {}} selectedColor="dark" />);
+    expect(screen.getByText("Week").closest("button")).toHaveAttribute("data-type", "inactive");
+  });
+});
+
+describe("shape (requested addition)", () => {
+  it("default keeps the confirmed per-size container/item radius", () => {
+    const { container } = render(<Switcher options={options} value="day" onChange={() => {}} size="lg" />);
+    expect((container.firstChild as HTMLElement).style.borderRadius).toBe("16px");
+    expect(screen.getByText("Day").closest("button")).toHaveAttribute("data-shape", "default");
+  });
+
+  it("pill gives the container and every segment a true stadium radius", () => {
+    const { container } = render(<Switcher options={options} value="day" onChange={() => {}} shape="pill" />);
+    expect((container.firstChild as HTMLElement).style.borderRadius).toBe("1000px");
+    expect(screen.getByText("Day").closest("button")).toHaveAttribute("data-shape", "pill");
+    expect(screen.getByText("Day").closest("button")).toHaveStyle({ borderRadius: "1000px" });
+  });
+});
+
+describe("state override (requested addition)", () => {
+  it("forces only the selected segment's state; unselected segments stay pointer-driven", () => {
+    render(<Switcher options={options} value="day" onChange={() => {}} state="hover" />);
+    expect(screen.getByText("Day").closest("button")).toHaveAttribute("data-state", "hover");
+    expect(screen.getByText("Week").closest("button")).toHaveAttribute("data-state", "default");
+  });
+});
