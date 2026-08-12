@@ -5,6 +5,10 @@ const SIZES: AvatarSize[] = ["xl", "lg", "md", "sm", "xs"];
 const TYPES: AvatarType[] = ["image", "icon", "text"];
 const PHOTO = "https://i.pravatar.cc/128?img=12";
 
+const badgeGlyph = (
+  <span style={{ width: 12, height: 12, borderRadius: 1000, background: "#5468ff", display: "block" }} />
+);
+
 export const pageConfig: ComponentPageConfig = {
   longDescription:
     "Deep-audited at size=md, type=image — the first component confirmed to skip Figma auto-layout entirely (root relative, children absolute-positioned) and the first confirmed to carry no elevation or effect token at all, unlike every Button/Input component audited so far. The circular crop comes directly from a border-radius applied to the <img> itself, not a clip-path or mask layer. Two sibling component sets, avatar_face (12 face images) and avatar_group (a multi-avatar composition with no way to verify its per-size width math), are out of scope and not implemented here.",
@@ -61,21 +65,51 @@ function ProfileBadge() {
         defaultValue: "image",
         options: TYPES.map((v) => ({ label: v, value: v })),
       },
+      {
+        prop: "status",
+        label: "Status",
+        defaultValue: "inactive",
+        options: [
+          { label: "inactive", value: "inactive" },
+          { label: "active", value: "active" },
+        ],
+      },
+      {
+        prop: "badge",
+        label: "Badge",
+        defaultValue: "none",
+        options: [
+          { label: "none", value: "none" },
+          { label: "icon", value: "icon" },
+        ],
+      },
     ],
     render: (v) => {
       const type = v.type as AvatarType;
+      const status = v.status === "active";
+      const verification = v.badge === "icon";
       if (type === "image") {
-        return <Avatar size={v.size as AvatarSize} type="image" src={PHOTO} alt="Profile" />;
+        return (
+          <Avatar
+            size={v.size as AvatarSize}
+            type="image"
+            src={PHOTO}
+            alt="Profile"
+            status={status}
+            verification={verification}
+            verificationContent={badgeGlyph}
+          />
+        );
       }
       if (type === "text") {
         return (
-          <Avatar size={v.size as AvatarSize} type="text">
+          <Avatar size={v.size as AvatarSize} type="text" status={status} verification={verification} verificationContent={badgeGlyph}>
             AB
           </Avatar>
         );
       }
       return (
-        <Avatar size={v.size as AvatarSize} type="icon">
+        <Avatar size={v.size as AvatarSize} type="icon" status={status} verification={verification} verificationContent={badgeGlyph}>
           <span aria-hidden>👤</span>
         </Avatar>
       );
@@ -111,27 +145,8 @@ function ProfileBadge() {
       render: () => (
         <>
           <Avatar type="image" src={PHOTO} status />
-          <Avatar
-            type="image"
-            src={PHOTO}
-            verification
-            verificationContent={
-              <span
-                style={{ width: 12, height: 12, borderRadius: 1000, background: "#5468ff", display: "block" }}
-              />
-            }
-          />
-          <Avatar
-            type="image"
-            src={PHOTO}
-            status
-            verification
-            verificationContent={
-              <span
-                style={{ width: 12, height: 12, borderRadius: 1000, background: "#5468ff", display: "block" }}
-              />
-            }
-          />
+          <Avatar type="image" src={PHOTO} verification verificationContent={badgeGlyph} />
+          <Avatar type="image" src={PHOTO} status verification verificationContent={badgeGlyph} />
         </>
       ),
     },
