@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DigitInput } from "./digit_input";
 import { Dropdown } from "./dropdown";
-import { Field } from "./field";
+import { Field, type FieldSize } from "./field";
 import { InputField } from "./input_field";
 import { InputHint } from "./input_hint";
 import { InputLabel } from "./input_label";
@@ -179,6 +179,50 @@ describe("InputField — confirmed per-state chrome (docs/audit/input.md §14)",
   it("hides label/hint when their booleans are false", () => {
     const { container } = render(<InputField label={false} hint={false} />);
     expect(container.querySelector("label")).not.toBeInTheDocument();
+  });
+});
+
+// InputField previously had no way to render at any size other than Field's own bare default —
+// `field`'s xl/lg/md/sm geometry is independently confirmed (docs/audit/input.md §14), and
+// fieldChromeStyle's state colors/border/ring have no size dependency at all, so composing the
+// two was the "least invented" fix rather than a guessed new combination.
+describe("InputField — size (composes field's own confirmed per-size geometry)", () => {
+  it("defaults to md, matching prior (only possible) behavior", () => {
+    const { container } = render(<InputField />);
+    const field = container.querySelector("[data-type='default']") as HTMLElement;
+    expect(field).toHaveAttribute("data-size", "md");
+    expect(field.style.height).toBe("40px");
+  });
+
+  it("renders at every confirmed field size, state chrome unaffected", () => {
+    const rows: [FieldSize, string][] = [
+      ["xl", "56px"],
+      ["lg", "48px"],
+      ["md", "40px"],
+      ["sm", "32px"],
+    ];
+    for (const [size, height] of rows) {
+      const { container, unmount } = render(<InputField size={size} state="active" />);
+      const field = container.querySelector("[data-type='default']") as HTMLElement;
+      expect(field, size).toHaveAttribute("data-size", size);
+      expect(field.style.height, size).toBe(height);
+      // The confirmed active-state chrome (pink border) still applies regardless of size.
+      expect(field.style.border, size).toContain("246, 129, 215");
+      unmount();
+    }
+  });
+
+  it("maps lg/xl down to InputLabel/InputHint's own confirmed md size (neither has a confirmed lg/xl treatment)", () => {
+    const { container, rerender } = render(
+      <InputField size="xl" labelContent="Label" hintProps={{ hintTextContent: "Hint" }} />,
+    );
+    expect(container.querySelector('[data-size]')).toBeInTheDocument();
+    let label = screen.getByText("Label").closest("[data-size]");
+    expect(label).toHaveAttribute("data-size", "md");
+
+    rerender(<InputField size="sm" labelContent="Label" hintProps={{ hintTextContent: "Hint" }} />);
+    label = screen.getByText("Label").closest("[data-size]");
+    expect(label).toHaveAttribute("data-size", "sm");
   });
 });
 

@@ -66,7 +66,7 @@ export const pageConfig: ComponentPageConfig = {
     "The nested field inside input_field/active uses a 12px radius and full width, while the standalone field uses 10px and a fixed width — a confirmed, unexplained discrepancy. One consistent radius is used here rather than forking an undocumented second variant.",
     "`Dropdown` and `Textarea` are now independently confirmed via their own `get_design_context` pulls rather than reusing `field`'s baseline — both turned out to genuinely differ (Textarea's own radius/padding/error-text-color; Dropdown's own text color, `brand`/`active_no_focus` chrome, padding and gap). `DigitInput` was already independently confirmed.",
     "`digit_field` is a bare Figma instance with no captured properties at all, and its relationship to `digit_input` is explicitly uninvestigated — so no multi-cell OTP layout is invented for it.",
-    "`InputField` (which drives State's confirmed fill/border/ring chrome) has no `size` prop at all and hard-excludes `type` from its own composition — it only ever renders `Field`'s default size/type internally. In this playground, Size only takes effect for the textarea/advanced_with_buttons types below; State's full confirmed chrome only applies to default/textarea (both real state-driven primitives) — advanced_with_buttons falls back to Field's own plain `disabled` boolean for State, since InputField can't compose that type at all.",
+    "`InputField` now accepts `size` — Figma's own `input_field` component set (node 66056:19180) crosses `state` alone with no size axis, but `fieldChromeStyle`'s state colors/border/ring have no size dependency either, so this composes `field`'s own independently-confirmed xl/lg/md/sm geometry (node 66056:19051) underneath `input_field`'s confirmed per-state chrome, rather than leaving `InputField` locked to Field's bare default size. `InputLabel`/`InputHint` are separately confirmed to support only sm/md — lg/xl map down to their own confirmed md, the closest available, not an invented lg/xl label/hint treatment. `InputField` still hard-excludes `type` from its own composition, since Figma's `input_field` set has no type axis at all — State's full confirmed chrome only applies to default/textarea (both real state-driven primitives); advanced_with_buttons falls back to Field's own plain `disabled` boolean for State, since InputField can't compose that type at all.",
     "buttonColor is a requested addition with no Figma source — Figma's own confirmed advanced_with_buttons composition always uses NewPinkButton (the \"secondary\" default here); primary/dark reuse NewBlueButton/GreyscaleButton's own confirmed color resolvers instead of inventing new colors.",
   ],
   usageExample: `import { InputField } from "@shikho/ui";
@@ -82,7 +82,7 @@ export function EmailField() {
   );
 }`,
   props: [
-    { name: "size", type: "xl | lg | md | sm", defaultValue: "md", description: "`Field` only. Only `md` has confirmed layout data." },
+    { name: "size", type: "xl | lg | md | sm", defaultValue: "md", description: "`Field`'s own confirmed per-size geometry (all 4 sizes independently confirmed). `InputField` now composes this too, underneath its own confirmed per-state chrome." },
     { name: "type", type: "default | textarea | advanced_with_buttons", defaultValue: "default", description: "`Field` only — all three now render their own confirmed structure at every size (P1 repair pass)." },
     { name: "state", type: "default | default_dark | hover | filled | active | error | disabled", defaultValue: "default", description: "Interaction state. Only `active` has a confirmed distinct visual." },
     { name: "label / hint", type: "boolean", defaultValue: "true", description: "`InputField` only — confirmed component booleans controlling the label and hint rows." },
@@ -110,11 +110,13 @@ export function EmailField() {
     // "default" (textarea has no icon slots at all; advanced_with_buttons' only "left" content is
     // the dropdown lead chip itself, controlled by LEFT DROPDOWN instead).
     //
-    // InputField (which drives STATE's confirmed fill/border/ring chrome) hard-excludes `type`
-    // from its own props — it only ever renders Field's "default" type internally. So STATE's
-    // full chrome only applies for type="default"/"textarea" (both real state-driven primitives);
-    // type="advanced_with_buttons" falls back to Field's own plain `disabled` boolean for STATE,
-    // documented as a gap below rather than silently pretended away.
+    // InputField now composes field's own confirmed xl/lg/md/sm geometry underneath its confirmed
+    // per-state chrome (previously hardcoded to Field's bare default size) — see the gaps entry
+    // above for why that's a safe, "least invented" composition rather than a guessed one. It
+    // still hard-excludes `type` from its own props, since Figma's input_field set has no type
+    // axis at all — so STATE's full chrome only applies for type="default"/"textarea" (both real
+    // state-driven primitives); type="advanced_with_buttons" falls back to Field's own plain
+    // `disabled` boolean for STATE, documented as a gap above rather than silently pretended away.
     controls: [
       {
         prop: "size",
@@ -250,12 +252,11 @@ export function EmailField() {
       return (
         <div style={{ width: "100%", maxWidth: 340 }}>
           <InputField
+            size={v.size as FieldSize}
             state={v.state as InputFieldState}
             label={showLabel}
             hint={showHint}
             labelContent="Label"
-            // InputField has no `size` prop at all — it always renders Field at Field's own
-            // default size ("md"). SIZE only takes effect for the other 2 types below.
             fieldProps={{
               textContent: "Input text",
               leftLead: v.leftIcon === "true",
