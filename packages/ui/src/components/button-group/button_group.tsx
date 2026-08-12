@@ -1,5 +1,6 @@
 import { type HTMLAttributes, type ReactNode, forwardRef } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
+import { aiGradientStyle, greyscalePrimaryStyle, iconButtonStyle, rampEmphasisStyle } from "../button/shared";
 
 // docs/audit/button-group.md §2, §3 — button_group: exactly two properties, `size` (xs, sm, md,
 // lg, xl — Scale A, matching button_danger/button_success/Greyscale/icon_button rather than the
@@ -60,13 +61,55 @@ const borderColor = color.black[50];
 
 // docs/audit/button-group.md §14, §17 — the one deep-audited instance's fill (Color/secondary/
 // 500) and label colour (text/white-950), applied identically to all three segments. There is no
-// `type` property on button_group to vary this by, so this single confirmed data point is
+// `type` property on button_group to vary this by — this was the single confirmed data point,
 // applied uniformly, the same reasoning already used for Alert's one confirmed severity.
-const segmentFill = color.secondary[500];
-const segmentText = color.white[950];
+//
+// Not part of the original Figma audit — a requested addition. `family` reuses the same 8 Button
+// families' own confirmed color resolvers (packages/ui/src/components/button/shared.ts) rather
+// than inventing new colors, following the "structure + color, not a new type per color" pattern
+// requested across this batch of feedback. Only each family's own solid/"primary" treatment is
+// reused — ButtonGroup's own confirmed structural conventions (segment-joining, outer-corner-only
+// radius, shared borders, no per-segment shadow) are unaffected by `family` and stay exactly as
+// confirmed regardless of which family is selected. `new_pink` is the default because its solid
+// fill is `color.secondary[500]` — numerically identical to the original confirmed
+// `segmentFill`, so the default appearance is unchanged.
+export type ButtonGroupFamily =
+  | "new_blue"
+  | "new_pink"
+  | "ai_rounded"
+  | "ai_regular"
+  | "button_success"
+  | "button_danger"
+  | "greyscale"
+  | "icon_button";
+
+function familyFillAndText(family: ButtonGroupFamily): { background: string; textColor: string } {
+  switch (family) {
+    case "new_blue":
+      return rampEmphasisStyle(color.primary, "solid", "default", "primary");
+    case "new_pink":
+      return rampEmphasisStyle(color.secondary, "solid", "default", "secondary");
+    case "button_success":
+      return rampEmphasisStyle(color.success, "solid", "default", "success");
+    case "button_danger":
+      return rampEmphasisStyle(color.danger, "solid", "default", "danger");
+    case "greyscale":
+      return greyscalePrimaryStyle("default");
+    case "ai_rounded":
+    case "ai_regular":
+      return aiGradientStyle("Primary", "default");
+    case "icon_button":
+      return iconButtonStyle("primary", "default");
+  }
+}
 
 export interface ButtonGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   size?: ButtonGroupSize;
+  /** Not part of the original Figma audit — a requested addition, default `"new_pink"` (see
+   * above for why that preserves the original confirmed appearance unchanged). All segments
+   * always share one family — button_group has no per-segment type/family axis, confirmed or
+   * otherwise, so mixing families within one group isn't exposed as an option. */
+  family?: ButtonGroupFamily;
   /** Confirmed supported range is 2-6 segments (§5) — not runtime-enforced, just documented. */
   items: ButtonGroupItem[];
 }
@@ -86,10 +129,14 @@ export interface ButtonGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, "
  * breakdown.
  */
 export const ButtonGroup = forwardRef<HTMLDivElement, ButtonGroupProps>(
-  ({ size = "md", items, style, ...props }, ref) => (
+  ({ size = "md", family = "new_pink", items, style, ...props }, ref) => {
+    const { background: segmentFill, textColor: segmentText } = familyFillAndText(family);
+
+    return (
     <div
       ref={ref}
       data-size={size}
+      data-family={family}
       style={{
         display: "inline-flex", // Hug, both axes — §9
         alignItems: "flex-start", // items-start, confirmed cross-axis alignment — §6
@@ -111,7 +158,9 @@ export const ButtonGroup = forwardRef<HTMLDivElement, ButtonGroupProps>(
               justifyContent: "center",
               flexShrink: 0, // shrink-0, confirmed — §9
               padding: paddingForSize[size],
-              backgroundColor: segmentFill,
+              // `background`, not `backgroundColor` — ai_rounded/ai_regular resolve to a CSS
+              // gradient string, which backgroundColor can't hold.
+              background: segmentFill,
               color: segmentText,
               borderStyle: "solid",
               borderColor,
@@ -159,7 +208,8 @@ export const ButtonGroup = forwardRef<HTMLDivElement, ButtonGroupProps>(
         );
       })}
     </div>
-  ),
+    );
+  },
 );
 
 ButtonGroup.displayName = "ButtonGroup";

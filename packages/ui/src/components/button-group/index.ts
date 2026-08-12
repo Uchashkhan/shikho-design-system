@@ -1,1 +1,7 @@
-export { ButtonGroup, type ButtonGroupProps, type ButtonGroupSize, type ButtonGroupItem } from "./button_group";
+export {
+  ButtonGroup,
+  type ButtonGroupProps,
+  type ButtonGroupSize,
+  type ButtonGroupItem,
+  type ButtonGroupFamily,
+} from "./button_group";

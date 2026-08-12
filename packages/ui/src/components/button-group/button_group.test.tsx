@@ -92,11 +92,54 @@ describe("confirmed first/middle/last segment treatment (§15, §16)", () => {
 });
 
 describe("confirmed uniform fill (no type property exists to vary it, §14/§17)", () => {
-  it("applies the confirmed secondary/500 fill and white text to every segment", () => {
+  it("applies the confirmed secondary/500 fill and white text to every segment (default family)", () => {
     const { container } = render(<ButtonGroup items={threeItems} />);
     const first = container.querySelector('[data-segment="first"]') as HTMLElement;
     expect(first.style.backgroundColor).toBe("rgb(226, 0, 141)"); // Color/secondary/500
     expect(first.style.color).toBe("rgb(255, 255, 255)");
+  });
+});
+
+// Requested addition, not part of the original Figma audit. Reuses each of the 8 standalone
+// Button families' own confirmed color resolvers rather than inventing new colors.
+describe("family (requested addition)", () => {
+  it("defaults to new_pink, numerically identical to the original confirmed secondary/500 fill", () => {
+    const { container } = render(<ButtonGroup items={threeItems} />);
+    const first = container.querySelector('[data-segment="first"]') as HTMLElement;
+    expect(first.style.backgroundColor).toBe("rgb(226, 0, 141)");
+    expect(container.firstElementChild).toHaveAttribute("data-family", "new_pink");
+  });
+
+  it("new_blue resolves to the confirmed solid primary/500 fill", () => {
+    const { container } = render(<ButtonGroup items={threeItems} family="new_blue" />);
+    const first = container.querySelector('[data-segment="first"]') as HTMLElement;
+    expect(first.style.backgroundColor).toBe("rgb(84, 104, 255)"); // primary/500
+  });
+
+  it("button_danger resolves to the confirmed solid danger/500 fill", () => {
+    const { container } = render(<ButtonGroup items={threeItems} family="button_danger" />);
+    const first = container.querySelector('[data-segment="first"]') as HTMLElement;
+    expect(first.style.backgroundColor).toBe("rgb(240, 61, 61)"); // danger/500
+  });
+
+  it("greyscale resolves to the confirmed black/900 (88% alpha) fill", () => {
+    const { container } = render(<ButtonGroup items={threeItems} family="greyscale" />);
+    const first = container.querySelector('[data-segment="first"]') as HTMLElement;
+    expect(first.style.backgroundColor).toBe("rgba(0, 0, 0, 0.88)");
+  });
+
+  it("ai_rounded resolves to its confirmed gradient, not a solid color", () => {
+    const { container } = render(<ButtonGroup items={threeItems} family="ai_rounded" />);
+    const first = container.querySelector('[data-segment="first"]') as HTMLElement;
+    expect(first.style.background).toContain("linear-gradient");
+  });
+
+  it("applies one family to every segment — no per-segment family axis exists", () => {
+    const { container } = render(<ButtonGroup items={threeItems} family="button_danger" />);
+    const segments = container.querySelectorAll("[data-segment]");
+    for (const segment of segments) {
+      expect((segment as HTMLElement).style.backgroundColor).toBe("rgb(240, 61, 61)");
+    }
   });
 });
 

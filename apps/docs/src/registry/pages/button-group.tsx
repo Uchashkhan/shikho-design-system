@@ -1,7 +1,17 @@
-import { ButtonGroup, type ButtonGroupSize } from "@shikho/ui";
+import { ButtonGroup, type ButtonGroupFamily, type ButtonGroupSize } from "@shikho/ui";
 import type { ComponentPageConfig } from "./types";
 
 const SIZES: ButtonGroupSize[] = ["xs", "sm", "md", "lg", "xl"];
+const FAMILIES: ButtonGroupFamily[] = [
+  "new_blue",
+  "new_pink",
+  "ai_rounded",
+  "ai_regular",
+  "button_success",
+  "button_danger",
+  "greyscale",
+  "icon_button",
+];
 
 const swatch = (
   <span style={{ display: "block", width: 14, height: 14, background: "#ffffff", borderRadius: 3, opacity: 0.8 }} />
@@ -26,6 +36,7 @@ export const pageConfig: ComponentPageConfig = {
     "secondary_button_effect (a 4-layer inner+drop-shadow composite) is confirmed actually applied, but not implemented — the same explicit decision already made for every standalone Button family, since @shikho/tokens has no effects category yet.",
     "Whether count=4/5/6 repeat the identical square/top-bottom-border middle-segment treatment for every additional middle segment was never inspected — only count=3 (one middle segment) was deep-audited. This implementation applies the same treatment to every non-edge segment.",
     "A confirmed 1-2px width discrepancy vs. standalone buttons of the same size step exists in the audit, but the mechanism is unconfirmed and not reproduced here — this implementation's Hug sizing derives naturally from padding and content.",
+    "family is a requested addition with no Figma source — it reuses each of the 8 standalone Button families' own confirmed color resolvers rather than inventing new colors; ButtonGroup's own confirmed structural conventions (segment-joining, border strategy, corner radius) are unaffected by it.",
   ],
   usageExample: `import { ButtonGroup } from "@shikho/ui";
 
@@ -43,6 +54,7 @@ function ViewToggle() {
 }`,
   props: [
     { name: "size", type: "xs | sm | md | lg | xl", defaultValue: "md", description: "Confirmed Scale A sizing. Only xs's padding/typography are deep-audited." },
+    { name: "family", type: "8 Button families", defaultValue: "new_pink", description: "Requested addition. Reuses each family's own confirmed color resolver; all segments always share one family." },
     { name: "items", type: "{ label: ReactNode; leftIcon?: ReactNode; rightIcon?: ReactNode }[]", description: "One entry per segment. Confirmed supported range is 2-6." },
   ],
   preview: () => (
@@ -53,6 +65,12 @@ function ViewToggle() {
   ),
   playground: {
     controls: [
+      {
+        prop: "family",
+        label: "Family",
+        defaultValue: "new_pink",
+        options: FAMILIES.map((v) => ({ label: v, value: v })),
+      },
       {
         prop: "size",
         label: "Size",
@@ -68,12 +86,27 @@ function ViewToggle() {
     ],
     render: (v) => (
       <ButtonGroup
+        family={v.family as ButtonGroupFamily}
         size={v.size as ButtonGroupSize}
         items={Array.from({ length: Number(v.count) }, (_, i) => ({ label: `${i + 1}` }))}
       />
     ),
   },
   showcases: [
+    {
+      title: "Families — a requested addition, not part of the original Figma audit",
+      description: "Reuses each of the 8 standalone Button families' own confirmed color resolver. All segments in a group always share one family.",
+      layout: "stack",
+      render: () => (
+        <>
+          {FAMILIES.map((family) => (
+            <div key={family} style={{ marginBottom: 12 }}>
+              <ButtonGroup family={family} items={[{ label: "One" }, { label: "Two" }, { label: "Three" }]} />
+            </div>
+          ))}
+        </>
+      ),
+    },
     {
       title: "All five confirmed sizes",
       layout: "stack",
