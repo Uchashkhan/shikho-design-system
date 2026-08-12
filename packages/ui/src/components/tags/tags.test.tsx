@@ -103,6 +103,46 @@ describe("confirmed per-size metrics (docs/audit/tags.md §14) — previously ev
     const iconSlot = screen.getByTestId("icon").parentElement as HTMLElement;
     expect(iconSlot.style.filter).toContain("drop-shadow");
   });
+
+  // Corrected (2026-08-12) — the label's own internal horizontal padding is size-dependent and
+  // non-monotonic (2px/4px/2px), not a flat 2px shared by every size; `md` previously rendered
+  // 2px too little padding around its label.
+  it("confirmed: the label's internal padding is 2px/4px/2px at sm/md/lg, not a flat 2px", () => {
+    const { rerender } = render(<Tags size="sm">Tag</Tags>);
+    expect(screen.getByText("Tag").style.padding).toBe("0px 0.125rem");
+    rerender(<Tags size="md">Tag</Tags>);
+    expect(screen.getByText("Tag").style.padding).toBe("0px 0.25rem");
+    rerender(<Tags size="lg">Tag</Tags>);
+    expect(screen.getByText("Tag").style.padding).toBe("0px 0.125rem");
+  });
+
+  // Confirmed via get_metadata on every sampled `sm` instance (primary, danger, secondary, info,
+  // across default/disabled) — zero left_icon/right_icon child layers, a structural absence, not
+  // a toggled-off default. leftIcon/rightIcon must be a no-op at this size.
+  it("confirmed: icons never render at size=sm, even with leftIcon/rightIcon explicitly true", () => {
+    render(
+      <Tags size="sm" leftIcon rightIcon selectLeftIcon={<svg data-testid="left" />} selectRightIcon={<svg data-testid="right" />}>
+        Tag
+      </Tags>,
+    );
+    expect(screen.queryByTestId("left")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("right")).not.toBeInTheDocument();
+  });
+
+  it("icons still render at md/lg (only sm is excluded)", () => {
+    const { rerender } = render(
+      <Tags size="md" selectLeftIcon={<svg data-testid="left" />}>
+        Tag
+      </Tags>,
+    );
+    expect(screen.getByTestId("left")).toBeInTheDocument();
+    rerender(
+      <Tags size="lg" selectLeftIcon={<svg data-testid="left" />}>
+        Tag
+      </Tags>,
+    );
+    expect(screen.getByTestId("left")).toBeInTheDocument();
+  });
 });
 
 describe("confirmed states (docs/audit/tags.md §14)", () => {

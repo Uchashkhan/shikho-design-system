@@ -21,9 +21,21 @@ export type TagType =
 export type TagState = "disabled" | "hover" | "default";
 
 // docs/audit/tags.md §14 — confirmed real per-size construction (height/padding/rootGap/radius/
-// iconSize/typography), sampled directly at sm/md/lg. The pre-rebuild implementation rendered
-// every size at the same height with an identical, size-invariant horizontal-only padding and a
-// single 12px font — none of which is what Figma actually does.
+// iconSize/typography/labelPadding), sampled directly at sm/md/lg. The pre-rebuild implementation
+// rendered every size at the same height with an identical, size-invariant horizontal-only
+// padding and a single 12px font — none of which is what Figma actually does.
+//
+// Corrected (2026-08-12, re-audited from a `get_metadata`/`get_design_context` sweep across
+// ~16 additional variants): `labelPadding` — the text_wrap's own internal horizontal padding —
+// was previously hardcoded flat at 2px for every size. It's actually size-dependent and
+// non-monotonic: 2px at sm, 4px at md, 2px again at lg (confirmed directly across primary,
+// tertiary, secondary, primary_outline, success, and Danger Filled samples at every size) — `md`
+// was rendering 2px too little internal padding around its label.
+//
+// Also confirmed: `sm` has NO icon slot at all — `get_metadata` on every sampled `sm` instance
+// (primary, danger, secondary, info, across default/disabled states) shows zero `left_icon`/
+// `right_icon` child layers, not just toggled off. `iconSize` below is kept for type-shape
+// consistency but is never applied at `sm` — see the `size !== "sm"` guard in the component body.
 interface SizeMetrics {
   height: number;
   padding: string;
@@ -32,12 +44,13 @@ interface SizeMetrics {
   iconSize: number;
   fontSize: number;
   lineHeight: string;
+  labelPadding: number;
 }
 
 const SIZE_METRICS: Record<TagSize, SizeMetrics> = {
-  sm: { height: 20, padding: "0 0.375rem", rootGap: 2, radius: radius.xs, iconSize: 12, fontSize: 11, lineHeight: "16px" },
-  md: { height: 24, padding: "0.25rem 0.375rem", rootGap: 0, radius: radius.sm, iconSize: 14, fontSize: 11, lineHeight: "16px" },
-  lg: { height: 32, padding: "0.5rem", rootGap: 2, radius: radius.md, iconSize: 16, fontSize: 12, lineHeight: "16px" },
+  sm: { height: 20, padding: "0 0.375rem", rootGap: 2, radius: radius.xs, iconSize: 12, fontSize: 11, lineHeight: "16px", labelPadding: 2 },
+  md: { height: 24, padding: "0.25rem 0.375rem", rootGap: 0, radius: radius.sm, iconSize: 14, fontSize: 11, lineHeight: "16px", labelPadding: 4 },
+  lg: { height: 32, padding: "0.5rem", rootGap: 2, radius: radius.md, iconSize: 16, fontSize: 12, lineHeight: "16px", labelPadding: 2 },
 };
 
 // docs/audit/tags.md §9/§14 — confirmed on every icon slot sampled, the same elevation/e2-based
@@ -133,9 +146,10 @@ export interface TagsProps extends Omit<HTMLAttributes<HTMLSpanElement>, "childr
   size?: TagSize;
   type?: TagType;
   state?: TagState;
-  /** Confirmed boolean property, default true (§14). */
+  /** Confirmed boolean property, default true (§14). No-op at `size="sm"` — confirmed absent from
+   * every sampled `sm` instance, not just toggled off. */
   leftIcon?: boolean;
-  /** Confirmed boolean property, default true (§14). */
+  /** Confirmed boolean property, default true (§14). No-op at `size="sm"` — see `leftIcon`. */
   rightIcon?: boolean;
   /** Confirmed boolean property, default true (§14). */
   text?: boolean;
@@ -171,6 +185,9 @@ export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
     const isDisabled = state === "disabled";
     const metrics = SIZE_METRICS[size];
     const visual = isDisabled ? disabledVisual : TAG_VISUAL[type][state === "hover" ? "hover" : "default"];
+    // Confirmed absent at `sm` — see the SIZE_METRICS comment above. Icons never render at this
+    // size regardless of the leftIcon/rightIcon props, matching every sampled `sm` instance.
+    const showIcons = size !== "sm";
 
     const computed: CSSProperties = {
       display: "inline-flex",
@@ -204,7 +221,7 @@ export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
         style={computed}
         {...props}
       >
-        {leftIcon && <span style={iconStyle}>{selectLeftIcon}</span>}
+        {showIcons && leftIcon && <span style={iconStyle}>{selectLeftIcon}</span>}
         {text && (
           <span
             style={{
@@ -212,7 +229,7 @@ export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
               alignItems: "center",
               justifyContent: "center",
               gap: "0.5rem",
-              padding: "0 0.125rem",
+              padding: `0 ${metrics.labelPadding / 16}rem`,
               fontSize: metrics.fontSize,
               lineHeight: metrics.lineHeight,
               fontWeight: 600, // web/Body SemiBold — the only weight confirmed for this family, §6
@@ -222,7 +239,7 @@ export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
             {children}
           </span>
         )}
-        {rightIcon && <span style={iconStyle}>{selectRightIcon}</span>}
+        {showIcons && rightIcon && <span style={iconStyle}>{selectRightIcon}</span>}
       </span>
     );
   },

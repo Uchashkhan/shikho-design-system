@@ -31,7 +31,7 @@ export const pageConfig: ComponentPageConfig = {
   gaps: [
     "hover for warning/success/primary_light is derived from the confirmed alpha_12 -> alpha_20 system (cross-checked correct on info) rather than independently sampled per type.",
     "hover for the 3 solid-fill types (primary, Danger Filled, Success Filled) is now confirmed via a fresh get_design_context re-check: the fill darkens from ramp-500 to ramp-600. primary_outline's hover is confirmed a light primary/500_alpha_12 tint, correcting an earlier plain-gray guess.",
-    "Icon size at the sm step (12px) is derived by rank from the confirmed 14px@md/16px@lg progression, not independently sampled.",
+    "sm has no icon slot at all, confirmed via get_metadata across 4 types — not a derived 12px guess but a structural absence; leftIcon/rightIcon are a no-op at this size.",
     "Why only danger/success get a \"Filled\" counterpart while warning/info do not is a confirmed asymmetry with no stated reason. Not resolved, not invented.",
   ],
   usageExample: `import { Tags } from "@shikho/ui";
