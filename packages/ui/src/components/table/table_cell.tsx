@@ -101,6 +101,27 @@ function IconSlot({ size, children }: { size: number; children?: ReactNode }) {
   );
 }
 
+// docs/audit/table-deep-audit.md — P18 repair. A fresh get_design_context re-pull on all 4
+// loading-state variants (node 66084:36288 and siblings) found the previous implementation
+// invented a single "2 circles + bar" skeleton and applied it to every type unchanged — but
+// Figma confirms the loading composition genuinely differs by type: header/header_compact have
+// NO circles at all (just a single thin bar), and default_compact's circles/bar are their own
+// confirmed smaller sizes, not default's reused. Padding/gap were also confirmed distinct from
+// each type's normal-state values, not the same table reused.
+interface LoadingConfig {
+  padding: string;
+  gap: string;
+  circleSizes: readonly number[];
+  barHeight: number;
+}
+
+const LOADING_CONFIG: Record<TableCellType, LoadingConfig> = {
+  header: { padding: "0.5rem 1rem 1.25rem", gap: "0.375rem", circleSizes: [], barHeight: 12 },
+  header_compact: { padding: "0.75rem 0.75rem 1.25rem", gap: "0.375rem", circleSizes: [], barHeight: 8 },
+  default: { padding: "0.75rem 1rem", gap: "1rem", circleSizes: [32, 24], barHeight: 16 },
+  default_compact: { padding: "0.75rem", gap: "0.5rem", circleSizes: [24, 20], barHeight: 12 },
+};
+
 function SkeletonCircle({ size }: { size: number }) {
   return (
     <span
@@ -209,13 +230,28 @@ export const TableCell = forwardRef<HTMLDivElement, TableCellProps>(
     };
 
     if (state === "loading") {
+      const loadingCfg = LOADING_CONFIG[type];
       return (
-        <div ref={ref} data-type={type} data-state="loading" style={{ ...rootStyle, gap: "1rem" }} {...props}>
-          <SkeletonCircle size={32} />
-          <SkeletonCircle size={24} />
+        <div
+          ref={ref}
+          data-type={type}
+          data-state="loading"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: loadingCfg.gap,
+            padding: loadingCfg.padding,
+            borderBottom: `1px solid ${color.gray[100]}`,
+            ...style,
+          }}
+          {...props}
+        >
+          {loadingCfg.circleSizes.map((size, i) => (
+            <SkeletonCircle key={i} size={size} />
+          ))}
           <span
             aria-hidden
-            style={{ flex: "1 0 0", height: 16, borderRadius: radius.full, background: color.gray[200] }}
+            style={{ flex: "1 0 0", height: loadingCfg.barHeight, borderRadius: radius.full, background: color.gray[200] }}
           />
         </div>
       );

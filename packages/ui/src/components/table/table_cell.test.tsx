@@ -94,6 +94,59 @@ describe("confirmed state=loading skeleton row (§4)", () => {
   });
 });
 
+// P18 repair — a fresh get_design_context re-pull on all 4 loading-state variants (node
+// 66084:36288 and siblings) found the previous implementation applied one invented "2 circles +
+// bar" skeleton to every type unchanged. Figma confirms header/header_compact have NO circles at
+// all (just a thin bar), and default_compact's circles/bar are their own confirmed smaller sizes
+// — not default's reused. Padding/gap were also confirmed distinct from each type's normal-state
+// values.
+describe("loading skeleton composition genuinely differs by type (P18 repair)", () => {
+  it("header/header_compact render NO circles, only a thin bar", () => {
+    for (const type of ["header", "header_compact"] as const) {
+      const { container, unmount } = render(<TableCell type={type} state="loading" />);
+      const circles = [...container.querySelectorAll('[aria-hidden="true"]')].filter(
+        (el) => (el as HTMLElement).style.borderRadius === "1000px" && (el as HTMLElement).style.width,
+      );
+      expect(circles).toHaveLength(0);
+      unmount();
+    }
+  });
+
+  it("header's bar is 12px tall; header_compact's is 8px", () => {
+    const { container: headerC } = render(<TableCell type="header" state="loading" />);
+    const headerBar = headerC.querySelector('[aria-hidden="true"]') as HTMLElement;
+    expect(headerBar.style.height).toBe("12px");
+
+    const { container: compactC } = render(<TableCell type="header_compact" state="loading" />);
+    const compactBar = compactC.querySelector('[aria-hidden="true"]') as HTMLElement;
+    expect(compactBar.style.height).toBe("8px");
+  });
+
+  it("default renders 32px + 24px circles and a 16px bar", () => {
+    const { container } = render(<TableCell type="default" state="loading" />);
+    const nodes = [...container.querySelectorAll('[aria-hidden="true"]')] as HTMLElement[];
+    expect(nodes.map((n) => n.style.width)).toEqual(["32px", "24px", ""]);
+    expect(nodes.at(-1)?.style.height).toBe("16px");
+  });
+
+  it("default_compact renders its OWN confirmed 24px + 20px circles and a 12px bar, not default's 32/24/16", () => {
+    const { container } = render(<TableCell type="default_compact" state="loading" />);
+    const nodes = [...container.querySelectorAll('[aria-hidden="true"]')] as HTMLElement[];
+    expect(nodes.map((n) => n.style.width)).toEqual(["24px", "20px", ""]);
+    expect(nodes.at(-1)?.style.height).toBe("12px");
+  });
+
+  it("each type's loading padding/gap is confirmed distinct from its normal-state values", () => {
+    const { container: headerLoading } = render(<TableCell type="header" state="loading" />);
+    expect((headerLoading.firstChild as HTMLElement).style.padding).toBe("0.5rem 1rem 1.25rem");
+    expect((headerLoading.firstChild as HTMLElement).style.gap).toBe("0.375rem");
+
+    const { container: defaultCompactLoading } = render(<TableCell type="default_compact" state="loading" />);
+    expect((defaultCompactLoading.firstChild as HTMLElement).style.padding).toBe("0.75rem");
+    expect((defaultCompactLoading.firstChild as HTMLElement).style.gap).toBe("0.5rem");
+  });
+});
+
 describe("checkbox interactivity", () => {
   it("calls onCheckedChange when the row checkbox is toggled", () => {
     const onCheckedChange = vi.fn();

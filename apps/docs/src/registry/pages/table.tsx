@@ -46,7 +46,7 @@ export const pageConfig: ComponentPageConfig = {
     "The original overview audit never ran get_design_context and, based on table_cell exposing \"zero boolean properties in this metadata,\" speculated it might be a simple two-property leaf. A deep re-audit confirms the opposite: table_cell is one of the richest single components audited in this entire library, composing a real nested Checkbox, up to 3 avatar-style image slots, 2 Tags, a dropdown action, and an icon-button action — resolving nearly every open question the original audit left about row selection, avatars, tags, and actions.",
   variants: [
     { name: "type", values: TYPES, note: "header/header_compact are confirmed structurally simpler — no description line, only one avatar slot, no tag/dropdown/action slots." },
-    { name: "state", values: ["default", "loading"], note: "loading is confirmed to render a real skeleton row (2 circles + a full-width bar), not the real content dimmed." },
+    { name: "state", values: ["default", "loading"], note: "loading renders a real skeleton row, not the real content dimmed — but the composition genuinely differs by type (P18): header/header_compact are just a thin bar with no circles at all; default/default_compact each have their own confirmed circle sizes, not a shared 2-circle + bar template." },
   ],
   states: ["default", "loading"],
   gaps: [
@@ -144,14 +144,21 @@ function UserRow() {
       ),
     },
     {
-      title: "Confirmed skeleton loading state",
-      description: "Not the real content dimmed — a genuine 2-circle + full-width-bar skeleton composition.",
+      title: "Confirmed skeleton loading state — genuinely differs by type",
+      description:
+        "Not the real content dimmed. Re-checked against fresh get_design_context pulls on all 4 types (P18): header/header_compact are just a single thin bar with NO circles at all; default has its own confirmed 32px+24px circles and 16px bar; default_compact has its own smaller 24px+20px circles and 12px bar — none of the 4 share one template.",
+      layout: "stack",
       render: () => (
-        <div style={{ width: 500, border: "1px solid #f4f4f6", borderRadius: 8 }}>
-          {[1, 2, 3].map((i) => (
-            <TableCell key={i} state="loading" />
+        <>
+          {TYPES.map((type) => (
+            <div key={type}>
+              <p style={{ fontSize: 11, color: "#8c929c", margin: "0 0 4px" }}>{type}</p>
+              <div style={{ width: 500, border: "1px solid #f4f4f6", borderRadius: 8 }}>
+                <TableCell type={type} state="loading" />
+              </div>
+            </div>
           ))}
-        </div>
+        </>
       ),
     },
   ],
