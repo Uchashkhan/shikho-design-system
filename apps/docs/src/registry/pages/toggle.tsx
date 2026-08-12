@@ -1,5 +1,13 @@
-import { Toggle, type ToggleSize } from "@shikho/ui";
+import { Toggle, type ToggleSize, type ToggleState } from "@shikho/ui";
 import type { ComponentPageConfig } from "./types";
+
+const TOGGLE_STATES: ToggleState[] = [
+  "switch_OFF",
+  "switch_ON",
+  "switch_ON_focused",
+  "switch_OFF_disabled",
+  "switch_ON_disabled",
+];
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
@@ -41,6 +49,7 @@ export function NotificationSetting() {
     { name: "checked", type: "boolean", description: "Native controlled state. Figma calls this `switch_ON`; the native prop name is kept." },
     { name: "defaultChecked", type: "boolean", description: "Native uncontrolled initial state." },
     { name: "disabled", type: "boolean", description: "Native disabled attribute." },
+    { name: "state", type: "switch_OFF | switch_ON | switch_ON_focused | switch_OFF_disabled | switch_ON_disabled", description: "Forces any of the 5 confirmed Figma states for a static preview (e.g. switch_ON_focused, which otherwise only shows while a real cursor/keyboard is actively focusing the element). Left unset, real checked/disabled + actual keyboard focus drive it." },
     { name: "…", type: "InputHTMLAttributes<HTMLInputElement>", description: "All other native input props are forwarded. The element carries role=\"switch\"." },
   ],
   preview: () => (
@@ -60,32 +69,14 @@ export function NotificationSetting() {
         options: ["lg", "md", "sm"].map((v) => ({ label: v, value: v })),
       },
       {
-        prop: "checked",
+        prop: "state",
         label: "State",
-        defaultValue: "true",
-        options: [
-          { label: "switch_ON", value: "true" },
-          { label: "switch_OFF", value: "false" },
-        ],
-      },
-      {
-        prop: "disabled",
-        label: "Disabled",
-        defaultValue: "false",
-        options: [
-          { label: "enabled", value: "false" },
-          { label: "disabled", value: "true" },
-        ],
+        defaultValue: "switch_ON",
+        options: TOGGLE_STATES.map((s) => ({ label: s, value: s })),
       },
     ],
     render: (v) => (
-      <Toggle
-        size={v.size as ToggleSize}
-        checked={v.checked === "true"}
-        disabled={v.disabled === "true"}
-        readOnly
-        aria-label="Toggle preview"
-      />
+      <Toggle size={v.size as ToggleSize} state={v.state as ToggleState} readOnly aria-label="Toggle preview" />
     ),
   },
   showcases: [
@@ -117,6 +108,22 @@ export function NotificationSetting() {
           <Toggle disabled aria-label="switch_OFF_disabled" />
           <Toggle disabled defaultChecked aria-label="switch_ON_disabled" />
         </>
+      ),
+    },
+    {
+      title: "All 5 confirmed states",
+      description:
+        "Every state forced via the state prop — including switch_ON_focused, which previously had no way to render without a live cursor/keyboard (there is no switch_OFF_focused or hover state; both are confirmed absent from Figma's own enum).",
+      layout: "stack",
+      render: () => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
+          {TOGGLE_STATES.map((s) => (
+            <span key={s} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              <Toggle state={s} readOnly aria-label={s} />
+              <span style={{ fontSize: 11, color: "#8c929c" }}>{s}</span>
+            </span>
+          ))}
+        </div>
       ),
     },
   ],

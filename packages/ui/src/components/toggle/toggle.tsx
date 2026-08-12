@@ -8,6 +8,20 @@ import { CheckIcon } from "@shikho/icons";
 // sizes for `md` vs `lg` despite their identical outer hit-box — see trackSizePx/knobSizePx.
 export type ToggleSize = "lg" | "md" | "sm";
 
+// docs/audit/toggle.md §2 — Figma's own `state` property is a genuine 5-value variant axis
+// (literal casing/values preserved verbatim, including the mixed-case `switch_ON_disabled`):
+// switch_OFF, switch_ON, switch_ON_focused, switch_OFF_disabled, switch_ON_disabled. Confirmed
+// asymmetric: only switch_ON gets a _focused variant (no switch_OFF_focused), and there's no
+// hover state at all. Previously there was no way to force any of this for a static preview —
+// switch_ON_focused specifically only ever appeared while a real cursor/keyboard was actively
+// focusing the element (the same gap already fixed on radio.tsx's `state` prop).
+export type ToggleState =
+  | "switch_OFF"
+  | "switch_ON"
+  | "switch_ON_focused"
+  | "switch_OFF_disabled"
+  | "switch_ON_disabled";
+
 const boxSizePx: Record<ToggleSize, { width: number; height: number }> = {
   lg: { width: 40, height: 24 },
   md: { width: 40, height: 24 }, // confirmed identical outer box to lg (§4) — not an error
@@ -95,6 +109,11 @@ export interface ToggleProps
    */
   checked?: boolean;
   defaultChecked?: boolean;
+  /** Forces a specific Figma-confirmed visual state (used by Storybook/playground controls to
+   * preview `switch_ON_focused` without a live cursor/keyboard). Left unset, the real
+   * checked/disabled state plus actual keyboard focus drive it — see `radio.tsx` for the
+   * identical fix and its rationale. */
+  state?: ToggleState;
 }
 
 /**
@@ -106,7 +125,7 @@ export interface ToggleProps
  * browsers draw as a plain checkbox square, not a switch.
  */
 export const Toggle = forwardRef<HTMLInputElement, ToggleProps>(
-  ({ size = "md", checked, defaultChecked, disabled, className, style, onFocus, onBlur, onChange, ...props }, ref) => {
+  ({ size = "md", checked, defaultChecked, disabled, state, className, style, onFocus, onBlur, onChange, ...props }, ref) => {
     const internalRef = useRef<HTMLInputElement>(null);
     useImperativeHandle(ref, () => internalRef.current as HTMLInputElement);
 
@@ -115,10 +134,31 @@ export const Toggle = forwardRef<HTMLInputElement, ToggleProps>(
     const isControlled = checked !== undefined;
     const resolvedChecked = isControlled ? !!checked : uncontrolledChecked;
 
+    // An explicit `state` always overrides the real interaction-derived values below — see
+    // radio.tsx for the identical pattern.
+    const effective = state
+      ? {
+          checked: state === "switch_ON" || state === "switch_ON_focused" || state === "switch_ON_disabled",
+          disabled: state === "switch_OFF_disabled" || state === "switch_ON_disabled",
+          focused: state === "switch_ON_focused",
+        }
+      : { checked: resolvedChecked, disabled: !!disabled, focused };
+    const resolvedState: ToggleState =
+      state ??
+      (effective.disabled
+        ? effective.checked
+          ? "switch_ON_disabled"
+          : "switch_OFF_disabled"
+        : effective.checked
+          ? effective.focused
+            ? "switch_ON_focused"
+            : "switch_ON"
+          : "switch_OFF");
+
     const box = boxSizePx[size];
     const track = trackSizePx[size];
     const knob = knobSizePx[size];
-    const visual = resolveVisual(resolvedChecked, !!disabled);
+    const visual = resolveVisual(effective.checked, effective.disabled);
 
     const trackStyle: CSSProperties = {
       position: "absolute",
@@ -131,11 +171,11 @@ export const Toggle = forwardRef<HTMLInputElement, ToggleProps>(
       padding: KNOB_INSET,
       background: visual.trackBackground,
       borderRadius: radius.full,
-      boxShadow: resolvedChecked && focused ? focusRing : undefined,
+      boxShadow: effective.checked && effective.focused ? focusRing : undefined,
       pointerEvents: "none",
       display: "flex",
       alignItems: "center",
-      justifyContent: resolvedChecked ? "flex-end" : "flex-start",
+      justifyContent: effective.checked ? "flex-end" : "flex-start",
     };
 
     const knobStyle: CSSProperties = {
@@ -162,6 +202,7 @@ export const Toggle = forwardRef<HTMLInputElement, ToggleProps>(
           {...(isControlled ? { checked: resolvedChecked } : { defaultChecked })}
           disabled={disabled}
           data-size={size}
+          data-state={resolvedState}
           className="absolute inset-0 m-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
           style={{ width: box.width, height: box.height }}
           onChange={(e) => {

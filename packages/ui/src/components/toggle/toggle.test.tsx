@@ -156,6 +156,45 @@ describe("ToggleLabel — confirmed real composition, Medium/500 label weight at
   });
 });
 
+// P16 — Figma's own `state` property is a confirmed 5-value variant axis, but there was
+// previously no way to force any of it for a static preview — switch_ON_focused specifically
+// only ever appeared while a real cursor/keyboard was actively focusing the element (the same
+// gap already fixed on radio.tsx's `state` prop).
+describe("explicit `state` forces any of the 5 confirmed visuals (P16)", () => {
+  it("switch_ON_focused renders the checked track/knob AND the primary-alpha ring without real focus", () => {
+    const { container } = render(<Toggle state="switch_ON_focused" aria-label="Preview" />);
+    const track = container.querySelector('[aria-hidden="true"]') as HTMLElement;
+    expect(track.style.background).toBe("rgb(84, 104, 255)"); // primary/500
+    expect(track.style.boxShadow).toContain("#5468ff3d");
+    expect(track.querySelector("svg")).toBeInTheDocument(); // the checkmark
+  });
+
+  it("sets data-state to the resolved value for every forced state", () => {
+    const states = [
+      "switch_OFF",
+      "switch_ON",
+      "switch_ON_focused",
+      "switch_OFF_disabled",
+      "switch_ON_disabled",
+    ] as const;
+    for (const s of states) {
+      const { unmount } = render(<Toggle state={s} aria-label="Preview" />);
+      expect(screen.getByRole("switch", { name: "Preview" })).toHaveAttribute("data-state", s);
+      unmount();
+    }
+  });
+
+  it("without an explicit state, data-state still derives from real checked/focus", () => {
+    render(<Toggle aria-label="Real" />);
+    const input = screen.getByRole("switch", { name: "Real" });
+    expect(input).toHaveAttribute("data-state", "switch_OFF");
+    fireEvent.click(input);
+    expect(input).toHaveAttribute("data-state", "switch_ON");
+    fireEvent.focus(input);
+    expect(input).toHaveAttribute("data-state", "switch_ON_focused");
+  });
+});
+
 describe("no unsupported states are exported", () => {
   it("has no indeterminate prop (confirmed absent from toggle's state enum, unlike Checkbox/Radio)", () => {
     const props = Object.keys((<Toggle aria-label="x" />).props);
