@@ -19,6 +19,156 @@ const dot = (
   />
 );
 
+// docs/audit/buttons.md §2 — the 8 confirmed families, each its own export with its own
+// confirmed size scale, type vocabulary, and state casing (never merged into one shared API).
+// The single cross-family playground below lets every one of them be previewed from one set of
+// controls, resolving each family's own confirmed values rather than inventing a shared one.
+type ButtonFamily =
+  | "new_blue"
+  | "new_pink"
+  | "ai_rounded"
+  | "ai_regular"
+  | "button_success"
+  | "button_danger"
+  | "greyscale"
+  | "icon_button";
+
+const FAMILIES: ButtonFamily[] = [
+  "new_blue",
+  "new_pink",
+  "ai_rounded",
+  "ai_regular",
+  "button_success",
+  "button_danger",
+  "greyscale",
+  "icon_button",
+];
+
+// Two competing size scales (§14) — xs/sm/md/lg shared by both, only the top step differs
+// (xl vs xxl). Families on scale A never accept "xxl"; families on scale B never accept "xl".
+const SCALE_A_FAMILIES: ButtonFamily[] = ["button_success", "button_danger", "greyscale", "icon_button"];
+const SIZE_OPTIONS = ["xs", "sm", "md", "lg", "xl", "xxl"];
+
+/** Maps the playground's single xl/xxl step onto whichever top step the selected family actually has. */
+function resolveSize(family: ButtonFamily, size: string): string {
+  const isScaleA = SCALE_A_FAMILIES.includes(family);
+  if (size === "xl" && !isScaleA) return "xxl";
+  if (size === "xxl" && isScaleA) return "xl";
+  return size;
+}
+
+// Four families use Capitalized state values, four use lowercase (§2, a confirmed
+// inconsistency) — one canonical Capitalized control, cased per family at render time.
+const CAPITALIZED_STATE_FAMILIES: ButtonFamily[] = ["new_blue", "new_pink", "ai_rounded", "ai_regular"];
+const STATE_OPTIONS = ["Default", "Hover", "Focus", "Disabled"];
+
+function resolveState(family: ButtonFamily, state: string): string {
+  return CAPITALIZED_STATE_FAMILIES.includes(family) ? state : state.toLowerCase();
+}
+
+// The union of every family's own confirmed type values, casing preserved verbatim (including
+// ai_regular's confirmed lowercase "purple" vs ai_rounded's "Purple" — a real inconsistency, not
+// normalized away). Each family only recognizes its own subset (§2); anything else falls back to
+// that family's own confirmed default type rather than rendering nothing.
+const TYPE_OPTIONS = [
+  "Outline",
+  "Primary",
+  "Secondary",
+  "Text",
+  "primary",
+  "secondary",
+  "tertiary",
+  "Green",
+  "Purple",
+  "purple",
+  "blue gradient",
+  "neutral",
+  "primary_light",
+  "quaternary",
+  "tertiary_light",
+];
+
+const FAMILY_TYPES: Record<ButtonFamily, { valid: string[]; default: string }> = {
+  new_blue: { valid: ["Outline", "Primary", "Secondary", "Text"], default: "Primary" },
+  new_pink: { valid: ["Outline", "Primary", "Secondary", "Text"], default: "Primary" },
+  ai_rounded: { valid: ["Green", "Primary", "Purple", "blue gradient"], default: "Primary" },
+  ai_regular: { valid: ["Green", "Primary", "blue gradient", "purple"], default: "Primary" },
+  button_success: { valid: ["Outline", "Secondary", "Text", "primary"], default: "primary" },
+  button_danger: { valid: ["Secondary", "Text", "primary", "tertiary"], default: "Secondary" },
+  greyscale: { valid: ["Outline", "Secondary", "Text", "primary"], default: "primary" },
+  icon_button: {
+    valid: ["neutral", "primary", "primary_light", "quaternary", "secondary", "tertiary", "tertiary_light"],
+    default: "primary",
+  },
+};
+
+function resolveType(family: ButtonFamily, type: string): string {
+  const cfg = FAMILY_TYPES[family];
+  return cfg.valid.includes(type) ? type : cfg.default;
+}
+
+function FamilyPreview({ family, size, type, state }: { family: ButtonFamily; size: string; type: string; state: string }) {
+  const resolvedSize = resolveSize(family, size);
+  const resolvedType = resolveType(family, type);
+  const resolvedState = resolveState(family, state);
+
+  switch (family) {
+    case "new_blue":
+      return (
+        <NewBlueButton size={resolvedSize as NewBlueSize} type={resolvedType as NewBlueType} state={resolvedState as NewBlueState}>
+          Button
+        </NewBlueButton>
+      );
+    case "new_pink":
+      return (
+        <NewPinkButton size={resolvedSize as any} type={resolvedType as any} state={resolvedState as any}>
+          Button
+        </NewPinkButton>
+      );
+    case "ai_rounded":
+      return (
+        <AiRoundedButton size={resolvedSize as any} type={resolvedType as any} state={resolvedState as any}>
+          Button
+        </AiRoundedButton>
+      );
+    case "ai_regular":
+      return (
+        <AiRegularButton size={resolvedSize as any} type={resolvedType as any} state={resolvedState as any}>
+          Button
+        </AiRegularButton>
+      );
+    case "button_success":
+      return (
+        <ButtonSuccess size={resolvedSize as any} type={resolvedType as any} state={resolvedState as any}>
+          Button
+        </ButtonSuccess>
+      );
+    case "button_danger":
+      return (
+        <ButtonDanger size={resolvedSize as any} type={resolvedType as any} state={resolvedState as any}>
+          Button
+        </ButtonDanger>
+      );
+    case "greyscale":
+      return (
+        <GreyscaleButton size={resolvedSize as any} type={resolvedType as any} state={resolvedState as any}>
+          Button
+        </GreyscaleButton>
+      );
+    case "icon_button":
+      // IconButton is icon-only (§ props table) — no text children, requires icon + aria-label.
+      return (
+        <IconButton
+          size={resolvedSize as any}
+          type={resolvedType as any}
+          state={resolvedState as any}
+          icon={dot}
+          aria-label="Icon button preview"
+        />
+      );
+  }
+}
+
 export const pageConfig: ComponentPageConfig = {
   longDescription:
     "The audit found eight sibling button component sets that do not share a common type or state vocabulary — and even disagree on the name of their largest size step. They are published as eight separate components rather than merged into one API, so those confirmed differences are preserved rather than erased. A deep re-audit (docs/audit/buttons.md §14) later found the original implementation had captured every family's variant vocabulary but never rendered a single instance — borders, shadows, gradients, and several color mappings were invented rather than confirmed. This has been rebuilt from ~35 get_design_context calls across all 8 families; see the audit's §14.1 for exactly what was wrong.",
@@ -73,32 +223,32 @@ export function SaveAction() {
   playground: {
     controls: [
       {
+        prop: "family",
+        label: "Family",
+        defaultValue: "new_blue",
+        options: FAMILIES.map((v) => ({ label: v, value: v })),
+      },
+      {
         prop: "size",
         label: "Size",
         defaultValue: "md",
-        options: ["xs", "sm", "md", "lg", "xxl"].map((v) => ({ label: v, value: v })),
+        options: SIZE_OPTIONS.map((v) => ({ label: v, value: v })),
       },
       {
         prop: "type",
         label: "Type",
         defaultValue: "Primary",
-        options: ["Outline", "Primary", "Secondary", "Text"].map((v) => ({ label: v, value: v })),
+        options: TYPE_OPTIONS.map((v) => ({ label: v, value: v })),
       },
       {
         prop: "state",
         label: "State",
         defaultValue: "Default",
-        options: ["Default", "Hover", "Focus", "Disabled"].map((v) => ({ label: v, value: v })),
+        options: STATE_OPTIONS.map((v) => ({ label: v, value: v })),
       },
     ],
     render: (v) => (
-      <NewBlueButton
-        size={v.size as NewBlueSize}
-        type={v.type as NewBlueType}
-        state={v.state as NewBlueState}
-      >
-        Button
-      </NewBlueButton>
+      <FamilyPreview family={v.family as ButtonFamily} size={v.size} type={v.type} state={v.state} />
     ),
   },
   showcases: [

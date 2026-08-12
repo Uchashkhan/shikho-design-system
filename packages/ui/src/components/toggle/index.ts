@@ -1,4 +1,4 @@
-export { Toggle, type ToggleProps, type ToggleSize } from "./toggle";
+export { Toggle, type ToggleProps, type ToggleSize, type ToggleState } from "./toggle";
 export {
   ToggleLabel,
   type ToggleLabelProps,
