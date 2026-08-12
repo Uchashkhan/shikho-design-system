@@ -21,6 +21,23 @@ function DotsIcon() {
     </svg>
   );
 }
+function StarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width={20} height={20} fill="none" aria-hidden>
+      <path
+        d="M10 2l2.2 5.2 5.6.5-4.3 3.7 1.3 5.5L10 14l-4.8 2.9 1.3-5.5-4.3-3.7 5.6-.5L10 2z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+function FlagIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width={20} height={20} fill="none" aria-hidden>
+      <path d="M5 2v16M5 3h9l-2 3 2 3H5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function InteractivePreview() {
   const [checked, setChecked] = useState(false);
@@ -76,6 +93,9 @@ function UserRow() {
     { name: "state", type: "default | loading", defaultValue: "default", description: "loading renders a confirmed skeleton row, not dimmed real content." },
     { name: "checkbox / checked / onCheckedChange", type: "boolean / boolean / (checked) => void", description: "Confirmed real nested Checkbox dependency." },
     { name: "avatar", type: "{ size: \"xs\"|\"sm\"|\"md\"; src?; alt? }", description: "Confirmed avatar-style image slot, pixel sizes vary by density." },
+    { name: "leftIcon / rightIcon / secondaryRightIcon", type: "ReactNode", description: "Confirmed single 24px icons (default/default_compact) — leftIcon and rightIcon (\"right_icon1\") flank the text group; secondaryRightIcon (\"right_icon2\") is a second single icon, distinct from the icon groups below." },
+    { name: "leftIconGroupIcon1 / leftIconGroupIcon2", type: "ReactNode", description: "Confirmed 2-icon group (20px each), rendered BEFORE the single leftIcon — default/default_compact only, ignored on header types (P19)." },
+    { name: "rightIconGroupIcon1 / rightIconGroupIcon2", type: "ReactNode", description: "Confirmed 2-icon group (20px each), rendered AFTER rightIcon/secondaryRightIcon — default/default_compact only, ignored on header types (P19)." },
     { name: "heading / supportText / description", type: "ReactNode", description: "description is confirmed absent on header types." },
     { name: "tag1 / tag2", type: "ReactNode", description: "Reuse the real Tags component — secondary and primary_light types respectively." },
     { name: "dropdownContent / onDropdownClick", type: "ReactNode / () => void", description: "Confirmed default/default_compact-only action." },
@@ -139,6 +159,27 @@ function UserRow() {
             tag2="Verified"
             dropdownContent={<>Admin <ChevronDownIcon /></>}
             actionIcon={<DotsIcon />}
+          />
+        </div>
+      ),
+    },
+    {
+      title: "Confirmed icon groups — distinct from the single left/right icons",
+      description:
+        "A fresh get_design_context re-pull on the richest type=default instance (node 66084:36311) found a confirmed 2-icon group on EACH side (20px icons, gap 4px), rendered before the single leftIcon and after rightIcon/secondaryRightIcon respectively — not a single secondary icon per side as previously implemented (P19). The single leftIcon/rightIcon/secondaryRightIcon are 24px, matching each other exactly.",
+      render: () => (
+        <div style={{ width: 500, border: "1px solid #f4f4f6", borderRadius: 8 }}>
+          <TableCell
+            leftIconGroupIcon1={<StarIcon />}
+            leftIconGroupIcon2={<FlagIcon />}
+            leftIcon={<DotsIcon />}
+            heading="Jane Doe"
+            supportText="Admin"
+            description="jane@example.com"
+            rightIcon={<DotsIcon />}
+            secondaryRightIcon={<DotsIcon />}
+            rightIconGroupIcon1={<StarIcon />}
+            rightIconGroupIcon2={<FlagIcon />}
           />
         </div>
       ),

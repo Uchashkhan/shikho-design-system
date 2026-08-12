@@ -150,12 +150,24 @@ export interface TableCellProps extends Omit<HTMLAttributes<HTMLDivElement>, "ch
    * regardless of `avatar.size` — the header family's single avatar slot is confirmed NOT to
    * scale between header and header_compact the way `default`'s 3-slot table does (§6). */
   avatar?: TableCellAvatar;
+  /** Confirmed single `left_icon` (24px at `default`/`default_compact`, 18/16px at
+   * `header`/`header_compact` — §6). Renders AFTER `leftIconGroup`'s two icons, matching the
+   * confirmed layer order (P19 — a fresh get_design_context re-pull on node 66084:36311). */
   leftIcon?: ReactNode;
-  /** Confirmed `default`/`default_compact`-only slot (§6) — the header family has no icon-group
-   * concept, only a single `leftIcon`/`rightIcon`; ignored for `header` types. */
-  secondaryLeftIcon?: ReactNode;
+  /** Confirmed `default`/`default_compact`-only 2-icon group (`left_icon_group`, P19), rendered
+   * BEFORE the single `leftIcon` — the header family has no icon-group concept at all. Replaces
+   * the previous single-icon `secondaryLeftIcon`, which didn't match this confirmed 2-icon
+   * group or its render position. */
+  leftIconGroupIcon1?: ReactNode;
+  leftIconGroupIcon2?: ReactNode;
+  /** Confirmed `right_icon1` (§6/P19) — same 24px/18px/16px sizing as `leftIcon`. */
   rightIcon?: ReactNode;
+  /** Confirmed `right_icon2` — a second single icon, distinct from the `right_icon_group` below. */
   secondaryRightIcon?: ReactNode;
+  /** Confirmed `default`/`default_compact`-only 2-icon group (`right_icon_group`, P19), rendered
+   * AFTER `rightIcon`/`secondaryRightIcon` — the header family has no icon-group concept. */
+  rightIconGroupIcon1?: ReactNode;
+  rightIconGroupIcon2?: ReactNode;
   heading?: ReactNode;
   supportText?: ReactNode;
   /** Confirmed absent on `header`/`header_compact` types (§2) — ignored for those types. */
@@ -193,9 +205,12 @@ export const TableCell = forwardRef<HTMLDivElement, TableCellProps>(
       onCheckedChange,
       avatar,
       leftIcon,
-      secondaryLeftIcon,
+      leftIconGroupIcon1,
+      leftIconGroupIcon2,
       rightIcon,
       secondaryRightIcon,
+      rightIconGroupIcon1,
+      rightIconGroupIcon2,
       heading,
       supportText,
       description,
@@ -268,8 +283,18 @@ export const TableCell = forwardRef<HTMLDivElement, TableCellProps>(
           />
         )}
         {avatar && <AvatarSlot size={avatarPx} src={avatar.src} alt={avatar.alt} />}
-        {leftIcon && <IconSlot size={header ? headerIconSize : groupIconSize}>{leftIcon}</IconSlot>}
-        {!header && secondaryLeftIcon && <IconSlot size={groupIconSize}>{secondaryLeftIcon}</IconSlot>}
+        {/* P19 repair — confirmed left_icon_group (2 icons, group size) renders BEFORE the
+            single left_icon, not after — the header family has no group concept at all. */}
+        {!header && (leftIconGroupIcon1 || leftIconGroupIcon2) && (
+          <span style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0 }}>
+            {leftIconGroupIcon1 && <IconSlot size={groupIconSize}>{leftIconGroupIcon1}</IconSlot>}
+            {leftIconGroupIcon2 && <IconSlot size={groupIconSize}>{leftIconGroupIcon2}</IconSlot>}
+          </span>
+        )}
+        {/* P19 repair — the single left_icon is confirmed 24px (default) / 18px (header) /
+            16px (header_compact), same as right_icon1 — previously sized with groupIconSize
+            (20/18), the GROUP's size, not this single icon's own confirmed size. */}
+        {leftIcon && <IconSlot size={header ? headerIconSize : iconSize}>{leftIcon}</IconSlot>}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", ...headingTypography }}>
             {heading && (
@@ -296,7 +321,17 @@ export const TableCell = forwardRef<HTMLDivElement, TableCellProps>(
           )}
         </div>
         {rightIcon && <IconSlot size={header ? headerIconSize : iconSize}>{rightIcon}</IconSlot>}
-        {!header && secondaryRightIcon && <IconSlot size={groupIconSize}>{secondaryRightIcon}</IconSlot>}
+        {/* P19 repair — right_icon2 is confirmed the SAME 24px single-icon size as right_icon1,
+            not groupIconSize (20) — previously wrongly sized as if it belonged to the group. */}
+        {!header && secondaryRightIcon && <IconSlot size={iconSize}>{secondaryRightIcon}</IconSlot>}
+        {/* P19 repair — confirmed right_icon_group (2 icons, group size), previously missing
+            entirely, rendered AFTER right_icon1/right_icon2. */}
+        {!header && (rightIconGroupIcon1 || rightIconGroupIcon2) && (
+          <span style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0 }}>
+            {rightIconGroupIcon1 && <IconSlot size={groupIconSize}>{rightIconGroupIcon1}</IconSlot>}
+            {rightIconGroupIcon2 && <IconSlot size={groupIconSize}>{rightIconGroupIcon2}</IconSlot>}
+          </span>
+        )}
         {!header && tag1 && (
           <Tags size="md" type="secondary">
             {tag1}

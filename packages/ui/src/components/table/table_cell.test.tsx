@@ -209,3 +209,69 @@ describe("confirmed corrections from a fresh get_design_context re-audit (docs/a
     expect(button.style.boxShadow).toBeFalsy();
   });
 });
+
+// P19 repair — a fresh get_design_context re-pull on the user-supplied node (66084:36311, the
+// richest type=default/state=default instance) found the confirmed component actually exposes a
+// 2-icon group on EACH side (left_icon_group, right_icon_group, both 20px group-sized icons) in
+// addition to the single left_icon/right_icon1/right_icon2 (24px) — not the single
+// secondaryLeftIcon/secondaryRightIcon slots previously implemented. It also found leftIcon was
+// sized with the GROUP's 20px instead of its own confirmed 24px single-icon size, and
+// secondaryRightIcon (right_icon2) was likewise wrongly sized 20px instead of 24px.
+describe("confirmed icon-group structure (P19 repair)", () => {
+  it("leftIcon renders at the confirmed 24px single-icon size, not the 20px group size", () => {
+    render(<TableCell heading="Row" leftIcon={<span data-testid="left" />} />);
+    const slot = screen.getByTestId("left").parentElement as HTMLElement;
+    expect(slot.style.width).toBe("24px");
+  });
+
+  it("secondaryRightIcon (right_icon2) renders at the confirmed 24px single-icon size, matching rightIcon1, not 20px", () => {
+    render(<TableCell heading="Row" rightIcon={<span data-testid="r1" />} secondaryRightIcon={<span data-testid="r2" />} />);
+    expect((screen.getByTestId("r1").parentElement as HTMLElement).style.width).toBe("24px");
+    expect((screen.getByTestId("r2").parentElement as HTMLElement).style.width).toBe("24px");
+  });
+
+  it("renders the confirmed left_icon_group (2 icons, 20px) before the single leftIcon", () => {
+    const { container } = render(
+      <TableCell
+        heading="Row"
+        leftIconGroupIcon1={<span data-testid="lg1" />}
+        leftIconGroupIcon2={<span data-testid="lg2" />}
+        leftIcon={<span data-testid="left" />}
+      />,
+    );
+    const slots = [...container.querySelectorAll("span[style*='width']")].filter(
+      (s) => s.querySelector("[data-testid]"),
+    );
+    const order = slots.map((s) => s.querySelector("[data-testid]")?.getAttribute("data-testid"));
+    expect(order.indexOf("lg1")).toBeLessThan(order.indexOf("left"));
+    expect(order.indexOf("lg2")).toBeLessThan(order.indexOf("left"));
+    expect((screen.getByTestId("lg1").parentElement as HTMLElement).style.width).toBe("20px");
+  });
+
+  it("renders the confirmed right_icon_group (2 icons, 20px) after rightIcon/secondaryRightIcon", () => {
+    render(
+      <TableCell
+        heading="Row"
+        rightIcon={<span data-testid="r1" />}
+        secondaryRightIcon={<span data-testid="r2" />}
+        rightIconGroupIcon1={<span data-testid="rg1" />}
+        rightIconGroupIcon2={<span data-testid="rg2" />}
+      />,
+    );
+    expect((screen.getByTestId("rg1").parentElement as HTMLElement).style.width).toBe("20px");
+    expect((screen.getByTestId("rg2").parentElement as HTMLElement).style.width).toBe("20px");
+  });
+
+  it("icon groups are ignored on header types, matching the confirmed absence of a group concept there", () => {
+    render(
+      <TableCell
+        type="header"
+        heading="Row"
+        leftIconGroupIcon1={<span data-testid="lg1" />}
+        rightIconGroupIcon1={<span data-testid="rg1" />}
+      />,
+    );
+    expect(screen.queryByTestId("lg1")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("rg1")).not.toBeInTheDocument();
+  });
+});
