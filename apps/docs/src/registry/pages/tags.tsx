@@ -1,5 +1,7 @@
-import { Tags, type TagSize, type TagState, type TagType } from "@shikho/ui";
+import { Tags, type TagShape, type TagSize, type TagState, type TagType } from "@shikho/ui";
 import type { ComponentPageConfig } from "./types";
+
+const SHAPES: TagShape[] = ["default", "pill"];
 
 const TYPES: TagType[] = [
   "info",
@@ -33,6 +35,7 @@ export const pageConfig: ComponentPageConfig = {
     "hover for the 3 solid-fill types (primary, Danger Filled, Success Filled) is now confirmed via a fresh get_design_context re-check: the fill darkens from ramp-500 to ramp-600. primary_outline's hover is confirmed a light primary/500_alpha_12 tint, correcting an earlier plain-gray guess.",
     "sm has no icon slot at all, confirmed via get_metadata across 4 types — not a derived 12px guess but a structural absence; leftIcon/rightIcon are a no-op at this size.",
     "Why only danger/success get a \"Filled\" counterpart while warning/info do not is a confirmed asymmetry with no stated reason. Not resolved, not invented.",
+    "shape is a requested addition with no Figma source — implemented as pure engineering (radius.full for pill, plus a couple more px of horizontal padding so it still reads as a Tag rather than a Button) rather than an invented pixel value.",
   ],
   usageExample: `import { Tags } from "@shikho/ui";
 
@@ -45,6 +48,7 @@ export function StatusLabel({ status }: { status: "success" | "danger" | "warnin
 }`,
   props: [
     { name: "size", type: "lg | md | sm", defaultValue: "md", description: "Confirmed bounding-box height; width is left to content." },
+    { name: "shape", type: "default | pill", defaultValue: "default", description: "Requested addition. pill uses a true stadium radius plus slightly more horizontal padding." },
     { name: "type", type: "11 confirmed values", defaultValue: "info", description: "Colour treatment. Casing preserved verbatim, including the two Title Case \"Filled\" values." },
     { name: "state", type: "disabled | hover | default", defaultValue: "default", description: "disabled sets aria-disabled plus visual dimming — a <span> has no native disabled attribute." },
     { name: "children", type: "ReactNode", description: "Label content. No default is supplied." },
@@ -66,6 +70,12 @@ export function StatusLabel({ status }: { status: "success" | "danger" | "warnin
         options: ["lg", "md", "sm"].map((v) => ({ label: v, value: v })),
       },
       {
+        prop: "shape",
+        label: "Shape",
+        defaultValue: "default",
+        options: SHAPES.map((v) => ({ label: v, value: v })),
+      },
+      {
         prop: "type",
         label: "Type",
         defaultValue: "info",
@@ -79,7 +89,7 @@ export function StatusLabel({ status }: { status: "success" | "danger" | "warnin
       },
     ],
     render: (v) => (
-      <Tags size={v.size as TagSize} type={v.type as TagType} state={v.state as TagState}>
+      <Tags size={v.size as TagSize} shape={v.shape as TagShape} type={v.type as TagType} state={v.state as TagState}>
         {v.type}
       </Tags>
     ),
@@ -125,6 +135,16 @@ export function StatusLabel({ status }: { status: "success" | "danger" | "warnin
         <>
           <Tags type="secondary">secondary</Tags>
           <Tags type="tertiary">tertiary</Tags>
+        </>
+      ),
+    },
+    {
+      title: "Shapes — a requested addition, not part of the original Figma audit",
+      description: "pill uses a true stadium radius plus a couple more px of horizontal padding so it still reads as a Tag rather than a Button.",
+      render: () => (
+        <>
+          <Tags type="primary" shape="default">default</Tags>
+          <Tags type="primary" shape="pill">pill</Tags>
         </>
       ),
     },

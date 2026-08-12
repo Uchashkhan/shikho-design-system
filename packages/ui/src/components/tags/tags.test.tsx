@@ -193,6 +193,25 @@ describe("confirmed hover corrections from a fresh re-audit (docs/audit/tags.md 
   });
 });
 
+// Requested addition, not part of the original Figma audit.
+describe("shape (requested addition)", () => {
+  it("default keeps the confirmed per-size rectangle radius and padding", () => {
+    const { container } = render(<Tags size="md">Tag</Tags>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.borderRadius).toBe("8px");
+    expect(root.style.padding).toBe("0.25rem 0.375rem");
+    expect(root).toHaveAttribute("data-shape", "default");
+  });
+
+  it("pill uses a true stadium radius with slightly more horizontal padding, unchanged vertical padding", () => {
+    const { container } = render(<Tags size="md" shape="pill">Tag</Tags>);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.borderRadius).toBe("1000px");
+    expect(root.style.padding).toBe("0.25rem 0.5rem"); // was 0.25rem 0.375rem — vertical (0.25rem) unchanged
+    expect(root).toHaveAttribute("data-shape", "pill");
+  });
+});
+
 describe("no unsupported variant is exported", () => {
   it("rejects a state value outside the confirmed 3-value enum — no focus, no drag", () => {
     // @ts-expect-error - "focus" is not a confirmed tags state (only disabled/hover/default exist, §2)

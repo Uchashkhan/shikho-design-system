@@ -19,6 +19,10 @@ export type TagType =
   | "primary_light"
   | "primary";
 export type TagState = "disabled" | "hover" | "default";
+/** Not part of the original Figma audit — a requested addition. `default` keeps the confirmed
+ * small rounded-rectangle radius; `pill` uses a true stadium radius plus a couple more px of
+ * horizontal padding so it still reads as a Tag rather than a Button, per spec. */
+export type TagShape = "default" | "pill";
 
 // docs/audit/tags.md §14 — confirmed real per-size construction (height/padding/rootGap/radius/
 // iconSize/typography/labelPadding), sampled directly at sm/md/lg. The pre-rebuild implementation
@@ -51,6 +55,16 @@ const SIZE_METRICS: Record<TagSize, SizeMetrics> = {
   sm: { height: 20, padding: "0 0.375rem", rootGap: 2, radius: radius.xs, iconSize: 12, fontSize: 11, lineHeight: "16px", labelPadding: 2 },
   md: { height: 24, padding: "0.25rem 0.375rem", rootGap: 0, radius: radius.sm, iconSize: 14, fontSize: 11, lineHeight: "16px", labelPadding: 4 },
   lg: { height: 32, padding: "0.5rem", rootGap: 2, radius: radius.md, iconSize: 16, fontSize: 12, lineHeight: "16px", labelPadding: 2 },
+};
+
+// Requested addition, not part of the original Figma audit. A couple more px of horizontal
+// padding than SIZE_METRICS' own confirmed value, per spec ("the Pill variant can have slightly
+// more horizontal padding than the default, but it should still clearly read as a Tag rather
+// than a Button") — vertical padding is untouched.
+const PILL_PADDING: Record<TagSize, string> = {
+  sm: "0 0.5rem", // 8px, was 6px
+  md: "0.25rem 0.5rem", // 8px, was 6px
+  lg: "0.5rem 0.625rem", // 10px, was 8px
 };
 
 // docs/audit/tags.md §9/§14 — confirmed on every icon slot sampled, the same elevation/e2-based
@@ -146,6 +160,8 @@ export interface TagsProps extends Omit<HTMLAttributes<HTMLSpanElement>, "childr
   size?: TagSize;
   type?: TagType;
   state?: TagState;
+  /** Not part of the original Figma audit — a requested addition. */
+  shape?: TagShape;
   /** Confirmed boolean property, default true (§14). No-op at `size="sm"` — confirmed absent from
    * every sampled `sm` instance, not just toggled off. */
   leftIcon?: boolean;
@@ -171,6 +187,7 @@ export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
       size = "md",
       type = "info",
       state = "default",
+      shape = "default",
       leftIcon = true,
       rightIcon = true,
       text = true,
@@ -195,8 +212,8 @@ export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
       justifyContent: "center",
       height: metrics.height,
       gap: metrics.rootGap,
-      padding: metrics.padding,
-      borderRadius: metrics.radius,
+      padding: shape === "pill" ? PILL_PADDING[size] : metrics.padding,
+      borderRadius: shape === "pill" ? radius.full : metrics.radius,
       background: visual.background,
       border: visual.border,
       boxShadow: restingInset,
@@ -217,6 +234,7 @@ export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
         data-size={size}
         data-type={type}
         data-state={state}
+        data-shape={shape}
         aria-disabled={isDisabled || undefined}
         style={computed}
         {...props}
