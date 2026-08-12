@@ -124,9 +124,16 @@ describe("AiRoundedButton — confirmed real gradients, and a true pill radius (
     expect(screen.getByRole("button", { name: "Ask AI" }).style.background).toContain("74, 37, 225");
   });
 
-  it("Purple type renders a radial gradient approximation of the confirmed 6-stop effect", () => {
+  // Purple's confirmed gradient is a real affine-transformed radial (§14.3/§15) — plain CSS
+  // radial-gradient() can't express that, so it's rendered as the literal inline SVG Figma uses,
+  // parametrized to any button size via gradientUnits="objectBoundingBox" (see purpleGradientSvg
+  // in shared.ts).
+  it("Purple type renders the confirmed 6-stop affine gradient as an inline SVG, not a CSS approximation", () => {
     render(<AiRoundedButton type="Purple">Ask AI</AiRoundedButton>);
-    expect(screen.getByRole("button", { name: "Ask AI" }).style.background).toContain("radial-gradient");
+    const background = screen.getByRole("button", { name: "Ask AI" }).style.background;
+    expect(background).toContain("image/svg+xml");
+    expect(background).toContain("objectBoundingBox");
+    expect(background).toContain("167%2C136%2C253"); // rgb(167,136,253), percent-encoded
   });
 
   it("radius is a true pill (radius.full), confirmed height/2 at every sampled size", () => {
@@ -150,7 +157,7 @@ describe("AiRoundedButton/AiRegularButton disabled — type-specific recipe, not
     const washed: Record<"Green" | "blue gradient" | "Purple", string> = {
       Green: "237, 245, 217",
       "blue gradient": "204, 194, 247",
-      Purple: "230,222,254",
+      Purple: "230%2C222%2C254", // rgb(230,222,254), percent-encoded inside the SVG data URI
     };
     for (const type of ["Green", "blue gradient", "Purple"] as const) {
       const { unmount } = render(<AiRoundedButton type={type} state="Disabled">Ask AI</AiRoundedButton>);
@@ -170,7 +177,7 @@ describe("AiRoundedButton/AiRegularButton disabled — type-specific recipe, not
 describe("AiRegularButton — same confirmed gradients as ai_rounded, scale radius not pill", () => {
   it("purple (lowercase) shares ai_rounded's Purple gradient definition", () => {
     render(<AiRegularButton type="purple">Ask AI</AiRegularButton>);
-    expect(screen.getByRole("button", { name: "Ask AI" }).style.background).toContain("radial-gradient");
+    expect(screen.getByRole("button", { name: "Ask AI" }).style.background).toContain("167%2C136%2C253");
   });
 
   it("uses the ordinary scale radius, not a pill", () => {

@@ -206,15 +206,56 @@ export function greyscalePrimaryStyle(phase: ButtonPhase): ResolvedButtonStyle {
 // confirmed and no token exists" rule applied everywhere else in this codebase.
 export type AiGradientType = "Primary" | "blue gradient" | "Green" | "Purple";
 
+// A CSS `url()` value can't contain a literal space or `(`/`)` and parse in every environment —
+// real browsers tolerate it, but jsdom's `cssstyle` parser (used by this package's own tests)
+// silently drops the entire declaration if it sees one unescaped. `encodeURIComponent` alone
+// isn't enough since it deliberately leaves `(`/`)` unescaped (they're "unreserved" per RFC 3986)
+// — those are escaped separately here.
+function svgDataUri(svg: string): string {
+  const encoded = encodeURIComponent(svg).replace(/\(/g, "%28").replace(/\)/g, "%29");
+  return `url("data:image/svg+xml,${encoded}")`;
+}
+
+// docs/audit/buttons.md §14.3/§15 — Purple's confirmed gradient (`Gradient/G4`) is a 6-stop
+// RADIAL gradient with a genuine affine (rotated/skewed/off-center) transform that plain CSS
+// `radial-gradient()` cannot express — Figma itself renders it as an inline SVG. Reproduced here
+// as that literal SVG rather than the earlier circular-gradient approximation. Sampling the raw
+// `gradientTransform` matrix at two different rendered sizes (`ai_rounded xxl`, viewBox 167×56,
+// node 66050:9322; `ai_regular md`, viewBox 122×40, node 64699:8498) showed the matrix's x-column
+// coefficients (`a`, `c`, `e`) scale exactly linearly with the instance's pixel WIDTH and its
+// y-column coefficients (`b`, `d`) scale exactly linearly with its pixel HEIGHT — i.e. the
+// transform is really defined as a fixed fraction of the element's own bounding box. Dividing the
+// sampled matrices by their respective W/H gives one size-independent matrix (below) that,
+// combined with `gradientUnits="objectBoundingBox"`, reproduces the confirmed shape at any button
+// size or content width — SVG's objectBoundingBox space IS that same per-axis W/H normalization.
+const PURPLE_GRADIENT_TRANSFORM = "matrix(0.1125 -0.111225 0.11104 0.09033 1.04396 0)";
+
+function purpleGradientSvg(stops: ReadonlyArray<readonly [offset: number, color: string]>): string {
+  const stopEls = stops.map(([offset, c]) => `<stop offset="${offset}" stop-color="${c}"/>`).join("");
+  return svgDataUri(
+    `<svg viewBox="0 0 1 1" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">` +
+      `<rect x="0" y="0" width="1" height="1" fill="url(#g)"/>` +
+      `<defs><radialGradient id="g" gradientUnits="objectBoundingBox" cx="0" cy="0" r="10" gradientTransform="${PURPLE_GRADIENT_TRANSFORM}">${stopEls}</radialGradient></defs>` +
+      `</svg>`,
+  );
+}
+
+// The 6 confirmed color stops (§14.3), unchanged from the prior approximation — only the shape
+// (circular -> the real affine ellipse) was wrong, not the colors.
+const PURPLE_STOPS: ReadonlyArray<readonly [number, string]> = [
+  [0, "rgb(167,136,253)"],
+  [0.25, "rgb(135,104,220)"],
+  [0.5, "rgb(102,72,186)"],
+  [0.75, "rgb(70,40,153)"],
+  [0.875, "rgb(54,24,136)"],
+  [1, "rgb(37,8,120)"],
+];
+
 const GRADIENTS: Record<AiGradientType, string> = {
   Primary: "linear-gradient(67.34deg, rgb(255, 55, 223) 0.54%, rgb(110, 0, 255) 99.41%)", // Gradient/G2
   "blue gradient": "linear-gradient(42.88deg, rgb(74, 37, 225) 0.88%, rgb(123, 90, 255) 91.67%)", // Gradient/G3
   Green: "linear-gradient(223.88deg, rgb(189, 219, 121) 3.93%, rgb(48, 138, 79) 96.62%)", // Gradient/G5
-  // Gradient/G4 — confirmed as a 6-stop RADIAL gradient with an affine (rotated/skewed) transform
-  // in Figma, rendered via an inline SVG data URI. Standard CSS radial-gradient() cannot express
-  // that affine transform; this is a documented, non-pixel-exact approximation using the same 6
-  // confirmed color stops on an ordinary circular radial-gradient (§14.3).
-  Purple: "radial-gradient(circle, rgba(167,136,253,1) 0%, rgba(135,104,220,1) 25%, rgba(102,72,186,1) 50%, rgba(70,40,153,1) 75%, rgba(54,24,136,1) 87.5%, rgba(37,8,120,1) 100%)",
+  Purple: purpleGradientSvg(PURPLE_STOPS),
 };
 
 export interface ResolvedAiButtonStyle extends ResolvedButtonStyle {
@@ -237,11 +278,21 @@ export interface ResolvedAiButtonStyle extends ResolvedButtonStyle {
 // gradients. (Figma's own `Purple`/`Disabled` swatch literally reuses `blue gradient`'s exact RGB
 // stops at every size sampled — a copy-paste artifact in the file, not a real Purple sample — so
 // this washes Purple's own confirmed default gradient instead of reproducing that anomaly.)
+// Same `base * 0.28 + white * 0.72` composite as Green/blue-gradient's washed stops above, applied
+// to Purple's own real affine SVG shape (`purpleGradientSvg`) instead of a circular approximation.
+const PURPLE_DISABLED_STOPS: ReadonlyArray<readonly [number, string]> = [
+  [0, "rgb(230,222,254)"],
+  [0.25, "rgb(221,213,245)"],
+  [0.5, "rgb(212,204,236)"],
+  [0.75, "rgb(203,195,226)"],
+  [0.875, "rgb(199,190,222)"],
+  [1, "rgb(194,186,217)"],
+];
+
 const DISABLED_GRADIENTS: Record<Exclude<AiGradientType, "Primary">, string> = {
   "blue gradient": "linear-gradient(42.88deg, rgb(204, 194, 247) 0.88%, rgb(218, 209, 255) 91.67%)",
   Green: "linear-gradient(223.88deg, rgb(237, 245, 217) 3.93%, rgb(197, 222, 206) 96.62%)",
-  Purple:
-    "radial-gradient(circle, rgba(230,222,254,1) 0%, rgba(221,213,245,1) 25%, rgba(212,204,236,1) 50%, rgba(203,195,226,1) 75%, rgba(199,190,222,1) 87.5%, rgba(194,186,217,1) 100%)",
+  Purple: purpleGradientSvg(PURPLE_DISABLED_STOPS),
 };
 
 /**
