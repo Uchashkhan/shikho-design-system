@@ -1,5 +1,15 @@
-import { Radio, RadioLabel, type RadioSize } from "@shikho/ui";
+import { Radio, RadioLabel, type RadioSize, type RadioState } from "@shikho/ui";
 import type { ComponentPageConfig } from "./types";
+
+const RADIO_STATES: RadioState[] = [
+  "inactive",
+  "hover",
+  "inactive_focused",
+  "active",
+  "active_focused",
+  "indeterminate",
+  "disabled",
+];
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
@@ -30,6 +40,7 @@ export function PlanPicker() {
     { name: "indeterminate", type: "boolean", defaultValue: "false", description: "Exposed as a data attribute only — radios have no native indeterminate property and no visual was confirmed." },
     { name: "name", type: "string", description: "Native grouping — radios sharing a name are mutually exclusive." },
     { name: "disabled", type: "boolean", description: "Native disabled attribute." },
+    { name: "state", type: "inactive | hover | inactive_focused | active | active_focused | indeterminate | disabled", description: "Forces any of the 7 confirmed Figma states for a static preview (e.g. active_focused, which otherwise only shows while a real cursor/keyboard is actively focusing the element). Left unset, real checked/indeterminate/disabled + actual pointer/keyboard interaction drive it." },
     { name: "…", type: "InputHTMLAttributes<HTMLInputElement>", description: "All other native input props are forwarded." },
   ],
   preview: () => (
@@ -52,32 +63,14 @@ export function PlanPicker() {
         ],
       },
       {
-        prop: "checked",
-        label: "Selected",
-        defaultValue: "true",
-        options: [
-          { label: "active", value: "true" },
-          { label: "inactive", value: "false" },
-        ],
-      },
-      {
-        prop: "disabled",
-        label: "Disabled",
-        defaultValue: "false",
-        options: [
-          { label: "enabled", value: "false" },
-          { label: "disabled", value: "true" },
-        ],
+        prop: "state",
+        label: "State",
+        defaultValue: "active",
+        options: RADIO_STATES.map((s) => ({ label: s, value: s })),
       },
     ],
     render: (v) => (
-      <Radio
-        size={v.size as RadioSize}
-        checked={v.checked === "true"}
-        disabled={v.disabled === "true"}
-        readOnly
-        aria-label="Radio preview"
-      />
+      <Radio size={v.size as RadioSize} state={v.state as RadioState} readOnly aria-label="Radio preview" />
     ),
   },
   showcases: [
@@ -120,38 +113,16 @@ export function PlanPicker() {
     {
       title: "All 7 confirmed states",
       description:
-        "inactive/active/indeterminate/disabled are shown via props; hover and inactive_focused/active_focused respond to a real pointer/keyboard focus — hover or Tab into the unlabeled ones to see them.",
+        "Every state forced via the state prop (P15) — including active_focused and inactive_focused, which previously had no way to render without a live cursor/keyboard. The unlabeled first Radio in the Interactive preview above still derives its look from real checked/hover/focus, same as normal usage.",
       layout: "stack",
       render: () => (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
-          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <Radio aria-label="inactive" />
-            <span style={{ fontSize: 11, color: "#8c929c" }}>inactive</span>
-          </span>
-          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <Radio aria-label="hover me" />
-            <span style={{ fontSize: 11, color: "#8c929c" }}>hover</span>
-          </span>
-          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <Radio aria-label="tab to me (inactive_focused)" />
-            <span style={{ fontSize: 11, color: "#8c929c" }}>inactive_focused</span>
-          </span>
-          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <Radio defaultChecked aria-label="active" />
-            <span style={{ fontSize: 11, color: "#8c929c" }}>active</span>
-          </span>
-          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <Radio defaultChecked aria-label="tab to me (active_focused)" />
-            <span style={{ fontSize: 11, color: "#8c929c" }}>active_focused</span>
-          </span>
-          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <Radio indeterminate aria-label="indeterminate" />
-            <span style={{ fontSize: 11, color: "#8c929c" }}>indeterminate</span>
-          </span>
-          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <Radio disabled aria-label="disabled" />
-            <span style={{ fontSize: 11, color: "#8c929c" }}>disabled</span>
-          </span>
+          {RADIO_STATES.map((s) => (
+            <span key={s} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              <Radio state={s} readOnly aria-label={s} />
+              <span style={{ fontSize: 11, color: "#8c929c" }}>{s}</span>
+            </span>
+          ))}
         </div>
       ),
     },

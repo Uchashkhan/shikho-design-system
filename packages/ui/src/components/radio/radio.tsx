@@ -12,6 +12,23 @@ import { color, radius } from "@shikho/tokens";
 // No `shape`/`type` property exists at all — radio is always circular.
 export type RadioSize = "md" | "sm";
 
+// docs/audit/radio-buttons.md §2 — Figma's own `state` property is a genuine 7-value variant
+// axis (this exact enum, `active`/`inactive` casing preserved), not just "hover/focus derived
+// from a real pointer." Previously there was no way to force any of these for a static preview —
+// `state` left unset (the normal case for real usage) still derives everything from real
+// checked/indeterminate/disabled + actual pointer hover + actual keyboard focus, matching every
+// other pointer/focus-driven component in this library; an explicit `state` always overrides,
+// for Storybook/playground previews of states like `active_focused` that a static screenshot
+// can't otherwise capture without a live cursor/keyboard.
+export type RadioState =
+  | "inactive"
+  | "hover"
+  | "inactive_focused"
+  | "active"
+  | "active_focused"
+  | "indeterminate"
+  | "disabled";
+
 const outerSizePx: Record<RadioSize, number> = { md: 24, sm: 20 };
 const innerSizePx: Record<RadioSize, number> = { md: 18, sm: 16 };
 // docs/audit/radio-buttons.md §15 — the "active" (selected) dot is a punched-out white circle
@@ -90,6 +107,11 @@ export interface RadioProps
    * (a confirmed pill-shaped dash mark, §15) rather than a native property.
    */
   indeterminate?: boolean;
+  /** Forces a specific Figma-confirmed visual state (used by Storybook/playground controls to
+   * preview e.g. `active_focused` without a live cursor/keyboard). Left unset, the real
+   * checked/indeterminate/disabled state plus actual pointer hover and keyboard focus drive it —
+   * see `sidebar_item.tsx` for the identical fix and its rationale. */
+  state?: RadioState;
 }
 
 /**
@@ -107,6 +129,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
       defaultChecked,
       indeterminate = false,
       disabled,
+      state,
       className,
       style,
       onFocus,
@@ -127,9 +150,42 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
     const isControlled = checked !== undefined;
     const resolvedChecked = isControlled ? !!checked : uncontrolledChecked;
 
+    // An explicit `state` always overrides the real interaction-derived values below — see
+    // sidebar_item.tsx for the identical pattern.
+    const effective = state
+      ? {
+          checked: state === "active" || state === "active_focused",
+          indeterminate: state === "indeterminate",
+          disabled: state === "disabled",
+          hover: state === "hover",
+          focused: state === "active_focused" || state === "inactive_focused",
+        }
+      : { checked: resolvedChecked, indeterminate, disabled: !!disabled, hover: hovered, focused };
+    const resolvedState: RadioState =
+      state ??
+      (effective.disabled
+        ? "disabled"
+        : effective.indeterminate
+          ? "indeterminate"
+          : effective.checked
+            ? effective.focused
+              ? "active_focused"
+              : "active"
+            : effective.focused
+              ? "inactive_focused"
+              : effective.hover
+                ? "hover"
+                : "inactive");
+
     const outerSize = outerSizePx[size];
     const innerSize = innerSizePx[size];
-    const visual = resolveVisual(resolvedChecked, indeterminate, !!disabled, hovered, focused);
+    const visual = resolveVisual(
+      effective.checked,
+      effective.indeterminate,
+      effective.disabled,
+      effective.hover,
+      effective.focused,
+    );
 
     const circleStyle: CSSProperties = {
       position: "absolute",
@@ -160,6 +216,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
           {...(isControlled ? { checked: resolvedChecked } : { defaultChecked })}
           disabled={disabled}
           data-size={size}
+          data-state={resolvedState}
           data-indeterminate={indeterminate || undefined}
           className="absolute inset-0 m-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
           style={{ width: outerSize, height: outerSize }}

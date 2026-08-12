@@ -182,6 +182,51 @@ describe("RadioLabel — confirmed real composition with size-dependent label ty
   });
 });
 
+// P15 — Figma's own `state` property is a confirmed 7-value variant axis, but there was
+// previously no way to force any of it for a static preview (e.g. active_focused, which
+// otherwise only appears while a real cursor/keyboard is actively focusing the element).
+describe("explicit `state` forces any of the 7 confirmed visuals (P15)", () => {
+  it("active_focused renders the checked disc/dot AND the primary-alpha ring without a real pointer/keyboard", () => {
+    const { container } = render(<Radio state="active_focused" aria-label="Preview" />);
+    const visibleCircle = container.querySelector('[aria-hidden="true"]') as HTMLElement;
+    expect(visibleCircle.style.background).toBe("rgb(84, 104, 255)"); // primary/500
+    expect(visibleCircle.style.boxShadow).toContain("#5468ff3d");
+    expect(visibleCircle.querySelector("span")).toBeInTheDocument(); // the white dot
+  });
+
+  it("inactive_focused renders the gray ring and darkened border without real focus", () => {
+    const { container } = render(<Radio state="inactive_focused" aria-label="Preview" />);
+    const visibleCircle = container.querySelector('[aria-hidden="true"]') as HTMLElement;
+    expect(visibleCircle.style.boxShadow).toContain("#dddfe4");
+    expect(visibleCircle.style.border).toContain("140, 146, 156"); // gray/600
+  });
+
+  it("sets data-state to the resolved value for every forced state", () => {
+    const states = [
+      "inactive",
+      "hover",
+      "inactive_focused",
+      "active",
+      "active_focused",
+      "indeterminate",
+      "disabled",
+    ] as const;
+    for (const s of states) {
+      const { unmount } = render(<Radio state={s} aria-label="Preview" />);
+      expect(screen.getByRole("radio", { name: "Preview" })).toHaveAttribute("data-state", s);
+      unmount();
+    }
+  });
+
+  it("without an explicit state, data-state still derives from real checked/hover/focus", () => {
+    render(<Radio aria-label="Real" />);
+    const input = screen.getByRole("radio", { name: "Real" });
+    expect(input).toHaveAttribute("data-state", "inactive");
+    fireEvent.mouseEnter(input);
+    expect(input).toHaveAttribute("data-state", "hover");
+  });
+});
+
 describe("no unsupported properties are exported", () => {
   it("rejects a size value outside the confirmed enum at the type level", () => {
     // @ts-expect-error - "lg" is not a confirmed radio size (only md/sm exist, §4)
