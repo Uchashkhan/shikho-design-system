@@ -417,6 +417,36 @@ describe("remaining Input family members render their confirmed state vocabulary
     expect(textarea.style.padding).toBe("0.75rem 1rem"); // py-12/px-16, not field's 8px/10px
   });
 
+  // §16/§17 — Textarea's own Figma component set has no size axis (only one instance was ever
+  // sampled); that sample turned out to be a byte-for-byte match for field's own type="textarea"
+  // "lg" row, not "md". size now defaults to "lg" to reproduce that exact original sample, and
+  // reuses the other 3 already-confirmed sizes from the same table as the least-invented extension.
+  describe("Textarea: size (composes field's own confirmed per-size textarea geometry)", () => {
+    it("defaults to lg, matching the original confirmed sample exactly", () => {
+      render(<Textarea aria-label="Message" />);
+      const textarea = screen.getByRole("textbox", { name: "Message" });
+      expect(textarea).toHaveAttribute("data-size", "lg");
+      expect(textarea.style.borderRadius).toBe("16px");
+      expect(textarea.style.padding).toBe("0.75rem 1rem");
+    });
+
+    it("renders at every confirmed size with genuinely different padding/radius", () => {
+      const rows: [FieldSize, string, string][] = [
+        ["sm", "8px", "0.5rem"],
+        ["md", "10px", "0.5rem 0.75rem"],
+        ["lg", "16px", "0.75rem 1rem"],
+        ["xl", "16px", "1rem"],
+      ];
+      for (const [size, radius, padding] of rows) {
+        const { unmount } = render(<Textarea aria-label="Message" size={size} />);
+        const textarea = screen.getByRole("textbox", { name: "Message" });
+        expect(textarea.style.borderRadius, size).toBe(radius);
+        expect(textarea.style.padding, size).toBe(padding);
+        unmount();
+      }
+    });
+  });
+
   it("Textarea: confirmed error reddens the input text itself (danger-500) — a genuine divergence from InputField's error, which keeps gray-700 text", () => {
     render(<Textarea state="error" aria-label="Message" />);
     expect(screen.getByRole("textbox", { name: "Message" }).style.color).toBe("rgb(240, 61, 61)");

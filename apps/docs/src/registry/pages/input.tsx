@@ -68,6 +68,7 @@ export const pageConfig: ComponentPageConfig = {
     "`digit_field` is a bare Figma instance with no captured properties at all, and its relationship to `digit_input` is explicitly uninvestigated — so no multi-cell OTP layout is invented for it.",
     "`InputField` now accepts `size` — Figma's own `input_field` component set (node 66056:19180) crosses `state` alone with no size axis, but `fieldChromeStyle`'s state colors/border/ring have no size dependency either, so this composes `field`'s own independently-confirmed xl/lg/md/sm geometry (node 66056:19051) underneath `input_field`'s confirmed per-state chrome, rather than leaving `InputField` locked to Field's bare default size. `InputLabel`/`InputHint` are separately confirmed to support only sm/md — lg/xl map down to their own confirmed md, the closest available, not an invented lg/xl label/hint treatment. `InputField` still hard-excludes `type` from its own composition, since Figma's `input_field` set has no type axis at all — State's full confirmed chrome only applies to default/textarea (both real state-driven primitives); advanced_with_buttons falls back to Field's own plain `disabled` boolean for State, since InputField can't compose that type at all.",
     "buttonColor is a requested addition with no Figma source — Figma's own confirmed advanced_with_buttons composition always uses NewPinkButton (the \"secondary\" default here); primary/dark reuse NewBlueButton/GreyscaleButton's own confirmed color resolvers instead of inventing new colors.",
+    "`Textarea` now accepts `size` too. Its own Figma component set (node 66056:19282) has no size axis — only one instance was ever sampled — but that sample's confirmed padding/radius is a byte-for-byte match with field's own type=\"textarea\" \"lg\" row, not \"md\" as originally assumed. `size` now defaults to \"lg\" (reproducing the original sample exactly) and reuses the other 3 already-confirmed sizes from that same table (now shared between Field and Textarea as `TEXTAREA_METRICS` in shared.ts) as the least-invented extension.",
   ],
   usageExample: `import { InputField } from "@shikho/ui";
 
@@ -215,6 +216,7 @@ export function EmailField() {
           <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: "0.25rem", alignItems: "flex-start" }}>
             {showLabel && <InputLabel>Label</InputLabel>}
             <Textarea
+              size={v.size as FieldSize}
               state={v.state as TextareaState}
               placeholder="Write something…"
               rows={3}
@@ -355,6 +357,21 @@ export function EmailField() {
               <Dropdown state={state} style={{ maxWidth: 260 }}>
                 Select an option
               </Dropdown>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      title: "Textarea — all four confirmed sizes",
+      description: "size defaults to \"lg\" — the exact size of the one sample Figma's own textarea component set confirms — and reuses field's own already-confirmed xl/lg/md/sm textarea geometry for the other 3.",
+      layout: "stack",
+      render: () => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(["xl", "lg", "md", "sm"] as FieldSize[]).map((size) => (
+            <div key={size} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 70, fontSize: 12, color: "#8c929c", flexShrink: 0 }}>{size}</span>
+              <Textarea size={size} aria-label={`Message (${size})`} placeholder="Write something…" rows={2} style={{ width: 260 }} />
             </div>
           ))}
         </div>

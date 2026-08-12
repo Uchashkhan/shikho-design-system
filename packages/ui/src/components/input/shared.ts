@@ -32,6 +32,34 @@ export const FIELD_SIZE_METRICS: Record<FieldSize, FieldSizeMetrics> = {
   xl: { height: 56, padding: "1rem 0.875rem", gap: 6, radius: radius.xl, iconSize: 24, fontSize: 18, lineHeight: "24px" },
 };
 
+interface TextareaSizeMetrics {
+  height: number;
+  padding: string;
+  radius: number;
+  gap: string;
+  image: number;
+  resizer: number;
+}
+
+// docs/audit/input.md §16 — `field`'s own `type="textarea"` sub-variant, confirmed per-size via
+// an independent get_design_context pull at every step (P1 repair pass) — genuinely different
+// geometry from FIELD_SIZE_METRICS' `default`/`advanced_with_buttons` rows (its own radius/
+// padding/gap/image/resizer scale). The standalone `Textarea` primitive (textarea.tsx) is built
+// from a SEPARATE Figma component set (node 66056:19282) with no size axis of its own — only one
+// instance was ever sampled there — but that single sample's confirmed geometry (padding
+// "0.75rem 1rem", radius.xl/16px) is a byte-for-byte match with this table's own `lg` row, not
+// `md` as originally assumed when Textarea was first built. That match is the basis for reusing
+// this one table for both: Textarea defaults to `size="lg"` (preserving its own confirmed sample
+// exactly) and picks up the other 3 already-confirmed sizes as the least-invented extension,
+// rather than Textarea and Field's textarea variant silently drifting into two different scales
+// for what Figma itself renders as effectively the same construction.
+export const TEXTAREA_METRICS: Record<FieldSize, TextareaSizeMetrics> = {
+  sm: { height: 72, padding: "0.5rem", radius: radius.sm, gap: "0.5rem", image: 16, resizer: 20 },
+  md: { height: 96, padding: "0.5rem 0.75rem", radius: radius.md, gap: "0.5rem", image: 24, resizer: 20 },
+  lg: { height: 104, padding: "0.75rem 1rem", radius: radius.xl, gap: "0.75rem", image: 24, resizer: 20 },
+  xl: { height: 128, padding: "1rem", radius: radius.xl, gap: "1rem", image: 32, resizer: 24 },
+};
+
 // docs/audit/input.md §9/§14 — the icon-slot drop-shadow filter, confirmed present on every icon
 // in every Input component sampled (field, input_field, dropdown, input_hint) — the same
 // elevation/e2-based pattern used system-wide, but never actually applied in the pre-rebuild code.

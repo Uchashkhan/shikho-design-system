@@ -1,6 +1,6 @@
 import { type ChangeEvent, type FocusEvent, type MouseEvent as ReactMouseEvent, type TextareaHTMLAttributes, forwardRef, useState } from "react";
-import { color, radius } from "@shikho/tokens";
-import { fieldChromeInnerShadow, fieldChromeStyle, typography, type FieldChromeState } from "./shared";
+import { color } from "@shikho/tokens";
+import { TEXTAREA_METRICS, fieldChromeInnerShadow, fieldChromeStyle, typography, type FieldChromeState, type FieldSize } from "./shared";
 
 // docs/audit/input.md §2, §4, §15 — textarea: state default|default_dark|hover|filled|active|
 // error|disabled — the identical 7-state vocabulary shared with input_field and digit_input.
@@ -12,6 +12,13 @@ export interface TextareaProps
    * real interaction). Left unset, the real `<textarea>` drives it: focus → `active`, a non-empty
    * value → `filled`, pointer hover → `hover`, otherwise `default`. `error` can only be forced. */
   state?: TextareaState;
+  /** docs/audit/input.md §16/§17 — Textarea's own Figma component set (node 66056:19282) has no
+   * size axis at all; only one instance was ever sampled. That sample's confirmed geometry is a
+   * byte-for-byte match with `field`'s own `type="textarea"` `lg` row (see `TEXTAREA_METRICS` in
+   * shared.ts), which is why `size` defaults to `"lg"` here — not `"md"` — to reproduce the
+   * original confirmed sample exactly. The other 3 sizes reuse that same already-confirmed table
+   * as the least-invented extension. */
+  size?: FieldSize;
 }
 
 /**
@@ -32,12 +39,18 @@ export interface TextareaProps
  * identically to `field`'s bare default fill/radius/shadow, regardless of what was passed. Now
  * renders its own confirmed per-state chrome, and — left unset — the same real pointer/focus-
  * driven state resolution already applied to `InputField`/`Dropdown`/`DigitInput`.
+ *
+ * `size` (§16/§17): previously hardcoded to a single geometry with no way to vary it. That
+ * hardcoded padding/radius pair turns out to be an exact match for `field`'s own `type="textarea"`
+ * `lg` step — not `md` as originally assumed — so `size` now defaults to `"lg"` (reproducing the
+ * original sample exactly) and composes the other 3 already-confirmed sizes from that same table.
  */
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   (
-    { state, disabled, className, style, value, defaultValue, onChange, onFocus, onBlur, onMouseEnter, onMouseLeave, ...props },
+    { state, size = "lg", disabled, className, style, value, defaultValue, onChange, onFocus, onBlur, onMouseEnter, onMouseLeave, ...props },
     ref,
   ) => {
+    const ta = TEXTAREA_METRICS[size];
     const [pointerHover, setPointerHover] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [hasValue, setHasValue] = useState(() => Boolean((value ?? defaultValue ?? "").toString().length > 0));
@@ -86,6 +99,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       <textarea
         ref={ref}
         data-state={resolvedState}
+        data-size={size}
         disabled={isDisabled}
         value={value}
         defaultValue={defaultValue}
@@ -99,8 +113,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           (className ? ` ${className}` : "")
         }
         style={{
-          padding: "0.75rem 1rem", // confirmed py-12/px-16, distinct from field's own padding
-          borderRadius: radius.xl, // confirmed radius/border_radius_lg (16px), not field's radius/custom/md
+          padding: ta.padding,
+          borderRadius: ta.radius,
           backgroundColor: chrome.background,
           border: chrome.border,
           boxShadow:

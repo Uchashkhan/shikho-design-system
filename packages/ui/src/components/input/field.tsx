@@ -15,6 +15,7 @@ import { NewPinkButton } from "../button/new_pink";
 import type { ButtonSizeScaleB } from "../button/shared";
 import {
   FIELD_SIZE_METRICS,
+  TEXTAREA_METRICS,
   fieldSupportTextColor,
   fieldTextColorDefault,
   iconShadowFilter,
@@ -237,16 +238,8 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
       // P1 repair pass: every size was independently re-sampled via get_design_context. The
       // previous code hard-coded md's `0.5rem 0.75rem` padding, md's `radius.md`, an 8px gap and a
       // 24px image for all four sizes. Figma varies padding, radius, gap, image size and resizer
-      // size per size — only md matched.
-      const TEXTAREA_METRICS: Record<
-        FieldSize,
-        { height: number; padding: string; radius: number; gap: string; image: number; resizer: number }
-      > = {
-        sm: { height: 72, padding: "0.5rem", radius: radius.sm, gap: "0.5rem", image: 16, resizer: 20 },
-        md: { height: 96, padding: "0.5rem 0.75rem", radius: radius.md, gap: "0.5rem", image: 24, resizer: 20 },
-        lg: { height: 104, padding: "0.75rem 1rem", radius: radius.xl, gap: "0.75rem", image: 24, resizer: 20 },
-        xl: { height: 128, padding: "1rem", radius: radius.xl, gap: "1rem", image: 32, resizer: 24 },
-      };
+      // size per size — only md matched. TEXTAREA_METRICS now lives in shared.ts, shared with the
+      // standalone Textarea primitive (§16) — see its own comment there for why.
       const ta = TEXTAREA_METRICS[size];
       return (
         <div
