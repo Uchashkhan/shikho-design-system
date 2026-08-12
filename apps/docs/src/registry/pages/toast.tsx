@@ -20,6 +20,7 @@ export const pageConfig: ComponentPageConfig = {
     "Whether the shorter, unqualified \"button_danger\" instance name here (vs. Alert's fully path-qualified one) reflects a meaningful binding difference is explicitly unconfirmed, though the fill/text values are now confirmed for both danger and success.",
     "secondary_button_effect (2 of 4 layers confirmed applied to the action button) is not implemented — the same gap ButtonDanger itself already has.",
     "The feature_icon slot's real glyph is confirmed to be a plain filled circle with no distinguishing shape in the audited instance — generic placeholder content, not implemented as a default.",
+    "autoDismiss/duration are requested additions with no Figma source — no timer/progress affordance exists anywhere in the audited component set. Manual dismiss cancels the pending timer immediately (spec); the progress bar animates via a CSS transition rather than @keyframes, keeping this component's existing inline-styles-only architecture.",
   ],
   usageExample: `import { Toast } from "@shikho/ui";
 
@@ -43,6 +44,7 @@ function DangerToast() {
     { name: "desc / descriptionContent", type: "boolean / ReactNode", defaultValue: "true", description: "13px/20px Regular, Text/Gray 600 — confirmed different from Alert's Gray 700." },
     { name: "actionButton / actionContent / onActionClick", type: "boolean / ReactNode / () => void", defaultValue: "true", description: "danger/success compose ButtonDanger/ButtonSuccess with a tinted background; warning/info are neutral; default is secondary/500-filled." },
     { name: "rightIcon / dismissIcon / onDismissClick / dismissButtonLabel", type: "boolean / ReactNode / () => void / string", defaultValue: "true / … / … / \"Dismiss\"", description: "Inline rounded-square dismiss button — confirmed not absolutely positioned, unlike Alert's corner button. Renders a confirmed default 'X' icon unless overridden." },
+    { name: "autoDismiss / duration", type: "boolean / number", defaultValue: "false / 5000", description: "Requested addition. A full-width progress bar drains over duration ms, then calls onDismissClick — the same callback the manual dismiss button uses. Toast never removes itself; the consumer still owns whether/how it leaves the DOM." },
   ],
   preview: () => (
     <Toast
@@ -87,9 +89,21 @@ function DangerToast() {
           { label: "single", value: "single" },
         ],
       },
+      {
+        prop: "autoDismiss",
+        label: "Auto dismiss",
+        defaultValue: "off",
+        options: [
+          { label: "on", value: "on" },
+          { label: "off", value: "off" },
+        ],
+      },
     ],
     render: (v) => (
       <Toast
+        // key remounts the Toast (and so restarts its internal timer) whenever Auto Dismiss is
+        // toggled back on after having already completed once, matching a real toast reappearing.
+        key={v.autoDismiss}
         state={v.state as ToastState}
         leftIcon={v.icon === "shown"}
         titleContent="Notification text"
@@ -97,6 +111,8 @@ function DangerToast() {
         descriptionContent="Supporting description goes here."
         actionButton={v.button === "single"}
         actionContent="Learn more"
+        autoDismiss={v.autoDismiss === "on"}
+        duration={4000}
       />
     ),
   },
@@ -130,6 +146,20 @@ function DangerToast() {
           titleContent="With a feature icon"
           descriptionContent="A 28×28 slot with no equivalent in Alert."
           actionContent="Learn more"
+        />
+      ),
+    },
+    {
+      title: "Auto dismiss — a requested addition, not part of the original Figma audit",
+      description: "A full-width progress bar drains over duration ms, then fires onDismissClick automatically — the same callback the manual dismiss button uses.",
+      render: () => (
+        <Toast
+          state="info"
+          titleContent="Auto-dismissing in 6s"
+          descriptionContent="Watch the bar at the bottom drain."
+          actionButton={false}
+          autoDismiss
+          duration={6000}
         />
       ),
     },

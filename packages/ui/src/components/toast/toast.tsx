@@ -1,4 +1,4 @@
-import { type HTMLAttributes, type ReactNode, forwardRef, useState } from "react";
+import { type HTMLAttributes, type ReactNode, forwardRef, useEffect, useRef, useState } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
 import { InfoCircleIcon, CloseIcon } from "@shikho/icons";
 import { ButtonDanger } from "../button/button_danger";
@@ -102,6 +102,16 @@ export interface ToastProps extends Omit<HTMLAttributes<HTMLDivElement>, "childr
   onDismissClick?: () => void;
   /** Accessible name for the icon-only dismiss button. */
   dismissButtonLabel?: string;
+  /** Not part of the original Figma audit — a requested addition. When `true`, a thin progress
+   * bar spans the full width at the bottom, draining over `duration` ms, and `onDismissClick`
+   * fires automatically when it completes — the same callback the manual dismiss button uses, so
+   * a consumer handles both identically (this component never removes itself; like the manual
+   * dismiss button, it only signals — the consumer owns whether/how the Toast leaves the DOM).
+   * Default `false`. */
+  autoDismiss?: boolean;
+  /** Total time in ms before `autoDismiss` fires. Default `5000`. Ignored when `autoDismiss` is
+   * `false`. */
+  duration?: number;
 }
 
 /**
@@ -137,6 +147,8 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
       dismissIcon,
       onDismissClick,
       dismissButtonLabel = "Dismiss",
+      autoDismiss = false,
+      duration = 5000,
       style,
       ...props
     },
@@ -146,6 +158,52 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
     // missing-interactivity defect already fixed on Alert this session.
     const [actionHover, setActionHover] = useState(false);
     const [dismissHover, setDismissHover] = useState(false);
+
+    // Requested addition — not part of the original Figma audit. `onDismissClick` is read via a
+    // ref rather than as a direct effect dependency: a consumer passing a fresh inline arrow
+    // function every render would otherwise restart the timer on every render, and — for a
+    // consumer with any regular re-render cadence — the timer could then never actually complete.
+    const onDismissRef = useRef(onDismissClick);
+    useEffect(() => {
+      onDismissRef.current = onDismissClick;
+    });
+
+    // `barWidth` starts at "100%" and is flipped to "0%" shortly after mount so the CSS
+    // `transition` (rather than a `@keyframes` block, keeping this component's existing
+    // inline-styles-only architecture) actually animates instead of snapping straight to empty.
+    // Needs the standard DOUBLE requestAnimationFrame here, not a single one: React's commit of
+    // the "100%" state and a single rAF callback's "0%" update both land inside the same browser
+    // frame, so the "100%" state never actually gets painted — the browser has no starting point
+    // to interpolate from and the transition silently no-ops, jumping straight to 0%. The first
+    // rAF callback runs after that frame is queued but still before its paint; deferring the
+    // actual "0%" write to a SECOND rAF (queued from inside the first) guarantees "100%" was
+    // painted at least once first.
+    const [barWidth, setBarWidth] = useState("100%");
+    const timerRef = useRef<ReturnType<typeof setTimeout>>();
+    useEffect(() => {
+      if (!autoDismiss) return;
+      setBarWidth("100%");
+      let raf2 = 0;
+      const raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => setBarWidth("0%"));
+      });
+      timerRef.current = setTimeout(() => onDismissRef.current?.(), duration);
+      return () => {
+        cancelAnimationFrame(raf1);
+        cancelAnimationFrame(raf2);
+        clearTimeout(timerRef.current);
+      };
+    }, [autoDismiss, duration]);
+
+    // Spec: "manual close immediately cancels the timer and dismisses the Toast." Clearing the
+    // pending setTimeout here matters even though the consumer will typically unmount the Toast
+    // right away (which would clean it up anyway via the effect's own cleanup) — a consumer that
+    // instead keeps it mounted after a manual dismiss (e.g. to animate an exit transition) would
+    // otherwise still get a second, redundant onDismissClick call once the original timer elapsed.
+    const handleDismissClick = () => {
+      clearTimeout(timerRef.current);
+      onDismissClick?.();
+    };
 
     const action =
       state === "danger" ? (
@@ -241,6 +299,10 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
           border: `1px solid ${borderColorByState[state]}`,
           borderRadius: radius["2xl"], // radius/border_radius_xl (20) — §9, identical to alert
           boxShadow: rootShadow,
+          // Requested addition — needed so the auto-dismiss progress bar below can be clipped to
+          // the root's own rounded corners instead of squaring off its bottom edge.
+          position: "relative",
+          overflow: "hidden",
           ...style,
         }}
         {...props}
@@ -322,7 +384,7 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
         {rightIcon && (
           <button
             type="button"
-            onClick={onDismissClick}
+            onClick={handleDismissClick}
             onMouseEnter={() => setDismissHover(true)}
             onMouseLeave={() => setDismissHover(false)}
             aria-label={dismissButtonLabel}
@@ -358,6 +420,33 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
               {dismissIcon ?? <CloseIcon style={{ width: 10.5, height: 10.5, color: color.gray[600] }} />}
             </span>
           </button>
+        )}
+
+        {/* Requested addition, not part of the original Figma audit — a full-width progress bar
+            draining over `duration` ms, tinted with the same per-severity color as the leading
+            icon. */}
+        {autoDismiss && (
+          <div
+            aria-hidden
+            data-testid="toast-progress-track"
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 3,
+              backgroundColor: color.gray[100],
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: barWidth,
+                backgroundColor: iconColorByState[state],
+                transition: `width ${duration}ms linear`,
+              }}
+            />
+          </div>
         )}
       </div>
     );

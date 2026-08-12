@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as uiRoot from "../../index";
 import { Toast } from "./toast";
 
@@ -266,5 +266,80 @@ describe("no unsupported variant is exported", () => {
     // @ts-expect-error - "Default" (capitalized) is alert's baseline value, not toast's (§2, §11)
     const invalidState: import("./toast").ToastState = "Default";
     expect(invalidState).toBeDefined();
+  });
+});
+
+// Requested addition, not part of the original Figma audit.
+describe("autoDismiss (requested addition)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("does not render a progress bar or fire onDismissClick when autoDismiss is unset", () => {
+    const onDismissClick = vi.fn();
+    render(<Toast onDismissClick={onDismissClick} />);
+    expect(screen.queryByTestId("toast-progress-track")).not.toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(onDismissClick).not.toHaveBeenCalled();
+  });
+
+  it("fires onDismissClick once the duration elapses", () => {
+    const onDismissClick = vi.fn();
+    render(<Toast autoDismiss duration={3000} onDismissClick={onDismissClick} />);
+    act(() => {
+      vi.advanceTimersByTime(2999);
+    });
+    expect(onDismissClick).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(onDismissClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders a progress bar that animates from 100% toward 0% over duration", () => {
+    render(<Toast autoDismiss duration={5000} />);
+    const track = screen.getByTestId("toast-progress-track");
+    const bar = track.firstElementChild as HTMLElement;
+    expect(bar.style.transition).toBe("width 5000ms linear");
+    expect(bar.style.width).toBe("100%");
+    // Double rAF, by design (see the component's own comment) — the first frame must actually
+    // paint "100%" before the second one writes "0%", or the CSS transition has no starting
+    // point to interpolate from and silently snaps straight to empty instead of animating.
+    act(() => {
+      vi.advanceTimersToNextFrame();
+    });
+    expect(bar.style.width).toBe("100%"); // still 100% after only the first frame
+    act(() => {
+      vi.advanceTimersToNextFrame();
+    });
+    expect(bar.style.width).toBe("0%");
+  });
+
+  it("manual dismiss cancels the pending timer — no redundant second onDismissClick call", () => {
+    const onDismissClick = vi.fn();
+    render(<Toast autoDismiss duration={3000} onDismissClick={onDismissClick} />);
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(onDismissClick).toHaveBeenCalledTimes(1);
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(onDismissClick).toHaveBeenCalledTimes(1); // still 1, not 2
+  });
+
+  it("always calls the LATEST onDismissClick, even if the prop changes after mount", () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const { rerender } = render(<Toast autoDismiss duration={1000} onDismissClick={first} />);
+    rerender(<Toast autoDismiss duration={1000} onDismissClick={second} />);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledTimes(1);
   });
 });
