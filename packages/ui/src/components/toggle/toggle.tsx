@@ -199,8 +199,11 @@ export const Toggle = forwardRef<HTMLInputElement, ToggleProps>(
           ref={internalRef}
           type="checkbox"
           role="switch"
-          {...(isControlled ? { checked: resolvedChecked } : { defaultChecked })}
-          disabled={disabled}
+          // When `state` is forced, the native input's checked/disabled must follow it too —
+          // otherwise the visual track/knob shows one thing while the real, accessible/testable
+          // element (what screen readers and .toBeChecked() actually see) shows another.
+          {...(state ? { checked: effective.checked } : isControlled ? { checked: resolvedChecked } : { defaultChecked })}
+          disabled={effective.disabled}
           data-size={size}
           data-state={resolvedState}
           className="absolute inset-0 m-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"

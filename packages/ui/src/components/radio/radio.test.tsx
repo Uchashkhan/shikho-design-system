@@ -218,6 +218,20 @@ describe("explicit `state` forces any of the 7 confirmed visuals (P15)", () => {
     }
   });
 
+  // P20 — the native input's checked/disabled must follow a forced `state` too, not just the
+  // custom disc/dot visual, otherwise screen readers and .toBeChecked() see something different
+  // from what's shown on screen.
+  it("the native input's checked/disabled attributes follow a forced state, not just the visual", () => {
+    const { rerender } = render(<Radio state="active" aria-label="Preview" />);
+    expect(screen.getByRole("radio", { name: "Preview" })).toBeChecked();
+
+    rerender(<Radio state="inactive" aria-label="Preview" />);
+    expect(screen.getByRole("radio", { name: "Preview" })).not.toBeChecked();
+
+    rerender(<Radio state="disabled" aria-label="Preview" />);
+    expect(screen.getByRole("radio", { name: "Preview" })).toBeDisabled();
+  });
+
   it("without an explicit state, data-state still derives from real checked/hover/focus", () => {
     render(<Radio aria-label="Real" />);
     const input = screen.getByRole("radio", { name: "Real" });

@@ -1,8 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Chip } from "@shikho/ui";
 import { InfoCircleIcon } from "@shikho/icons";
-import { componentSummaries, getComponent, getPageConfig, totalVariantValues, type Control } from "../registry";
+import {
+  componentSummaries,
+  getComponent,
+  getPageConfig,
+  resolveControlOptions,
+  totalVariantValues,
+  type Control,
+  type ControlOption,
+} from "../registry";
 import {
   CodeBlock,
   ConfidencePill,
@@ -20,10 +28,12 @@ import {
  */
 function ControlGroup({
   control,
+  options,
   value,
   onChange,
 }: {
   control: Control;
+  options: ControlOption[];
   value: string;
   onChange: (next: string) => void;
 }) {
@@ -31,7 +41,7 @@ function ControlGroup({
     <div className="sk-control-group">
       <span className="sk-control__label">{control.label}</span>
       <div className="sk-control__options">
-        {control.options.map((option) => (
+        {options.map((option) => (
           <Chip
             key={option.value}
             size="sm"
@@ -82,6 +92,23 @@ function ComponentDetailPageContent({ slug }: { slug: string }) {
   }, [page]);
 
   const [values, setValues] = useState<Record<string, string>>(initialValues);
+  const playground = page?.playground;
+
+  // Keeps every control's stored value valid whenever a control with DEPENDENT options (e.g.
+  // Button's Type, filtered by the selected Family) is affected by another control changing —
+  // otherwise the chip row could show nothing highlighted while the preview silently fell back
+  // to a different value than what's displayed as selected.
+  useEffect(() => {
+    if (!playground) return;
+    for (const control of playground.controls) {
+      const options = resolveControlOptions(control, values);
+      const current = values[control.prop];
+      if (options.length > 0 && !options.some((o) => o.value === current)) {
+        setValues((prev) => ({ ...prev, [control.prop]: options[0].value }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values, playground]);
 
   if (!entry) {
     return (
@@ -95,8 +122,6 @@ function ComponentDetailPageContent({ slug }: { slug: string }) {
       </div>
     );
   }
-
-  const playground = page?.playground;
 
   return (
     <div className="sk-container">
@@ -149,6 +174,7 @@ function ComponentDetailPageContent({ slug }: { slug: string }) {
                   <ControlGroup
                     key={control.prop}
                     control={control}
+                    options={resolveControlOptions(control, values)}
                     value={values[control.prop] ?? control.defaultValue}
                     onChange={(next) => setValues((prev) => ({ ...prev, [control.prop]: next }))}
                   />

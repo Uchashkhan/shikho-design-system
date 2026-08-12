@@ -27,7 +27,11 @@ export interface Control {
   /** Prop this control drives; also used as the key in the playground's value map. */
   prop: string;
   label: string;
-  options: ControlOption[];
+  /** Either a fixed list, or a function of the OTHER controls' current values — for controls
+   * whose valid options depend on another control (e.g. Button's Type options depend on which
+   * Family is selected, since the 8 families don't share a type vocabulary). Receives the full
+   * current values map, including this control's own (possibly now-invalid) value. */
+  options: ControlOption[] | ((values: Record<string, string>) => ControlOption[]);
   defaultValue: string;
 }
 
@@ -45,6 +49,17 @@ export interface VariantShowcase {
   /** `stack` lays children out vertically — used by full-width components like List. */
   layout?: "row" | "stack";
   render: () => ReactNode;
+}
+
+/** Resolves a control's options against the current values map, whether it's a fixed list or a
+ * function of the other controls (e.g. Button's Type list depends on the selected Family). Every
+ * consumer of `Control.options` (ComponentDetailPage, PlaygroundPage) must go through this
+ * rather than reading `.options` directly, since it may be a function, not an array. */
+export function resolveControlOptions(
+  control: Control,
+  values: Record<string, string>,
+): ControlOption[] {
+  return typeof control.options === "function" ? control.options(values) : control.options;
 }
 
 export interface ComponentPageConfig {

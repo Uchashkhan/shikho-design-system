@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Chip } from "@shikho/ui";
-import { componentRegistry, getPageConfig } from "../registry";
+import { componentRegistry, getPageConfig, resolveControlOptions } from "../registry";
 import { PageHeader, Section } from "../ui/primitives";
 
 const playable = componentRegistry
@@ -25,6 +25,25 @@ export function PlaygroundPage() {
 
   const [valuesBySlug, setValuesBySlug] = useState<Record<string, Record<string, string>>>({});
   const values = valuesBySlug[current?.entry.slug ?? ""] ?? initialValues;
+
+  // Same correction as ComponentDetailPage: keeps a control's stored value valid whenever it has
+  // DEPENDENT options (e.g. Button's Type, filtered by the selected Family) affected by another
+  // control changing.
+  useEffect(() => {
+    if (!current || !playground) return;
+    const slugKey = current.entry.slug;
+    for (const control of playground.controls) {
+      const options = resolveControlOptions(control, values);
+      const currentValue = values[control.prop];
+      if (options.length > 0 && !options.some((o) => o.value === currentValue)) {
+        setValuesBySlug((prev) => ({
+          ...prev,
+          [slugKey]: { ...(prev[slugKey] ?? initialValues), [control.prop]: options[0].value },
+        }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values, playground, current]);
 
   if (!current || !playground) {
     return (
@@ -74,7 +93,7 @@ export function PlaygroundPage() {
             <div key={control.prop}>
               <span className="sk-control__label">{control.label}</span>
               <div className="sk-control__options">
-                {control.options.map((option) => (
+                {resolveControlOptions(control, values).map((option) => (
                   <Chip
                     key={option.value}
                     size="sm"

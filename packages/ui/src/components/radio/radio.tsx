@@ -213,8 +213,11 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
         <input
           ref={internalRef}
           type="radio"
-          {...(isControlled ? { checked: resolvedChecked } : { defaultChecked })}
-          disabled={disabled}
+          // When `state` is forced, the native input's checked/disabled must follow it too —
+          // otherwise the visual disc/dot shows one thing while the real, accessible/testable
+          // element (what screen readers and .toBeChecked() actually see) shows another.
+          {...(state ? { checked: effective.checked } : isControlled ? { checked: resolvedChecked } : { defaultChecked })}
+          disabled={effective.disabled}
           data-size={size}
           data-state={resolvedState}
           data-indeterminate={indeterminate || undefined}

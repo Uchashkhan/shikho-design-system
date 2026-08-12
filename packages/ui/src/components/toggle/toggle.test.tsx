@@ -184,6 +184,22 @@ describe("explicit `state` forces any of the 5 confirmed visuals (P16)", () => {
     }
   });
 
+  // P20 — caught by a docs-site test asserting the forced preview is genuinely accessible: the
+  // native input's checked/disabled must follow a forced `state` too, not just the custom
+  // track/knob visual, otherwise screen readers and .toBeChecked() see something different from
+  // what's shown on screen.
+  it("the native input's checked/disabled attributes follow a forced state, not just the visual", () => {
+    const { rerender } = render(<Toggle state="switch_ON" aria-label="Preview" />);
+    expect(screen.getByRole("switch", { name: "Preview" })).toBeChecked();
+
+    rerender(<Toggle state="switch_OFF" aria-label="Preview" />);
+    expect(screen.getByRole("switch", { name: "Preview" })).not.toBeChecked();
+
+    rerender(<Toggle state="switch_ON_disabled" aria-label="Preview" />);
+    expect(screen.getByRole("switch", { name: "Preview" })).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Preview" })).toBeDisabled();
+  });
+
   it("without an explicit state, data-state still derives from real checked/focus", () => {
     render(<Toggle aria-label="Real" />);
     const input = screen.getByRole("switch", { name: "Real" });

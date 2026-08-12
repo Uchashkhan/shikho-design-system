@@ -6,6 +6,7 @@ import {
   getComponent,
   getPageConfig,
   groupByCategory,
+  resolveControlOptions,
   searchComponents,
   searchFoundations,
 } from "./index";
@@ -41,9 +42,18 @@ describe("component registry integrity", () => {
   it("only offers confirmed variant values through playground controls", () => {
     for (const entry of componentRegistry) {
       const page = getPageConfig(entry.slug);
-      for (const control of page?.playground?.controls ?? []) {
-        expect(control.options.length, `${entry.slug}.${control.prop}`).toBeGreaterThan(0);
-        const values = control.options.map((option: { value: string }) => option.value);
+      const controls = page?.playground?.controls ?? [];
+      // Some controls' options depend on another control's current value (e.g. Button's Type is
+      // filtered by the selected Family) — resolve against every control's own default, matching
+      // how the real pages seed their initial values, so dependent options are resolved for real
+      // rather than skipped.
+      const defaultValues: Record<string, string> = {};
+      for (const control of controls) defaultValues[control.prop] = control.defaultValue;
+
+      for (const control of controls) {
+        const options = resolveControlOptions(control, defaultValues);
+        expect(options.length, `${entry.slug}.${control.prop}`).toBeGreaterThan(0);
+        const values = options.map((option) => option.value);
         expect(values, `${entry.slug}.${control.prop} default`).toContain(control.defaultValue);
       }
     }

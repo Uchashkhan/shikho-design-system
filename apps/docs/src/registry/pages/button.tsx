@@ -66,28 +66,10 @@ function resolveState(family: ButtonFamily, state: string): string {
   return CAPITALIZED_STATE_FAMILIES.includes(family) ? state : state.toLowerCase();
 }
 
-// The union of every family's own confirmed type values, casing preserved verbatim (including
-// ai_regular's confirmed lowercase "purple" vs ai_rounded's "Purple" — a real inconsistency, not
-// normalized away). Each family only recognizes its own subset (§2); anything else falls back to
-// that family's own confirmed default type rather than rendering nothing.
-const TYPE_OPTIONS = [
-  "Outline",
-  "Primary",
-  "Secondary",
-  "Text",
-  "primary",
-  "secondary",
-  "tertiary",
-  "Green",
-  "Purple",
-  "purple",
-  "blue gradient",
-  "neutral",
-  "primary_light",
-  "quaternary",
-  "tertiary_light",
-];
-
+// Each family's own confirmed type vocabulary (§2) — casing preserved verbatim, including
+// ai_regular's confirmed lowercase "purple" vs ai_rounded's "Purple" (a real inconsistency, not
+// normalized away). The playground's Type control filters to only these per selected family
+// (see its `options` function below) rather than showing every family's types at once.
 const FAMILY_TYPES: Record<ButtonFamily, { valid: string[]; default: string }> = {
   new_blue: { valid: ["Outline", "Primary", "Secondary", "Text"], default: "Primary" },
   new_pink: { valid: ["Outline", "Primary", "Secondary", "Text"], default: "Primary" },
@@ -238,7 +220,13 @@ export function SaveAction() {
         prop: "type",
         label: "Type",
         defaultValue: "Primary",
-        options: TYPE_OPTIONS.map((v) => ({ label: v, value: v })),
+        // Dependent on Family — not all 8 confirmed families share a type vocabulary (§2), so
+        // this filters to only the currently selected family's own confirmed types instead of
+        // showing the full 15-value union regardless of which family is picked.
+        options: (values) => {
+          const family = (values.family as ButtonFamily) ?? "new_blue";
+          return FAMILY_TYPES[family].valid.map((v) => ({ label: v, value: v }));
+        },
       },
       {
         prop: "state",
