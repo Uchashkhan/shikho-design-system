@@ -33,6 +33,11 @@ export interface Control {
    * current values map, including this control's own (possibly now-invalid) value. */
   options: ControlOption[] | ((values: Record<string, string>) => ControlOption[]);
   defaultValue: string;
+  /** When this returns true, the ENTIRE control (not just its options) is omitted from the
+   * playground for the current values — e.g. Input's "Button color" control only makes sense
+   * when a right-side button is enabled at all. Receives the full current values map. Omit for
+   * controls that should always render. */
+  hidden?: (values: Record<string, string>) => boolean;
 }
 
 export interface VariantAxis {
@@ -60,6 +65,13 @@ export function resolveControlOptions(
   values: Record<string, string>,
 ): ControlOption[] {
   return typeof control.options === "function" ? control.options(values) : control.options;
+}
+
+/** Whether an entire control should be omitted from the playground for the current values (e.g.
+ * Input's "Button color" only appears once a right-side button is enabled). Every consumer that
+ * renders `playground.controls` must skip controls where this returns true. */
+export function isControlHidden(control: Control, values: Record<string, string>): boolean {
+  return control.hidden?.(values) ?? false;
 }
 
 export interface ComponentPageConfig {

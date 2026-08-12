@@ -90,6 +90,26 @@ describe("Field", () => {
     expect(screen.getByRole("button", { name: "Send" })).toBeInTheDocument();
   });
 
+  // Requested addition, not part of the original Figma audit — Figma's own confirmed composition
+  // always uses NewPinkButton (the "secondary" default here); primary/dark swap in other
+  // families' own confirmed color resolvers instead of inventing new colors.
+  describe("buttonColor (requested addition)", () => {
+    it("defaults to secondary — the confirmed NewPinkButton fill (secondary/500)", () => {
+      render(<Field type="advanced_with_buttons" textContent="Input text" buttonLabels={["Send"]} />);
+      expect(screen.getByRole("button", { name: "Send" }).style.background).toContain("226, 0, 141");
+    });
+
+    it("primary composes NewBlueButton (primary/500)", () => {
+      render(<Field type="advanced_with_buttons" textContent="Input text" buttonLabels={["Send"]} buttonColor="primary" />);
+      expect(screen.getByRole("button", { name: "Send" }).style.background).toContain("84, 104, 255");
+    });
+
+    it("dark composes GreyscaleButton (black/900, 88% alpha)", () => {
+      render(<Field type="advanced_with_buttons" textContent="Input text" buttonLabels={["Send"]} buttonColor="dark" />);
+      expect(screen.getByRole("button", { name: "Send" }).style.background).toContain("0.88");
+    });
+  });
+
   // P14 — a fresh get_design_context re-pull (node 66056:19069) found a third, previously
   // missing boolean-gated glyph in the lead chip: a stacked up/down chevron pair marking it as a
   // select/dropdown control, distinct from leftLead's own icon slot.

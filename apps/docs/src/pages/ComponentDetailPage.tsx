@@ -6,6 +6,7 @@ import {
   componentSummaries,
   getComponent,
   getPageConfig,
+  isControlHidden,
   resolveControlOptions,
   totalVariantValues,
   type Control,
@@ -170,15 +171,17 @@ function ComponentDetailPageContent({ slug }: { slug: string }) {
             >
               <div className="sk-preview">{playground.render(values)}</div>
               <div className="sk-controls">
-                {playground.controls.map((control) => (
-                  <ControlGroup
-                    key={control.prop}
-                    control={control}
-                    options={resolveControlOptions(control, values)}
-                    value={values[control.prop] ?? control.defaultValue}
-                    onChange={(next) => setValues((prev) => ({ ...prev, [control.prop]: next }))}
-                  />
-                ))}
+                {playground.controls
+                  .filter((control) => !isControlHidden(control, values))
+                  .map((control) => (
+                    <ControlGroup
+                      key={control.prop}
+                      control={control}
+                      options={resolveControlOptions(control, values)}
+                      value={values[control.prop] ?? control.defaultValue}
+                      onChange={(next) => setValues((prev) => ({ ...prev, [control.prop]: next }))}
+                    />
+                  ))}
               </div>
             </Section>
           ) : null}

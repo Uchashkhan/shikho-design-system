@@ -9,6 +9,8 @@ import {
 } from "react";
 import { color, radius } from "@shikho/tokens";
 import { SelectChevronsIcon } from "@shikho/icons";
+import { GreyscaleButton } from "../button/greyscale";
+import { NewBlueButton } from "../button/new_blue";
 import { NewPinkButton } from "../button/new_pink";
 import type { ButtonSizeScaleB } from "../button/shared";
 import {
@@ -76,6 +78,11 @@ export interface FieldProps
   selectLeadChevron?: ReactNode;
   /** `type="advanced_with_buttons"` only — confirmed 1-3 solid pink action buttons, reusing `NewPinkButton`. */
   buttonLabels?: string[];
+  /** Not part of the original Figma audit — a requested addition. `type="advanced_with_buttons"`
+   * only. Figma's own confirmed composition always uses `NewPinkButton` (`"secondary"`, the
+   * default here) — `"primary"`/`"dark"` swap in `NewBlueButton`/`GreyscaleButton` instead,
+   * reusing their own confirmed color resolvers rather than inventing new colors. */
+  buttonColor?: "primary" | "secondary" | "dark";
   /** Overrides the confirmed default input-text color (docs/audit/input.md §14) — used by
    * `InputField`/`Dropdown` to apply their own confirmed per-state text color. */
   textColor?: string;
@@ -198,6 +205,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
       leadChevron = true,
       selectLeadChevron,
       buttonLabels = ["Button"],
+      buttonColor = "secondary",
       textColor,
       className,
       style,
@@ -389,11 +397,24 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
             </span>
           )}
           <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-            {buttonLabels.map((label, i) => (
-              <NewPinkButton key={i} size={adv.buttonSize} type="Primary">
-                {label}
-              </NewPinkButton>
-            ))}
+            {buttonLabels.map((label, i) =>
+              buttonColor === "primary" ? (
+                <NewBlueButton key={i} size={adv.buttonSize} type="Primary">
+                  {label}
+                </NewBlueButton>
+              ) : buttonColor === "dark" ? (
+                // ADVANCED_METRICS.buttonSize only ever takes the values xs/sm/md/lg (never
+                // xxl) — a subset shared by both ButtonSizeScaleA and ButtonSizeScaleB, but
+                // GreyscaleButton (Scale A) doesn't type-include Scale B's "xxl" possibility.
+                <GreyscaleButton key={i} size={adv.buttonSize as "xs" | "sm" | "md" | "lg"} type="primary">
+                  {label}
+                </GreyscaleButton>
+              ) : (
+                <NewPinkButton key={i} size={adv.buttonSize} type="Primary">
+                  {label}
+                </NewPinkButton>
+              ),
+            )}
           </span>
         </div>
       );

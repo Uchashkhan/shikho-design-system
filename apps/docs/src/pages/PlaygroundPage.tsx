@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Chip } from "@shikho/ui";
-import { componentRegistry, getPageConfig, resolveControlOptions } from "../registry";
+import { componentRegistry, getPageConfig, isControlHidden, resolveControlOptions } from "../registry";
 import { PageHeader, Section } from "../ui/primitives";
 
 const playable = componentRegistry
@@ -89,7 +89,9 @@ export function PlaygroundPage() {
       <Section title={entry.name} description={entry.description}>
         <div className="sk-preview">{playground.render(values)}</div>
         <div className="sk-controls">
-          {playground.controls.map((control) => (
+          {playground.controls
+            .filter((control) => !isControlHidden(control, values))
+            .map((control) => (
             <div key={control.prop}>
               <span className="sk-control__label">{control.label}</span>
               <div className="sk-control__options">

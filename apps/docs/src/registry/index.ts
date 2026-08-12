@@ -3,7 +3,7 @@ import { discoveredComponentMeta } from "./meta-discovery";
 import { getPageConfig } from "./pages";
 
 export type { ComponentDocsCategory, ComponentDocsMeta, ComponentDocsStatus } from "@shikho/ui";
-export { getPageConfig, resolveControlOptions } from "./pages";
+export { getPageConfig, resolveControlOptions, isControlHidden } from "./pages";
 export { componentSummaries } from "./summaries";
 export type {
   Control,
