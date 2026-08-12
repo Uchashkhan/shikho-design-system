@@ -1,19 +1,18 @@
-import { Checkbox, type CheckboxShape, type CheckboxSize } from "@shikho/ui";
+import { Checkbox, CheckboxLabel, type CheckboxShape, type CheckboxSize } from "@shikho/ui";
 import type { ComponentPageConfig } from "./types";
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
-    "A real <input type=\"checkbox\"> is kept for semantics/keyboard/AX, but is now visually hidden — a deep re-audit (docs/audit/checkboxes.md §14) found the browser's own native checked/indeterminate indicator could not reproduce Figma's confirmed checkmark glyph, tint colors, or dash artwork, so a custom-rendered visual box now drives the actual appearance. The audit's single conflated `state` enum is decomposed into separate `checked`, `indeterminate`, `disabled`, `hover`, and `focus` handling.",
+    "A real <input type=\"checkbox\"> is kept for semantics/keyboard/AX, but is now visually hidden — a deep re-audit (docs/audit/checkboxes.md §14) found the browser's own native checked/indeterminate indicator could not reproduce Figma's confirmed checkmark glyph, tint colors, or dash artwork, so a custom-rendered visual box now drives the actual appearance. `checked`'s exact fill/checkmark colors were re-confirmed by downloading and decomposing the real SVG asset behind `checked_focused` (node 66077:30012): primary/500 fill (#5468FF), white checkmark, and a 3px primary/500-at-24%-alpha focus ring — exactly matching what the implementation already used. The audit's single conflated `state` enum is decomposed into separate `checked`, `indeterminate`, `disabled`, `hover`, and `focus` handling.",
   variants: [
     { name: "size", values: ["md", "sm"], note: "md is 24×24 (18×18 visible box), sm is 20×20 (16×16 visible box) — the visible box is confirmed smaller than the component's own footprint." },
     { name: "shape", values: ["sphere", "square"], note: "A genuine confirmed binary shape choice; Radio has no equivalent property." },
   ],
-  states: ["unchecked", "checked", "indeterminate", "hover", "focused", "disabled"],
+  states: ["unchecked", "hover", "unchecked_focused", "checked", "checked_focused", "indeterminate", "indeterminate_disabled", "disabled"],
   gaps: [
-    "checked's exact fill/checkmark colors were not decomposable from Figma's flattened image asset — the conventional solid primary/500 fill + white checkmark is used as the most likely candidate, explicitly derived rather than confirmed.",
     "hover for checked/indeterminate has no confirmed visual — both render identically to their non-hover look.",
-    "checkbox_label is now implemented (previously out of scope) — confirmed to compose a real nested Checkbox plus a label (Regular 400 weight) and optional caption.",
-    "Radio's own visual still derives from Checkbox's pre-rebuild values and was not re-confirmed as part of this pass.",
+    "CheckboxLabel composes a real nested Checkbox plus a label (Regular 400 weight) and optional caption — confirmed across all 4 size × direction variants.",
+    "No literal `checked_disabled`/`indeterminate` + `disabled` combination beyond `indeterminate_disabled` exists in Figma — plain `disabled` is necessarily unchecked and reuses `indeterminate_disabled`'s solid-gray recipe.",
   ],
   usageExample: `import { Checkbox } from "@shikho/ui";
 
@@ -126,12 +125,83 @@ export function TermsCheckbox() {
     },
     {
       title: "Disabled",
+      description: "Plain disabled is necessarily unchecked; indeterminate_disabled is the only other confirmed disabled combination.",
       render: () => (
         <>
           <Checkbox size="md" disabled aria-label="Disabled unchecked" />
-          <Checkbox size="md" disabled defaultChecked aria-label="Disabled checked" />
           <Checkbox size="md" disabled indeterminate aria-label="Disabled indeterminate" />
         </>
+      ),
+    },
+    {
+      title: "All 8 confirmed states",
+      description:
+        "unchecked/checked/indeterminate/disabled/indeterminate_disabled are shown via props; hover and unchecked_focused/checked_focused respond to a real pointer/keyboard focus — hover or Tab into the unlabeled ones to see them. checked_focused's exact primary/500 fill + white checkmark + primary-alpha ring was re-confirmed by decomposing the real SVG asset (node 66077:30012).",
+      layout: "stack",
+      render: () => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Checkbox aria-label="unchecked" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>unchecked</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Checkbox aria-label="hover me" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>hover</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Checkbox aria-label="tab to me (unchecked_focused)" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>unchecked_focused</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Checkbox defaultChecked aria-label="checked" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>checked</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Checkbox defaultChecked aria-label="tab to me (checked_focused)" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>checked_focused</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Checkbox indeterminate aria-label="indeterminate" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>indeterminate</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Checkbox indeterminate disabled aria-label="indeterminate_disabled" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>indeterminate_disabled</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Checkbox disabled aria-label="disabled" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>disabled</span>
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "CheckboxLabel — size × direction",
+      description:
+        "Composes a real nested Checkbox plus a label/caption text column, confirmed across all 4 size × direction variants. md's label is Regular/400 at body_1; sm collapses label and caption to the same Medium/500 caption_2 typography.",
+      layout: "stack",
+      render: () => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <CheckboxLabel
+            size="md"
+            direction="left"
+            labelContent="Remember this device"
+            captionContent="Skip 2FA on this browser for 30 days."
+            checkboxProps={{ defaultChecked: true }}
+          />
+          <CheckboxLabel
+            size="sm"
+            direction="left"
+            labelContent="Marketing emails"
+            captionContent="Occasional product updates only."
+          />
+          <CheckboxLabel
+            size="md"
+            direction="right"
+            labelContent="Right-aligned (direction=right)"
+            captionContent="The checkbox renders after the text column."
+          />
+        </div>
       ),
     },
   ],

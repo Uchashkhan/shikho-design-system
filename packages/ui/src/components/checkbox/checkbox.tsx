@@ -50,10 +50,10 @@ function resolveVisual(checked: boolean, indeterminate: boolean, disabled: boole
     return { background: color.primary[100], border: "none" };
   }
   if (checked) {
-    // The confirmed instance renders as a single flattened image asset — the containing box
-    // dimensions/position are confirmed, but the internal fill/checkmark colors were not
-    // decomposable from it. This uses the conventional solid-fill + white-checkmark treatment
-    // (derived, not confirmed) since it's the one "on" state where the asset couldn't be read.
+    // Re-checked via a fresh get_design_context re-pull (node 66077:30012, checked_focused/md/
+    // square) that downloads and decomposes the real SVG asset: fill is exactly primary/500
+    // (#5468FF) with a white checkmark — confirming the pre-existing "derived, not confirmed"
+    // guess was exactly right, not just a plausible convention.
     return {
       background: color.primary[500],
       border: "none",
