@@ -71,6 +71,13 @@ export interface LinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>,
   leftIcon?: boolean;
   rightIcon?: boolean;
   text?: boolean;
+  /** Not part of the original Figma audit — a requested addition; default `false` matches the
+   * confirmed original behavior (`text-decoration: none` in every sampled state). When `true`,
+   * the underline is applied consistently across default/hover — there's no confirmed Figma
+   * source for a state-specific underline treatment, and Link already has no distinct `focus`
+   * treatment at all (see the confirmed-absent note above), so this doesn't attempt to invent
+   * one either. */
+  underline?: boolean;
   /** Confirmed instance-swap slots (§2) — replace the default icon rendering entirely. */
   selectLeftIcon?: ReactNode | null;
   selectRightIcon?: ReactNode | null;
@@ -114,6 +121,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
       size = "md",
       type = "primary",
       state,
+      underline = false,
       leftIcon = true,
       rightIcon = true,
       text = true,
@@ -156,7 +164,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
       lineHeight,
       fontWeight: FONT_WEIGHT[type],
       color: TEXT_COLOR[type][resolvedState],
-      textDecoration: "none",
+      textDecoration: underline ? "underline" : "none",
       cursor: isDisabled ? "not-allowed" : "pointer",
       pointerEvents: isDisabled ? "none" : "auto",
       whiteSpace: "nowrap",
@@ -175,6 +183,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
       "data-size": size,
       "data-type": type,
       "data-state": resolvedState,
+      "data-underline": underline || undefined,
       "aria-disabled": isDisabled || undefined,
       style: computedStyle,
       onClick: isDisabled ? undefined : onClick,

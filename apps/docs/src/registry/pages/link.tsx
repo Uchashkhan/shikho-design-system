@@ -19,6 +19,7 @@ export const pageConfig: ComponentPageConfig = {
     "type=quaternary's Medium-weight substitution was only directly confirmed at size=xl and is applied uniformly across all sizes as the least-invented extension.",
     "Rendering as a real <a> (with a role/tabIndex fallback when no href is supplied) is a functional necessity — Figma's own export never distinguishes an anchor element from any other container.",
     "The real icon glyph content is unconfirmed — no @shikho/icons inventory exists yet, so leftIcon/rightIcon render empty unless selectLeftIcon/selectRightIcon supply content.",
+    "underline is a requested addition with no Figma source. It applies uniformly across default and hover — there's no confirmed per-state underline treatment to differentiate, and since Link has no distinct focus state at all (confirmed absent, see above), underline doesn't add one either; focus continues to rely on the browser's native outline exactly as it does when underline is off.",
   ],
   usageExample: `import { Link } from "@shikho/ui";
 
@@ -33,6 +34,7 @@ function Example() {
     { name: "size", type: "xl | lg | md | sm | xs", defaultValue: "md", description: "Confirmed per-size gap, icon size and typography." },
     { name: "type", type: "primary | quaternary", defaultValue: "primary", description: "Confirmed color/weight family — primary is brand-colored SemiBold, quaternary is neutral Medium." },
     { name: "state", type: "default | hover | disabled", defaultValue: "default", description: "No focus state exists — confirmed absent." },
+    { name: "underline", type: "boolean", defaultValue: "false", description: "Requested addition. Applies uniformly across default/hover — no confirmed per-state treatment exists." },
     { name: "leftIcon / rightIcon / text", type: "boolean", defaultValue: "true", description: "The 3 confirmed boolean slots." },
     { name: "selectLeftIcon / selectRightIcon", type: "ReactNode | null", defaultValue: "null", description: "Confirmed instance-swap slots." },
     { name: "…", type: "AnchorHTMLAttributes<HTMLAnchorElement>", description: "Rendered as a real <a>; href and other native anchor props are forwarded." },
@@ -61,6 +63,15 @@ function Example() {
         options: TYPES.map((v) => ({ label: v, value: v })),
       },
       {
+        prop: "underline",
+        label: "Underline",
+        defaultValue: "false",
+        options: [
+          { label: "true", value: "true" },
+          { label: "false", value: "false" },
+        ],
+      },
+      {
         prop: "state",
         label: "State",
         defaultValue: "default",
@@ -68,7 +79,7 @@ function Example() {
       },
     ],
     render: (v) => (
-      <Link href="#" size={v.size as LinkSize} type={v.type as LinkType} state={v.state as LinkState}>
+      <Link href="#" size={v.size as LinkSize} type={v.type as LinkType} state={v.state as LinkState} underline={v.underline === "true"}>
         Link
       </Link>
     ),
@@ -96,6 +107,16 @@ function Example() {
               {type}
             </Link>
           ))}
+        </>
+      ),
+    },
+    {
+      title: "Underline — a requested addition, not part of the original Figma audit",
+      description: "Applies uniformly across default/hover — there's no confirmed per-state underline treatment.",
+      render: () => (
+        <>
+          <Link href="#">no underline</Link>
+          <Link href="#" underline>underline</Link>
         </>
       ),
     },

@@ -220,3 +220,19 @@ describe("renders a <span role=\"link\"> instead of a real <a> when no href is g
     expect(onClick).toHaveBeenCalled();
   });
 });
+
+// Requested addition, not part of the original Figma audit — default false matches the confirmed
+// original behavior (text-decoration: none in every sampled state).
+describe("underline (requested addition)", () => {
+  it("defaults to no underline, matching confirmed original behavior", () => {
+    render(<Link href="/x">Link</Link>);
+    expect(screen.getByRole("link").style.textDecoration).toBe("none");
+  });
+
+  it("applies underline when true, consistently across default and hover — no confirmed per-state treatment exists", () => {
+    const { rerender } = render(<Link href="/x" underline>Link</Link>);
+    expect(screen.getByRole("link").style.textDecoration).toBe("underline");
+    rerender(<Link href="/x" underline state="hover">Link</Link>);
+    expect(screen.getByRole("link").style.textDecoration).toBe("underline");
+  });
+});
