@@ -84,9 +84,11 @@ export interface FieldProps
   /** `type="advanced_with_buttons"` only — confirmed 1-3 solid pink action buttons, reusing `NewPinkButton`. */
   buttonLabels?: string[];
   /** Not part of the original Figma audit — a requested addition. `type="advanced_with_buttons"`
-   * only. Figma's own confirmed composition always uses `NewPinkButton` (`"secondary"`, the
-   * default here) — `"primary"`/`"dark"` swap in `NewBlueButton`/`GreyscaleButton` instead,
-   * reusing their own confirmed color resolvers rather than inventing new colors. */
+   * only. Figma's own confirmed composition always uses `NewPinkButton` (`"secondary"`) — default
+   * changed to `"primary"` (`NewBlueButton`, `Color/primary/500`) per direct request, a deliberate
+   * deviation from Figma's own default, not a re-derived one. `"secondary"`/`"dark"` remain
+   * available, each reusing `NewPinkButton`/`GreyscaleButton`'s own confirmed color resolvers
+   * rather than inventing new colors. */
   buttonColor?: "primary" | "secondary" | "dark";
   /** Overrides the confirmed default input-text color (docs/audit/input.md §14) — used by
    * `InputField`/`Dropdown` to apply their own confirmed per-state text color. */
@@ -252,7 +254,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
       leadChevron = true,
       selectLeadChevron,
       buttonLabels = ["Button"],
-      buttonColor = "secondary",
+      buttonColor = "primary",
       textColor,
       state,
       className,

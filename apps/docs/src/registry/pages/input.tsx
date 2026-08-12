@@ -67,7 +67,7 @@ export const pageConfig: ComponentPageConfig = {
     "`Dropdown` and `Textarea` are now independently confirmed via their own `get_design_context` pulls rather than reusing `field`'s baseline — both turned out to genuinely differ (Textarea's own radius/padding/error-text-color; Dropdown's own text color, `brand`/`active_no_focus` chrome, padding and gap). `DigitInput` was already independently confirmed.",
     "`digit_field` is a bare Figma instance with no captured properties at all, and its relationship to `digit_input` is explicitly uninvestigated — so no multi-cell OTP layout is invented for it.",
     "`InputField` now accepts `size` — Figma's own `input_field` component set (node 66056:19180) crosses `state` alone with no size axis, but `fieldChromeStyle`'s state colors/border/ring have no size dependency either, so this composes `field`'s own independently-confirmed xl/lg/md/sm geometry (node 66056:19051) underneath `input_field`'s confirmed per-state chrome, rather than leaving `InputField` locked to Field's bare default size. `InputLabel`/`InputHint` are separately confirmed to support only sm/md — lg/xl map down to their own confirmed md, the closest available, not an invented lg/xl label/hint treatment. `InputField` still hard-excludes `type` from its own composition, since Figma's `input_field` set has no type axis at all.",
-    "buttonColor is a requested addition with no Figma source — Figma's own confirmed advanced_with_buttons composition always uses NewPinkButton (the \"secondary\" default here); primary/dark reuse NewBlueButton/GreyscaleButton's own confirmed color resolvers instead of inventing new colors.",
+    "buttonColor is a requested addition with no Figma source — Figma's own confirmed advanced_with_buttons composition always uses NewPinkButton (\"secondary\"). Default changed to \"primary\" (NewBlueButton, Color/primary/500) per direct follow-up request — a deliberate deviation from Figma's own default, not a re-derived one; \"secondary\"/\"dark\" remain available and reuse NewPinkButton/GreyscaleButton's own confirmed color resolvers instead of inventing new colors.",
     "`Textarea` now accepts `size` too. Its own Figma component set (node 66056:19282) has no size axis — only one instance was ever sampled — but that sample's confirmed padding/radius is a byte-for-byte match with field's own type=\"textarea\" \"lg\" row, not \"md\" as originally assumed. `size` now defaults to \"lg\" (reproducing the original sample exactly) and reuses the other 3 already-confirmed sizes from that same table (now shared between Field and Textarea as `TEXTAREA_METRICS` in shared.ts) as the least-invented extension.",
     "Requested: `active`'s border/ring is now `Color/primary/500` + `primary/200` (blue), a deliberate CODE-ONLY override — Figma's own `input_field`/`active` (node 66056:19197) still renders secondary pink, confirmed unchanged, re-verified during this pass. Applied everywhere `fieldChromeStyle` is shared (InputField, Textarea, and now advanced_with_buttons) — `Dropdown`/`DigitInput` each have their own independent, still-pink chrome function and were left untouched since only \"the input field\" was named.",
     "Requested: type=\"advanced_with_buttons\" now accepts `state` and, left unset, derives it from real focus/value/hover the same way default/textarea already do — previously it had no state prop at all and always rendered the same static chrome no matter what. No Figma component wraps this type with a state axis (confirmed absent), so this reuses the exact same already-confirmed `fieldChromeStyle` the rest of the family shares, rather than inventing new colors. Disabled now also passes through to the real NewPinkButton/NewBlueButton/GreyscaleButton shortcut buttons (native `disabled`, not just a visual dimming).",
@@ -94,7 +94,7 @@ export function EmailField() {
     { name: "image", type: "boolean", defaultValue: "false", description: "`Field`'s ninth boolean — the only one confirmed to default off." },
     { name: "selectLeftIcon / selectRightIcon", type: "ReactNode | null", defaultValue: "null", description: "Confirmed instance-swap slots — the first found anywhere in the audit series." },
     { name: "leadTextContent / leadChevron / buttonLabels", type: "ReactNode / boolean / string[]", description: "`Field`, type=\"advanced_with_buttons\" only — the lead dropdown chip and 0-3 action buttons." },
-    { name: "buttonColor", type: "primary | secondary | dark", defaultValue: "secondary", description: "Requested addition. type=\"advanced_with_buttons\" only — which family's color resolver the action buttons use." },
+    { name: "buttonColor", type: "primary | secondary | dark", defaultValue: "primary", description: "Requested addition. type=\"advanced_with_buttons\" only — which family's color resolver the action buttons use. Default changed to \"primary\" (blue) per request; Figma's own confirmed default is \"secondary\" (pink)." },
   ],
   preview: () => (
     <div style={{ width: "100%", maxWidth: 320 }}>
@@ -186,7 +186,7 @@ export function EmailField() {
       {
         prop: "buttonColor",
         label: "Button color",
-        defaultValue: "secondary",
+        defaultValue: "primary",
         hidden: (values) => values.type !== "advanced_with_buttons" || values.rightButtons === "none",
         options: BUTTON_COLORS,
       },
@@ -305,7 +305,7 @@ export function EmailField() {
     {
       title: "Field — type=advanced_with_buttons",
       description:
-        "Independently re-confirmed at all 4 sizes via get_design_context (node 66056:19069 and siblings): a bordered lead chip (country-code-style prefix, with a real select-chevrons glyph rendered by default), a flex-1 text column, an optional trail label, and 1-3 real NewPinkButton actions. Shown at every size to demonstrate the confirmed per-size lead/button metrics.",
+        "Independently re-confirmed at all 4 sizes via get_design_context (node 66056:19069 and siblings): a bordered lead chip (country-code-style prefix, with a real select-chevrons glyph rendered by default), a flex-1 text column, an optional trail label, and 1-3 real shortcut-button actions (NewBlueButton/primary by default — a requested deviation from Figma's own confirmed NewPinkButton/secondary, see buttonColor below). Shown at every size to demonstrate the confirmed per-size lead/button metrics.",
       layout: "stack",
       render: () => (
         <>
@@ -348,7 +348,7 @@ export function EmailField() {
     },
     {
       title: "Field — advanced_with_buttons, up to 3 buttons",
-      description: "buttonLabels accepts 1-3 labels, each composing a real NewPinkButton — confirmed the max Figma exposes.",
+      description: "buttonLabels accepts 1-3 labels, each composing a real NewBlueButton (buttonColor's default) — confirmed the max Figma exposes.",
       render: () => (
         <Field
           type="advanced_with_buttons"

@@ -85,23 +85,24 @@ describe("Field", () => {
     expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument(); // the resizer glyph
   });
 
-  it("confirmed: type=advanced_with_buttons composes a real NewPinkButton action, not a drawn approximation", () => {
+  it("confirmed: type=advanced_with_buttons composes a real button action, not a drawn approximation", () => {
     render(<Field type="advanced_with_buttons" textContent="Input text" buttonLabels={["Send"]} />);
     expect(screen.getByRole("button", { name: "Send" })).toBeInTheDocument();
   });
 
   // Requested addition, not part of the original Figma audit — Figma's own confirmed composition
-  // always uses NewPinkButton (the "secondary" default here); primary/dark swap in other
+  // always uses NewPinkButton ("secondary"); default changed to "primary" (NewBlueButton) per
+  // direct request, a deliberate deviation from Figma's own default. secondary/dark swap in other
   // families' own confirmed color resolvers instead of inventing new colors.
   describe("buttonColor (requested addition)", () => {
-    it("defaults to secondary — the confirmed NewPinkButton fill (secondary/500)", () => {
+    it("defaults to primary — NewBlueButton, Color/primary/500 (requested default, not Figma's own)", () => {
       render(<Field type="advanced_with_buttons" textContent="Input text" buttonLabels={["Send"]} />);
-      expect(screen.getByRole("button", { name: "Send" }).style.background).toContain("226, 0, 141");
+      expect(screen.getByRole("button", { name: "Send" }).style.background).toContain("84, 104, 255");
     });
 
-    it("primary composes NewBlueButton (primary/500)", () => {
-      render(<Field type="advanced_with_buttons" textContent="Input text" buttonLabels={["Send"]} buttonColor="primary" />);
-      expect(screen.getByRole("button", { name: "Send" }).style.background).toContain("84, 104, 255");
+    it("secondary composes NewPinkButton (secondary/500) — Figma's own confirmed default", () => {
+      render(<Field type="advanced_with_buttons" textContent="Input text" buttonLabels={["Send"]} buttonColor="secondary" />);
+      expect(screen.getByRole("button", { name: "Send" }).style.background).toContain("226, 0, 141");
     });
 
     it("dark composes GreyscaleButton (black/900, 88% alpha)", () => {
