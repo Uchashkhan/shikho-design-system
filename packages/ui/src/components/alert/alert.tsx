@@ -82,10 +82,18 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, "childr
    * unlike `danger`/`success` (§14). */
   primaryActionContent?: ReactNode;
   onPrimaryActionClick?: () => void;
+  /** Not part of the original Figma audit — a requested addition. Figma's own sampled instances
+   * always show both action buttons (no boolean toggle exists for either in the confirmed
+   * design), so this defaults to `true` to keep that appearance unchanged; consumers who need
+   * zero or one action button now have an explicit way to ask for it instead of passing empty
+   * content into an always-rendered button. */
+  primaryAction?: boolean;
   /** Content for the second action button — confirmed identical construction across all 5
    * severities (`secondary/500` fill, white text, §11/§14). */
   dismissContent?: ReactNode;
   onDismissClick?: () => void;
+  /** Not part of the original Figma audit — a requested addition. See `primaryAction`. */
+  dismissAction?: boolean;
   /** Overrides the confirmed default "X" icon for the corner close button (§14). */
   closeIcon?: ReactNode;
   onCloseClick?: () => void;
@@ -124,8 +132,10 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
       descriptionContent,
       primaryActionContent,
       onPrimaryActionClick,
+      primaryAction = true,
       dismissContent,
       onDismissClick,
+      dismissAction = true,
       closeIcon,
       onCloseClick,
       closeButtonLabel = "Close",
@@ -268,42 +278,46 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
               incidentally made the composed ButtonDanger/ButtonSuccess reach the confirmed 40px
               height only because the Dismiss button's own explicit height stretched it; fixed
               properly by giving the composed buttons their own explicit height below. */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" /* gap-[spacing/8] */ }}>
-            {primaryButton}
-            {/* Second action button — confirmed structurally identical across all 5 severities,
-                but not confirmed to be drawn from a named component set (§11), so it is
-                implemented inline with its own exactly confirmed fill/text. */}
-            <button
-              type="button"
-              onClick={onDismissClick}
-              onMouseEnter={() => setDismissHover(true)}
-              onMouseLeave={() => setDismissHover(false)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center", // confirmed — re-pulled get_design_context, node 66071:28148
-                height: 40, // confirmed h-[40px] — same fixed height as the primary action button,
-                // previously missing here (the two buttons rendered at different heights)
-                padding: "0.5rem 0.75rem", // py-[spacing/8] px-[spacing/12] — §11
-                gap: "0.25rem", // gap-[spacing/4] — §11
-                borderRadius: radius.md, // radius/custom/md (10) — §11
-                border: `1px solid ${color.black[50]}`, // outline/black-50 — §11 (P1 repair)
-                // Re-pulled get_design_context confirms the same outer 1px drop-shadow + inset
-                // highlight/shadow pair already applied to the primary neutral button — previously
-                // missing here entirely.
-                boxShadow: neutralButtonShadow,
-                backgroundColor: dismissHover ? dismissButtonHoverBg : color.secondary[500], // confirmed — §11
-                color: color.white[950], // text/white-950 — §11
-                fontSize: 13,
-                lineHeight: "20px",
-                fontWeight: 600, // web/Body/13 Semibold — §11
-                cursor: "pointer",
-              }}
-            >
-              {/* Same confirmed text_wrap 4px padding as the primary neutral button above. */}
-              <span style={{ padding: "0 0.25rem" }}>{dismissContent}</span>
-            </button>
-          </div>
+          {(primaryAction || dismissAction) && (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" /* gap-[spacing/8] */ }}>
+              {primaryAction && primaryButton}
+              {/* Second action button — confirmed structurally identical across all 5 severities,
+                  but not confirmed to be drawn from a named component set (§11), so it is
+                  implemented inline with its own exactly confirmed fill/text. */}
+              {dismissAction && (
+                <button
+                  type="button"
+                  onClick={onDismissClick}
+                  onMouseEnter={() => setDismissHover(true)}
+                  onMouseLeave={() => setDismissHover(false)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center", // confirmed — re-pulled get_design_context, node 66071:28148
+                    height: 40, // confirmed h-[40px] — same fixed height as the primary action button,
+                    // previously missing here (the two buttons rendered at different heights)
+                    padding: "0.5rem 0.75rem", // py-[spacing/8] px-[spacing/12] — §11
+                    gap: "0.25rem", // gap-[spacing/4] — §11
+                    borderRadius: radius.md, // radius/custom/md (10) — §11
+                    border: `1px solid ${color.black[50]}`, // outline/black-50 — §11 (P1 repair)
+                    // Re-pulled get_design_context confirms the same outer 1px drop-shadow + inset
+                    // highlight/shadow pair already applied to the primary neutral button — previously
+                    // missing here entirely.
+                    boxShadow: neutralButtonShadow,
+                    backgroundColor: dismissHover ? dismissButtonHoverBg : color.secondary[500], // confirmed — §11
+                    color: color.white[950], // text/white-950 — §11
+                    fontSize: 13,
+                    lineHeight: "20px",
+                    fontWeight: 600, // web/Body/13 Semibold — §11
+                    cursor: "pointer",
+                  }}
+                >
+                  {/* Same confirmed text_wrap 4px padding as the primary neutral button above. */}
+                  <span style={{ padding: "0 0.25rem" }}>{dismissContent}</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Absolutely-positioned corner icon_button — confirmed outside the main flex flow,

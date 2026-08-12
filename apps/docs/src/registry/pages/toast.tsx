@@ -60,12 +60,42 @@ function DangerToast() {
         defaultValue: "danger",
         options: STATES.map((v) => ({ label: v, value: v })),
       },
+      {
+        prop: "icon",
+        label: "Icon",
+        defaultValue: "shown",
+        options: [
+          { label: "shown", value: "shown" },
+          { label: "hidden", value: "hidden" },
+        ],
+      },
+      {
+        prop: "supportingText",
+        label: "Supporting text",
+        defaultValue: "shown",
+        options: [
+          { label: "shown", value: "shown" },
+          { label: "hidden", value: "hidden" },
+        ],
+      },
+      {
+        prop: "button",
+        label: "Button",
+        defaultValue: "single",
+        options: [
+          { label: "none", value: "none" },
+          { label: "single", value: "single" },
+        ],
+      },
     ],
     render: (v) => (
       <Toast
         state={v.state as ToastState}
+        leftIcon={v.icon === "shown"}
         titleContent="Notification text"
+        desc={v.supportingText === "shown"}
         descriptionContent="Supporting description goes here."
+        actionButton={v.button === "single"}
         actionContent="Learn more"
       />
     ),

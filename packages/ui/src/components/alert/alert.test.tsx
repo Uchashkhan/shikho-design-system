@@ -300,3 +300,32 @@ describe("real pointer-driven hover on the alert's own buttons (P3 repair)", () 
     expect(button).toHaveAttribute("data-state", "default");
   });
 });
+
+// Requested addition, not part of the original Figma audit — Figma's own sampled instances
+// always show both action buttons (no boolean toggle exists for either in the confirmed design).
+describe("primaryAction / dismissAction (requested addition)", () => {
+  it("both default to true, keeping the confirmed 2-button appearance unchanged", () => {
+    render(<Alert primaryActionContent="Learn more" dismissContent="Dismiss" />);
+    expect(screen.getByRole("button", { name: "Learn more" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dismiss" })).toBeInTheDocument();
+  });
+
+  it("primaryAction=false hides only the primary action button", () => {
+    render(<Alert primaryActionContent="Learn more" dismissContent="Dismiss" primaryAction={false} />);
+    expect(screen.queryByRole("button", { name: "Learn more" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dismiss" })).toBeInTheDocument();
+  });
+
+  it("dismissAction=false hides only the dismiss button", () => {
+    render(<Alert primaryActionContent="Learn more" dismissContent="Dismiss" dismissAction={false} />);
+    expect(screen.getByRole("button", { name: "Learn more" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dismiss" })).not.toBeInTheDocument();
+  });
+
+  it("both false renders neither action button (only the corner close button remains)", () => {
+    render(<Alert primaryActionContent="Learn more" dismissContent="Dismiss" primaryAction={false} dismissAction={false} />);
+    expect(screen.queryByRole("button", { name: "Learn more" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dismiss" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+  });
+});

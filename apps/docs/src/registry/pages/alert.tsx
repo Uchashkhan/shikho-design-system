@@ -19,6 +19,7 @@ export const pageConfig: ComponentPageConfig = {
     "warning/info border colors (outline/warning_alpha, outline/info_alpha) are confirmed exact hex values with no equivalent yet in @shikho/tokens, so they're used as cited literal constants rather than added to the tokens package.",
     "The second action button (\"Dismiss\") has an exact confirmed fill/text, identical across all 5 severities, but is not confirmed to be drawn from any named component set — implemented as its own inline <button>.",
     "Whether the visible \"Dismiss\" text button and the corner close button are two distinct intended controls or redundant was never determined — both are implemented as independent, separately-clickable controls rather than collapsing them into one.",
+    "primaryAction/dismissAction are requested additions with no Figma source — Figma's own sampled instances always show both action buttons; these default to true to keep that appearance unchanged.",
   ],
   usageExample: `import { Alert } from "@shikho/ui";
 
@@ -42,6 +43,7 @@ function DangerBanner() {
     { name: "icon", type: "ReactNode", description: "Overrides the confirmed default info-circle icon, tinted per state — rarely needed." },
     { name: "titleContent / descriptionContent", type: "ReactNode", description: "Title (15px/24px SemiBold) and description (13px/20px Regular) content." },
     { name: "primaryActionContent / onPrimaryActionClick", type: "ReactNode / () => void", description: "Composes real ButtonDanger/ButtonSuccess for danger/success; a plain neutral button for Default/warning/info." },
+    { name: "primaryAction / dismissAction", type: "boolean", defaultValue: "true", description: "Requested addition. Independently show/hide each action button — Figma's own sampled instances always show both." },
     { name: "dismissContent / onDismissClick", type: "ReactNode / () => void", description: "The second action button, confirmed structurally identical across all 5 severities but not confirmed to be a named component set." },
     { name: "closeIcon / onCloseClick / closeButtonLabel", type: "ReactNode / () => void / string", defaultValue: "\"Close\"", description: "The absolutely-positioned corner icon button — renders a confirmed default 'X' icon unless overridden." },
   ],
@@ -62,14 +64,36 @@ function DangerBanner() {
         defaultValue: "danger",
         options: STATES.map((v) => ({ label: v, value: v })),
       },
+      {
+        prop: "icon",
+        label: "Icon",
+        defaultValue: "shown",
+        options: [
+          { label: "shown", value: "shown" },
+          { label: "hidden", value: "hidden" },
+        ],
+      },
+      {
+        prop: "buttons",
+        label: "Buttons",
+        defaultValue: "multiple",
+        options: [
+          { label: "none", value: "none" },
+          { label: "single", value: "single" },
+          { label: "multiple", value: "multiple" },
+        ],
+      },
     ],
     render: (v) => (
       <Alert
         state={v.state as AlertState}
+        leftIcon={v.icon === "shown"}
         titleContent="Notification text"
         descriptionContent="Supporting description goes here."
         primaryActionContent="Learn more"
+        primaryAction={v.buttons === "single" || v.buttons === "multiple"}
         dismissContent="Dismiss"
+        dismissAction={v.buttons === "multiple"}
       />
     ),
   },
