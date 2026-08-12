@@ -44,6 +44,13 @@ export interface TextareaProps
  * hardcoded padding/radius pair turns out to be an exact match for `field`'s own `type="textarea"`
  * `lg` step — not `md` as originally assumed — so `size` now defaults to `"lg"` (reproducing the
  * original sample exactly) and composes the other 3 already-confirmed sizes from that same table.
+ *
+ * Re-audit (node 66056:19127 and siblings): `size` was wired to `padding`/`borderRadius` but not
+ * `height` — the confirmed per-size height (sm 72 / md 96 / lg 104 / xl 128, byte-for-byte
+ * cross-checked against `field`'s own `type="textarea"` variants) was computed into `ta.height`
+ * and then silently dropped, so the rendered box only ever changed padding/radius and was actually
+ * sized by the browser's default `rows` behavior — not Figma's confirmed heights. Now applies
+ * `height: ta.height` directly; `resize: "vertical"` still lets the user drag past it.
  */
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   (
@@ -113,6 +120,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           (className ? ` ${className}` : "")
         }
         style={{
+          height: ta.height,
           padding: ta.padding,
           borderRadius: ta.radius,
           backgroundColor: chrome.background,

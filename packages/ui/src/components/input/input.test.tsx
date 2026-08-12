@@ -428,20 +428,22 @@ describe("remaining Input family members render their confirmed state vocabulary
       expect(textarea).toHaveAttribute("data-size", "lg");
       expect(textarea.style.borderRadius).toBe("16px");
       expect(textarea.style.padding).toBe("0.75rem 1rem");
+      expect(textarea.style.height).toBe("104px");
     });
 
-    it("renders at every confirmed size with genuinely different padding/radius", () => {
-      const rows: [FieldSize, string, string][] = [
-        ["sm", "8px", "0.5rem"],
-        ["md", "10px", "0.5rem 0.75rem"],
-        ["lg", "16px", "0.75rem 1rem"],
-        ["xl", "16px", "1rem"],
+    it("renders at every confirmed size with genuinely different padding/radius/height", () => {
+      const rows: [FieldSize, string, string, string][] = [
+        ["sm", "8px", "0.5rem", "72px"],
+        ["md", "10px", "0.5rem 0.75rem", "96px"],
+        ["lg", "16px", "0.75rem 1rem", "104px"],
+        ["xl", "16px", "1rem", "128px"],
       ];
-      for (const [size, radius, padding] of rows) {
+      for (const [size, radius, padding, height] of rows) {
         const { unmount } = render(<Textarea aria-label="Message" size={size} />);
         const textarea = screen.getByRole("textbox", { name: "Message" });
         expect(textarea.style.borderRadius, size).toBe(radius);
         expect(textarea.style.padding, size).toBe(padding);
+        expect(textarea.style.height, size).toBe(height);
         unmount();
       }
     });
