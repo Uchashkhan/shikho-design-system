@@ -52,6 +52,30 @@ describe("confirmed type x state matrix (§1)", () => {
   });
 });
 
+// Requested addition, not part of the original Figma audit.
+describe("selectedColor (requested addition)", () => {
+  it("default keeps the confirmed neutral gray-950 text / black border for active", () => {
+    render(<TabNavItem type="active">Nav item</TabNavItem>);
+    const el = screen.getByRole("button");
+    expect(el.style.borderBottom).toContain("rgb(0, 0, 0)");
+    expect(screen.getByText("Nav item").style.color).toBe("rgb(10, 12, 17)");
+  });
+
+  it("primary swaps both the border and text to primary/500, only when type=active", () => {
+    render(<TabNavItem type="active" selectedColor="primary">Nav item</TabNavItem>);
+    const el = screen.getByRole("button");
+    expect(el.style.borderBottom).toContain("rgb(84, 104, 255)");
+    expect(screen.getByText("Nav item").style.color).toBe("rgb(84, 104, 255)");
+  });
+
+  it("never affects inactive tabs, regardless of selectedColor", () => {
+    render(<TabNavItem type="inactive" selectedColor="primary">Nav item</TabNavItem>);
+    const el = screen.getByRole("button");
+    expect(el.style.borderBottom).toContain("transparent");
+    expect(screen.getByText("Nav item").style.color).toBe("rgb(140, 146, 156)");
+  });
+});
+
 describe("confirmed boolean slots", () => {
   it("hides icon slots independently", () => {
     render(

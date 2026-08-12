@@ -9,6 +9,10 @@ import { color, elevation } from "@shikho/tokens";
 export type TabNavItemSize = "xs" | "sm" | "md" | "lg" | "xl";
 export type TabNavItemType = "inactive" | "active";
 export type TabNavItemState = "default" | "hover";
+/** Not part of the original Figma audit — a requested addition. Only affects `type="active"`;
+ * inactive tabs are unchanged regardless of this value. `default` keeps the confirmed neutral
+ * black/gray-950 treatment; `primary` swaps the active indicator and label to primary/500. */
+export type TabNavSelectedColor = "default" | "primary";
 
 // docs/audit/tab-navigation-deep-audit.md §1-§2 — confirmed heights (size metadata); icon size
 // confirmed only at md (18px), interpolated for xs/sm/lg/xl using the confirmed 5-step
@@ -55,6 +59,8 @@ export interface TabNavItemProps
   /** Forces a specific state (used by Storybook/playground controls to preview `hover` without a
    * pointer). Left unset, the real cursor drives it via onMouseEnter/onMouseLeave. */
   state?: TabNavItemState;
+  /** Not part of the original Figma audit — a requested addition. Only affects `type="active"`. */
+  selectedColor?: TabNavSelectedColor;
   /** The 3 confirmed boolean slots, all default `true`. */
   leftIcon?: boolean;
   rightIcon?: boolean;
@@ -77,6 +83,7 @@ export const TabNavItem = forwardRef<HTMLButtonElement, TabNavItemProps>(
       size = "md",
       type = "inactive",
       state,
+      selectedColor = "default",
       leftIcon = true,
       rightIcon = true,
       text = true,
@@ -109,8 +116,13 @@ export const TabNavItem = forwardRef<HTMLButtonElement, TabNavItemProps>(
     };
 
     // Confirmed: active never has a hover variant — the default text color is used regardless of
-    // the resolved state when type="active".
-    const textColor = type === "active" ? TEXT_COLOR.active.default : TEXT_COLOR.inactive[resolvedState];
+    // the resolved state when type="active". selectedColor only ever applies to the active
+    // treatment — inactive tabs are unaffected, per the requested "inactive tabs remain unchanged"
+    // behavior. default keeps the two confirmed-distinct tokens (gray/950 text, black/950 border);
+    // primary swaps BOTH to the same primary/500.
+    const activeTextColor = selectedColor === "primary" ? color.primary[500] : TEXT_COLOR.active.default;
+    const activeBorderColor = selectedColor === "primary" ? color.primary[500] : color.black[950];
+    const textColor = type === "active" ? activeTextColor : TEXT_COLOR.inactive[resolvedState];
 
     return (
       <button
@@ -119,6 +131,7 @@ export const TabNavItem = forwardRef<HTMLButtonElement, TabNavItemProps>(
         data-size={size}
         data-type={type}
         data-state={resolvedState}
+        data-selected-color={selectedColor}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{
@@ -129,7 +142,7 @@ export const TabNavItem = forwardRef<HTMLButtonElement, TabNavItemProps>(
           gap: metrics.gap,
           padding: metrics.padding,
           border: "none",
-          borderBottom: type === "active" ? `2px solid ${color.black[950]}` : "2px solid transparent", // outline/b
+          borderBottom: type === "active" ? `2px solid ${activeBorderColor}` : "2px solid transparent", // outline/b
           background: "transparent",
           cursor: "pointer",
           whiteSpace: "nowrap",

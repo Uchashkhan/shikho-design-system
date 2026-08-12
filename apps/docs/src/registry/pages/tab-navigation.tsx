@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { TabNavItem, type TabNavItemSize, type TabNavItemState, type TabNavItemType } from "@shikho/ui";
+import { TabNavItem, type TabNavItemSize, type TabNavItemState, type TabNavItemType, type TabNavSelectedColor } from "@shikho/ui";
 import type { ComponentPageConfig } from "./types";
 
 const SIZES: TabNavItemSize[] = ["xs", "sm", "md", "lg", "xl"];
 const TYPES: TabNavItemType[] = ["active", "inactive"];
 const STATES: TabNavItemState[] = ["default", "hover"];
+const SELECTED_COLORS: TabNavSelectedColor[] = ["default", "primary"];
 
 function InteractivePreview() {
   const [active, setActive] = useState("account");
@@ -35,6 +36,7 @@ export const pageConfig: ComponentPageConfig = {
     { name: "size", values: SIZES, note: "Only md was directly confirmed for icon size; xs/sm/lg/xl are interpolated using the confirmed 5-step icon-size token ramp." },
     { name: "type", values: TYPES, note: "The smallest type vocabulary of any nav component in this library — no semantic-color variants." },
     { name: "state", values: STATES, note: "Confirmed: active never has a distinct hover treatment. Inactive's hover only darkens text color — no background fill exists, unlike SwitcherItem/SidebarItem." },
+    { name: "selectedColor", values: SELECTED_COLORS, note: "Requested addition, not part of the original Figma audit. Only affects type=active — primary swaps the border-bottom and label to primary/500; inactive tabs are unchanged." },
   ],
   states: STATES,
   gaps: [
@@ -63,6 +65,7 @@ function Tabs() {
     { name: "type", type: "inactive | active", defaultValue: "inactive", description: "The smallest type vocabulary of any nav component in this library." },
     { name: "state", type: "default | hover", description: "Left unset, the real cursor drives it. No focus state exists. active ignores state entirely — confirmed no active+hover variant." },
     { name: "leftIcon / rightIcon / text", type: "boolean", defaultValue: "true", description: "The 3 confirmed boolean slots." },
+    { name: "selectedColor", type: "default | primary", defaultValue: "default", description: "Requested addition. Only affects type=active; inactive tabs are unchanged." },
   ],
   preview: () => <InteractivePreview />,
   playground: {
@@ -82,6 +85,12 @@ function Tabs() {
         options: SIZES.map((v) => ({ label: v, value: v })),
       },
       {
+        prop: "selectedColor",
+        label: "Selected color",
+        defaultValue: "default",
+        options: SELECTED_COLORS.map((v) => ({ label: v, value: v })),
+      },
+      {
         prop: "type",
         label: "Type",
         defaultValue: "inactive",
@@ -96,7 +105,12 @@ function Tabs() {
     ],
     render: (v) => (
       <div style={{ borderBottom: "1px solid #f4f4f6" }}>
-        <TabNavItem size={v.size as TabNavItemSize} type={v.type as TabNavItemType} state={v.state as TabNavItemState}>
+        <TabNavItem
+          size={v.size as TabNavItemSize}
+          type={v.type as TabNavItemType}
+          state={v.state as TabNavItemState}
+          selectedColor={v.selectedColor as TabNavSelectedColor}
+        >
           Nav item
         </TabNavItem>
       </div>
