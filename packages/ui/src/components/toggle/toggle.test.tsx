@@ -41,7 +41,12 @@ describe("switch semantics (native checkbox + role=switch, visually hidden behin
     expect(track.style.background).toBe("rgb(84, 104, 255)"); // primary/500
     expect(track.style.justifyContent).toBe("flex-end");
     const knob = track.firstElementChild as HTMLElement;
-    expect(knob.querySelector("svg")).toBeInTheDocument();
+    const check = knob.querySelector("svg") as SVGElement;
+    expect(check).toBeInTheDocument();
+    // Confirmed via get_design_context (node 254:155) — the check's own layout frame is exactly
+    // knob-sized, not shrunk further inside it (§ toggle.tsx's inline comment on this render).
+    expect(check.style.width).toBe("100%");
+    expect(check.style.height).toBe("100%");
   });
 
   it("toggles ON/OFF like a native checkbox on click", () => {

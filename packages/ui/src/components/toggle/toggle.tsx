@@ -226,8 +226,16 @@ export const Toggle = forwardRef<HTMLInputElement, ToggleProps>(
           <span style={knobStyle}>
             {visual.showCheck && (
               /* P2: this glyph WAS already the real export — it is now the single shared
-                 source in `@shikho/icons`, which Checkbox also consumes. */
-              <CheckIcon style={{ width: "60%", height: "60%", color: visual.checkColor }} />
+                 source in `@shikho/icons`, which Checkbox also consumes.
+                 Confirmed via get_design_context (node 254:155, switch_ON/md) — the check's own
+                 layout frame in Figma is exactly knob-sized (20x16 at md, identical to
+                 CheckIcon's own viewBox), not a further-shrunk icon inside the knob. CheckIcon
+                 already bakes in generous internal padding around the mark (occupies ~35% of its
+                 own viewBox — see check.tsx) — the previous 60% here compounded on top of that
+                 built-in padding, rendering the mark at roughly 0.6 * 0.35 ≈ 21% of the knob, far
+                 smaller than confirmed. Checkbox already renders CheckIcon at 100% for the same
+                 reason (checkbox.tsx). */
+              <CheckIcon style={{ width: "100%", height: "100%", color: visual.checkColor }} />
             )}
           </span>
         </span>
