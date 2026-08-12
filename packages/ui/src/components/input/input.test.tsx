@@ -139,14 +139,110 @@ describe("Field", () => {
     lead = container.querySelector('[data-testid="field-lead"]') as HTMLElement;
     expect(lead.querySelector('[data-testid="custom-chevron"]')).toBeInTheDocument();
   });
+
+  // Re-audit (node 66056:19069 and siblings) — the chevron glyph was hardcoded to size={24} for
+  // every field size (only correct at xl) and its wrapping span had no flex centering at all, so
+  // it rendered as an inline block sitting on the text baseline — visibly high and, at lg/md/sm,
+  // oversized for its slot.
+  describe("advanced_with_buttons: leadChevron sizing (re-audit — was hardcoded to 24 at every size)", () => {
+    it.each([
+      ["xl", "24"],
+      ["lg", "20"],
+      ["md", "18"],
+      ["sm", "16"],
+    ] as const)("renders the confirmed chevron size at size=%s", (size, expected) => {
+      const { container } = render(
+        <Field type="advanced_with_buttons" size={size} leadTextContent="+1" textContent="Input text" />,
+      );
+      const svg = container.querySelector("svg[data-icon='select-chevrons']") as SVGElement;
+      expect(svg.getAttribute("width"), size).toBe(expected);
+      expect(svg.getAttribute("height"), size).toBe(expected);
+    });
+
+    it("centers the chevron's wrapping slot with flex, not baseline-aligned inline layout", () => {
+      const { container } = render(
+        <Field type="advanced_with_buttons" leadTextContent="+1" textContent="Input text" />,
+      );
+      const svg = container.querySelector("svg[data-icon='select-chevrons']") as SVGElement;
+      const slot = svg.parentElement as HTMLElement;
+      expect(slot.style.display).toBe("flex");
+      expect(slot.style.alignItems).toBe("center");
+      expect(slot.style.justifyContent).toBe("center");
+    });
+  });
+});
+
+// Re-audit — advanced_with_buttons previously always rendered the same static gray-100/
+// innerShadow chrome, with no `state` prop and no real focus/hover/value tracking at all, unlike
+// default (via InputField) and textarea (via Textarea). Now shares the same fieldChromeStyle
+// chrome, real interaction-driven by default.
+describe("Field type=advanced_with_buttons — real interaction-driven states (previously static, no state prop at all)", () => {
+  it("with no `state` prop, real focus drives it to `active` and blur returns it to `default`", () => {
+    const { container } = render(
+      <Field type="advanced_with_buttons" leadTextContent="+1" textContent="" buttonLabels={["Send"]} />,
+    );
+    const input = screen.getByRole("textbox");
+    const wrapper = container.querySelector("[data-type='advanced_with_buttons']") as HTMLElement;
+    expect(wrapper).toHaveAttribute("data-state", "default");
+    fireEvent.focus(input);
+    expect(wrapper).toHaveAttribute("data-state", "active");
+    expect(wrapper.style.border).toContain("84, 104, 255"); // Color/primary/500
+    fireEvent.blur(input);
+    expect(wrapper).toHaveAttribute("data-state", "default");
+  });
+
+  it("with no `state` prop, typing a value drives it to `filled` once blurred", () => {
+    const { container } = render(
+      <Field type="advanced_with_buttons" leadTextContent="+1" textContent="" buttonLabels={["Send"]} />,
+    );
+    const input = screen.getByRole("textbox");
+    const wrapper = container.querySelector("[data-type='advanced_with_buttons']") as HTMLElement;
+    fireEvent.change(input, { target: { value: "hello" } });
+    fireEvent.blur(input);
+    expect(wrapper).toHaveAttribute("data-state", "filled");
+  });
+
+  it("with no `state` prop, real pointer hover drives it to `hover`", () => {
+    const { container } = render(
+      <Field type="advanced_with_buttons" leadTextContent="+1" textContent="" buttonLabels={["Send"]} />,
+    );
+    const wrapper = container.querySelector("[data-type='advanced_with_buttons']") as HTMLElement;
+    fireEvent.mouseEnter(wrapper);
+    expect(wrapper).toHaveAttribute("data-state", "hover");
+    fireEvent.mouseLeave(wrapper);
+    expect(wrapper).toHaveAttribute("data-state", "default");
+  });
+
+  it("`state` can still be forced, matching InputField/Textarea/Dropdown's own pattern", () => {
+    const { container } = render(
+      <Field type="advanced_with_buttons" state="error" leadTextContent="+1" textContent="Input text" buttonLabels={["Send"]} />,
+    );
+    const wrapper = container.querySelector("[data-type='advanced_with_buttons']") as HTMLElement;
+    expect(wrapper).toHaveAttribute("data-state", "error");
+  });
+
+  it("disabled grays the chrome AND disables the real shortcut buttons (native disabled, not just visual)", () => {
+    render(
+      <Field
+        type="advanced_with_buttons"
+        disabled
+        leadTextContent="+1"
+        textContent="Input text"
+        buttonLabels={["Send"]}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Send" }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+  });
 });
 
 describe("InputField — confirmed per-state chrome (docs/audit/input.md §14)", () => {
-  it("applies the confirmed active-state border and fill", () => {
+  it("applies the active-state border and fill (primary blue — a deliberate code-only override, not Figma's own pink)", () => {
     const { container } = render(<InputField state="active" />);
     const field = container.querySelector("[data-type='default']") as HTMLElement;
     expect(field.style.backgroundColor).toBe("rgb(255, 255, 255)"); // Color/smoke_base
-    expect(field.style.border).toContain("246, 129, 215"); // outline/Secondary 300 #f681d7
+    expect(field.style.border).toContain("84, 104, 255"); // Color/primary/500 #5468ff
+    expect(field.style.boxShadow).toContain("#d5e7ff"); // Color/primary/200
   });
 
   it("confirmed: error uses a danger-colored border but the SAME ring color as active", () => {
@@ -206,8 +302,8 @@ describe("InputField — size (composes field's own confirmed per-size geometry)
       const field = container.querySelector("[data-type='default']") as HTMLElement;
       expect(field, size).toHaveAttribute("data-size", size);
       expect(field.style.height, size).toBe(height);
-      // The confirmed active-state chrome (pink border) still applies regardless of size.
-      expect(field.style.border, size).toContain("246, 129, 215");
+      // The active-state chrome (primary blue border, a deliberate override) still applies regardless of size.
+      expect(field.style.border, size).toContain("84, 104, 255");
       unmount();
     }
   });
@@ -407,7 +503,9 @@ describe("remaining Input family members render their confirmed state vocabulary
     expect(textarea.style.backgroundColor).toBe("rgb(244, 244, 246)"); // smoke_med / gray[100]
     rerender(<Textarea state="active" aria-label="Message" />);
     expect(textarea.style.backgroundColor).toBe("rgb(255, 255, 255)"); // smoke_base / white
-    expect(textarea.style.border).toContain("246, 129, 215"); // secondary/300 ring border
+    // Shares `fieldChromeStyle` with InputField/Dropdown/DigitInput — active is now primary blue
+    // everywhere (a deliberate code-only override, not a Figma value; see shared.ts).
+    expect(textarea.style.border).toContain("84, 104, 255"); // Color/primary/500 #5468ff
   });
 
   it("Textarea: confirmed own radius/padding via a live get_design_context pull on its own component set (§15) — distinct from Field's", () => {

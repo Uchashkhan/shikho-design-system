@@ -6,9 +6,10 @@ import {
   type ReactNode,
   type Ref,
   forwardRef,
+  useState,
 } from "react";
 import { color, radius } from "@shikho/tokens";
-import { SelectChevronsIcon } from "@shikho/icons";
+import { SelectChevronsIcon, type IconSize } from "@shikho/icons";
 import { GreyscaleButton } from "../button/greyscale";
 import { NewBlueButton } from "../button/new_blue";
 import { NewPinkButton } from "../button/new_pink";
@@ -16,10 +17,13 @@ import type { ButtonSizeScaleB } from "../button/shared";
 import {
   FIELD_SIZE_METRICS,
   TEXTAREA_METRICS,
+  fieldChromeInnerShadow,
+  fieldChromeStyle,
   fieldSupportTextColor,
   fieldTextColorDefault,
   iconShadowFilter,
   innerShadow,
+  type FieldChromeState,
   type FieldSize,
 } from "./shared";
 
@@ -87,10 +91,42 @@ export interface FieldProps
   /** Overrides the confirmed default input-text color (docs/audit/input.md §14) — used by
    * `InputField`/`Dropdown` to apply their own confirmed per-state text color. */
   textColor?: string;
+  /** `type="advanced_with_buttons"` only — forces a specific state, the same `state?` pattern
+   * `InputField`/`Textarea`/`Dropdown` already expose. Left unset, real interaction drives it:
+   * focus → `active`, a non-empty value → `filled`, pointer hover → `hover`, otherwise `default`;
+   * `disabled` always wins. `default`/`textarea` are unaffected — those stay externally controlled
+   * by `InputField`/`Textarea`, unchanged.
+   *
+   * Not part of the original Figma audit — no state-driven Figma component wraps
+   * `type="advanced_with_buttons"` (confirmed absent: neither `field` itself nor any sibling
+   * composed component crosses this type with a `state` axis). Requested directly, reusing the
+   * exact same already-confirmed `fieldChromeStyle` chrome that `input_field`/`textarea`/
+   * `dropdown`/`digit_input` all already share — the same "least invented extension" pattern used
+   * elsewhere in this file, not new colors. The shortcut buttons also pick up `disabled` from this
+   * (real native `disabled`, via each button's own already-confirmed disabled treatment) rather
+   * than only graying the surrounding chrome while leaving them clickable. */
+  state?: FieldChromeState;
 }
 
 const IconSlot = ({ size, children }: { size: number; children?: ReactNode }) => (
-  <span style={{ width: size, height: size, flexShrink: 0, filter: iconShadowFilter }} aria-hidden={!children}>
+  <span
+    style={{
+      width: size,
+      height: size,
+      flexShrink: 0,
+      filter: iconShadowFilter,
+      // Re-audit: this span had no centering at all, so a child SVG rendered as an inline
+      // block sitting on its own text baseline — visibly offset toward the top of the slot,
+      // not the true middle. Figma's own icon slots center the glyph via a symmetric inset
+      // (confirmed elsewhere, e.g. `dropdown`'s right_icon: 20px slot, glyph inset 12.5% on
+      // all 4 sides), and `ButtonShell`'s own icon slot already applies this same flex fix —
+      // this brings `Field`'s icon slots (every `IconSlot` usage) in line with that.
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+    aria-hidden={!children}
+  >
     {children}
   </span>
 );
@@ -120,6 +156,12 @@ interface AdvancedMetrics {
   leadRadiusRight: number;
   /** The lead group's own leading icon — a different scale from the field's `iconSize`. */
   leadIconSize: number;
+  /** Re-audit (node 66056:19069 and siblings) — `leadChevron`'s glyph is a genuinely SECOND,
+   * independently-sized `left_icon` instance in the lead chip, distinct from `leadIconSize`
+   * above. Was previously hardcoded to a single `size={24}` for all 4 field sizes (only correct
+   * at `xl`); confirmed to actually scale 24/20/18/16 across xl/lg/md/sm, same as every other
+   * per-size metric in this table. */
+  leadChevronSize: IconSize;
   textPaddingX: number;
   trailPaddingRight: number;
   /** The confirmed `new_pink` size: always one step below the field's own size. */
@@ -133,6 +175,7 @@ const ADVANCED_METRICS: Record<FieldSize, AdvancedMetrics> = {
     leadRadiusLeft: 8,
     leadRadiusRight: 8,
     leadIconSize: 16,
+    leadChevronSize: 16,
     textPaddingX: 8,
     trailPaddingRight: 4,
     buttonSize: "xs",
@@ -143,6 +186,7 @@ const ADVANCED_METRICS: Record<FieldSize, AdvancedMetrics> = {
     leadRadiusLeft: 10,
     leadRadiusRight: 10,
     leadIconSize: 20,
+    leadChevronSize: 18,
     textPaddingX: 8,
     trailPaddingRight: 4,
     buttonSize: "sm",
@@ -153,6 +197,7 @@ const ADVANCED_METRICS: Record<FieldSize, AdvancedMetrics> = {
     leadRadiusLeft: 12,
     leadRadiusRight: 12,
     leadIconSize: 22,
+    leadChevronSize: 20,
     textPaddingX: 12,
     trailPaddingRight: 8,
     buttonSize: "md",
@@ -164,6 +209,7 @@ const ADVANCED_METRICS: Record<FieldSize, AdvancedMetrics> = {
     leadRadiusLeft: 16,
     leadRadiusRight: 12,
     leadIconSize: 28,
+    leadChevronSize: 24,
     textPaddingX: 16,
     trailPaddingRight: 12,
     buttonSize: "lg",
@@ -208,6 +254,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
       buttonLabels = ["Button"],
       buttonColor = "secondary",
       textColor,
+      state,
       className,
       style,
       ...props
@@ -228,6 +275,45 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
       id,
       readOnly,
       disabled,
+    };
+
+    // `type="advanced_with_buttons"` only (see the `state` prop doc above) — real interaction-
+    // driven state resolution, matching `InputField`/`Textarea`. Hooks are called unconditionally
+    // (Rules of Hooks — this component has early returns per `type` below), but only read/wired
+    // into that branch's own JSX; `default`/`textarea` are untouched.
+    const [advPointerHover, setAdvPointerHover] = useState(false);
+    const [advIsFocused, setAdvIsFocused] = useState(false);
+    const [advHasValue, setAdvHasValue] = useState(() => Boolean((value ?? textContent ?? "").length > 0));
+    const resolvedAdvancedState: FieldChromeState =
+      state ??
+      (disabled
+        ? "disabled"
+        : advIsFocused
+          ? "active"
+          : advHasValue
+            ? "filled"
+            : advPointerHover
+              ? "hover"
+              : "default");
+    const handleAdvFocus = (event: FocusEvent<HTMLInputElement>) => {
+      setAdvIsFocused(true);
+      onFocus?.(event);
+    };
+    const handleAdvBlur = (event: FocusEvent<HTMLInputElement>) => {
+      setAdvIsFocused(false);
+      onBlur?.(event);
+    };
+    const handleAdvChange = (event: ChangeEvent<HTMLInputElement>) => {
+      setAdvHasValue(event.target.value.length > 0);
+      onChange?.(event);
+    };
+    const handleAdvMouseEnter = (event: ReactMouseEvent<HTMLDivElement>) => {
+      setAdvPointerHover(true);
+      props.onMouseEnter?.(event);
+    };
+    const handleAdvMouseLeave = (event: ReactMouseEvent<HTMLDivElement>) => {
+      setAdvPointerHover(false);
+      props.onMouseLeave?.(event);
     };
 
     if (type === "textarea") {
@@ -307,12 +393,21 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
       // size BELOW the field — field sm -> button xs, md -> sm, lg -> md, xl -> lg. Every metric
       // matches (height, padding, radius, typography), so `NewPinkButton` is reused rather than a
       // new variant being invented.
+      //
+      // Re-audit (see `state` prop doc): this branch used to always render the same static
+      // gray-100/innerShadow chrome regardless of interaction — no state prop, no hover/focus/
+      // error/disabled visual at all, unlike `default`/`textarea` (both real state-driven via
+      // `InputField`/`Textarea`). Now resolves the same `fieldChromeStyle` chrome `input_field`/
+      // `textarea`/`dropdown`/`digit_input` already share.
       const adv = ADVANCED_METRICS[size];
+      const advChrome = fieldChromeStyle(resolvedAdvancedState);
+      const isAdvDisabled = Boolean(disabled) || resolvedAdvancedState === "disabled";
       return (
         <div
           ref={ref}
           data-size={size}
           data-type={type}
+          data-state={resolvedAdvancedState}
           className={className}
           style={{
             display: "flex",
@@ -321,8 +416,12 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
             minHeight: metrics.height,
             paddingRight: "0.25rem", // pr-[spacing/4] — confirmed identical at all four sizes
             borderRadius: metrics.radius,
-            backgroundColor: color.gray[100],
-            boxShadow: innerShadow,
+            backgroundColor: advChrome.background,
+            border: advChrome.border,
+            boxShadow:
+              [fieldChromeInnerShadow(resolvedAdvancedState), advChrome.boxShadow]
+                .filter(Boolean)
+                .join(", ") || "none",
             position: "relative",
             overflow: "hidden",
             fontSize: metrics.fontSize,
@@ -331,6 +430,8 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
             ...style,
           }}
           {...props}
+          onMouseEnter={handleAdvMouseEnter}
+          onMouseLeave={handleAdvMouseLeave}
         >
           {leadTextContent !== undefined && (
             <span
@@ -346,7 +447,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
                 border: `1px solid ${color.gray[100]}`,
                 backgroundColor: color.white[950],
                 boxShadow: "inset 0 1px 3px 0 rgba(255,255,255,0.04), inset 0 -1px 3px 0 rgba(0,0,0,0.04)",
-                color: fieldTextColorDefault,
+                color: advChrome.textColor,
                 fontWeight: 600,
                 flexShrink: 0,
               }}
@@ -354,8 +455,10 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
               {selectLeftIcon && <IconSlot size={adv.leadIconSize}>{selectLeftIcon}</IconSlot>}
               {leadTextContent}
               {leadChevron && (
-                <IconSlot size={24}>
-                  {selectLeadChevron ?? <SelectChevronsIcon style={{ color: color.gray[700] }} />}
+                <IconSlot size={adv.leadChevronSize}>
+                  {selectLeadChevron ?? (
+                    <SelectChevronsIcon size={adv.leadChevronSize} style={{ color: color.gray[700] }} />
+                  )}
                 </IconSlot>
               )}
             </span>
@@ -364,11 +467,14 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
             ref={inputRef as Ref<HTMLInputElement>}
             data-testid="field-text"
             {...inputCommonProps}
+            onFocus={handleAdvFocus}
+            onBlur={handleAdvBlur}
+            onChange={handleAdvChange}
             style={{
               flex: "1 0 0",
               minWidth: 1,
               padding: `0 ${adv.textPaddingX}px`,
-              color: fieldTextColorDefault,
+              color: advChrome.textColor,
               font: "inherit",
               border: "none",
               outline: "none",
@@ -392,18 +498,23 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(
           <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
             {buttonLabels.map((label, i) =>
               buttonColor === "primary" ? (
-                <NewBlueButton key={i} size={adv.buttonSize} type="Primary">
+                <NewBlueButton key={i} size={adv.buttonSize} type="Primary" disabled={isAdvDisabled}>
                   {label}
                 </NewBlueButton>
               ) : buttonColor === "dark" ? (
                 // ADVANCED_METRICS.buttonSize only ever takes the values xs/sm/md/lg (never
                 // xxl) — a subset shared by both ButtonSizeScaleA and ButtonSizeScaleB, but
                 // GreyscaleButton (Scale A) doesn't type-include Scale B's "xxl" possibility.
-                <GreyscaleButton key={i} size={adv.buttonSize as "xs" | "sm" | "md" | "lg"} type="primary">
+                <GreyscaleButton
+                  key={i}
+                  size={adv.buttonSize as "xs" | "sm" | "md" | "lg"}
+                  type="primary"
+                  disabled={isAdvDisabled}
+                >
                   {label}
                 </GreyscaleButton>
               ) : (
-                <NewPinkButton key={i} size={adv.buttonSize} type="Primary">
+                <NewPinkButton key={i} size={adv.buttonSize} type="Primary" disabled={isAdvDisabled}>
                   {label}
                 </NewPinkButton>
               ),

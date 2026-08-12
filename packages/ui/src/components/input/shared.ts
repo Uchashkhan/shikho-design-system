@@ -119,11 +119,18 @@ export interface FieldChromeStyle {
 
 /**
  * The confirmed fill/border/ring/text combination shared by `input_field`, `dropdown`, and
- * `digit_input`'s field-chrome (docs/audit/input.md §14). `active`/`error` both use the exact
- * same ring color (`Color/Secondary/500_alpha_24`) — confirmed independently on both — differing
- * only in border color (secondary/300 pink vs. danger/300 red). This is a genuine, confirmed
- * Figma detail (the same binding-reuse pattern documented elsewhere as `focus_danger`), not an
- * approximation.
+ * `digit_input`'s field-chrome (docs/audit/input.md §14). `error` uses the confirmed
+ * `Color/Secondary/500_alpha_24` ring (secondary/300 pink border) — that part is untouched.
+ *
+ * `active`'s border/ring is a **deliberate code-only override**, not a Figma value: Figma's own
+ * `input_field`/`active` (node `66056:19197`, re-verified §18) still renders `outline/secondary-
+ * 300` (#f681d7) border + `Color/Secondary/500_alpha_24` ring — the same pink as `error`. Requested
+ * directly (not derived from a Figma re-pull) to distinguish focus from validation-error visually:
+ * border `Color/primary/500` (#5468ff), ring `Color/primary/200` (#d5e7ff, solid — not an alpha
+ * blend of 500, a literal step). Same override pattern already used for `focusRingColor.danger` in
+ * `@shikho/tokens` (docs/audit/special-effects.md §9) — a confirmed, intentional Figma deviation,
+ * not a guess. `error` keeps its original confirmed pink ring untouched since only `active` was
+ * requested.
  */
 export function fieldChromeStyle(state: FieldChromeState): FieldChromeStyle {
   switch (state) {
@@ -138,10 +145,12 @@ export function fieldChromeStyle(state: FieldChromeState): FieldChromeStyle {
       // Confirmed visually identical to `default` in the sampled instance (§14).
       return { background: color.gray[100], border: "none", textColor: color.gray[700], hintColor: color.gray[700] };
     case "active":
+      // Deliberate code-only override — see doc comment above. Figma itself still shows secondary
+      // pink here (confirmed, not a mistake); primary blue was requested independently of Figma.
       return {
         background: color.white[950],
-        border: `1px solid ${color.secondary[300]}`,
-        boxShadow: `0 0 0 3px ${color.secondary[500]}3d`,
+        border: `1px solid ${color.primary[500]}`,
+        boxShadow: `0 0 0 3px ${color.primary[200]}`,
         textColor: color.gray[950],
         hintColor: color.gray[700],
       };
