@@ -1,18 +1,17 @@
-import { Radio, type RadioSize } from "@shikho/ui";
+import { Radio, RadioLabel, type RadioSize } from "@shikho/ui";
 import type { ComponentPageConfig } from "./types";
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
-    "A real `<input type=\"radio\">` is kept for semantics/keyboard/AX and grouping by `name` still gives true mutually-exclusive behaviour, but its visual is now custom-rendered from a deep Figma re-audit (docs/audit/radio-buttons.md §14) rather than left to the browser's native indicator. Figma names this control's selection concept `active`/`inactive` — the clearest cross-component naming divergence in the audit series, since Checkbox calls the same idea `checked`/`unchecked`.",
+    "A real `<input type=\"radio\">` is kept for semantics/keyboard/AX and grouping by `name` still gives true mutually-exclusive behaviour, but its visual is custom-rendered from a ground-truth re-audit (docs/audit/radio-buttons.md §15) that reads every fill/border/mark color directly off the real SVG source behind all 7 confirmed Figma states — not derived by analogy to Checkbox, despite the two sharing identical dimensions. Figma names this control's selection concept `active`/`inactive` — the clearest cross-component naming divergence in the audit series, since Checkbox calls the same idea `checked`/`unchecked`.",
   variants: [
-    { name: "size", values: ["md", "sm"], note: "24×24 and 20×20 — identical dimensions to Checkbox at both steps." },
+    { name: "size", values: ["md", "sm"], note: "24×24 and 20×20 — identical dimensions to Checkbox at both steps, but with independently confirmed colors (§15)." },
   ],
-  states: ["inactive", "active", "indeterminate", "hover", "focused", "disabled"],
+  states: ["inactive", "hover", "inactive_focused", "active", "active_focused", "indeterminate", "disabled"],
   gaps: [
-    "Every sampled `radio` Figma instance renders as a single flattened image asset, so exact fill/border colors are reused from Checkbox's own independently-confirmed values rather than independently decomposed for Radio — justified by the audit's own finding that the two families share a token-for-token identical colour export and identical dimensions (§9, §14).",
     "No radius token was found bound anywhere in this component's subtree — a confirmed gap in the Figma data. `radius.full` is used, since a radio button is unambiguously circular regardless of the mechanism.",
-    "Figma exposes an `indeterminate` state, which the audit itself flags as conventionally unusual for a single-choice control. HTML has no native indeterminate property for radios, so it drives a custom-rendered tint fill + center dot rather than a native property.",
-    "`radio_label` is now implemented (§14) — composes a real nested `Radio` plus a label/caption text column, structurally identical to `checkbox_label`.",
+    "Figma exposes an `indeterminate` state, which the audit itself flags as conventionally unusual for a single-choice control. HTML has no native indeterminate property for radios, so it drives a custom-rendered tint fill + center dash mark rather than a native property.",
+    "`RadioLabel` composes a real nested `Radio` plus a label/caption text column, structurally identical to `checkbox_label` — confirmed across all 4 size × direction variants (§15).",
   ],
   usageExample: `import { Radio } from "@shikho/ui";
 
@@ -110,11 +109,81 @@ export function PlanPicker() {
     },
     {
       title: "Disabled",
+      description: "Figma confirms exactly ONE disabled visual — the gray dash mark shows regardless of checked state.",
       render: () => (
         <>
           <Radio disabled aria-label="Disabled inactive" />
           <Radio disabled defaultChecked aria-label="Disabled active" />
         </>
+      ),
+    },
+    {
+      title: "All 7 confirmed states",
+      description:
+        "inactive/active/indeterminate/disabled are shown via props; hover and inactive_focused/active_focused respond to a real pointer/keyboard focus — hover or Tab into the unlabeled ones to see them.",
+      layout: "stack",
+      render: () => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Radio aria-label="inactive" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>inactive</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Radio aria-label="hover me" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>hover</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Radio aria-label="tab to me (inactive_focused)" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>inactive_focused</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Radio defaultChecked aria-label="active" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>active</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Radio defaultChecked aria-label="tab to me (active_focused)" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>active_focused</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Radio indeterminate aria-label="indeterminate" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>indeterminate</span>
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <Radio disabled aria-label="disabled" />
+            <span style={{ fontSize: 11, color: "#8c929c" }}>disabled</span>
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "RadioLabel — size × direction",
+      description:
+        "Composes a real nested Radio plus a label/caption text column, confirmed across all 4 size × direction variants (§15). md's label is Regular/400 at body_1; sm collapses label and caption to the same Medium/500 caption_2 typography.",
+      layout: "stack",
+      render: () => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <RadioLabel
+            size="md"
+            direction="left"
+            labelContent="Email notifications"
+            captionContent="Get notified when someone replies."
+            radioProps={{ name: "radio-label-demo-1", defaultChecked: true }}
+          />
+          <RadioLabel
+            size="sm"
+            direction="left"
+            labelContent="SMS notifications"
+            captionContent="Standard messaging rates apply."
+            radioProps={{ name: "radio-label-demo-2" }}
+          />
+          <RadioLabel
+            size="md"
+            direction="right"
+            labelContent="Right-aligned (direction=right)"
+            captionContent="The radio renders after the text column."
+            radioProps={{ name: "radio-label-demo-3" }}
+          />
+        </div>
       ),
     },
   ],
