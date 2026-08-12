@@ -52,7 +52,10 @@ function IconButton({ onClick, disabled, label, children }: { onClick?: () => vo
         opacity: disabled ? 0.5 : 1,
       }}
     >
-      <span style={{ width: 18, height: 18, filter: iconShadowFilter }}>{children}</span>
+      {/* Requested reduction: was 18px in a 32px button (the icon's own SVG intrinsic default),
+          reading as oversized. Reduced to 16px — the same icon-size change already made to the
+          compact variant below — while keeping the 32px clickable hit area untouched. */}
+      <span style={{ width: 16, height: 16, filter: iconShadowFilter }}>{children}</span>
     </button>
   );
 }
@@ -147,7 +150,7 @@ export const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
             }}
           >
             <span style={{ width: 16, height: 16, filter: iconShadowFilter }}>
-              <ChevronLeftIcon />
+              <ChevronLeftIcon size={16} />
             </span>
             Prev
           </button>
@@ -175,7 +178,7 @@ export const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
           >
             Next
             <span style={{ width: 16, height: 16, filter: iconShadowFilter }}>
-              <ChevronRightIcon />
+              <ChevronRightIcon size={16} />
             </span>
           </button>
         </div>
@@ -187,7 +190,7 @@ export const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
     const pagesRow = (
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         <IconButton onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1} label="Previous page">
-          <ChevronLeftIcon />
+          <ChevronLeftIcon size={16} />
         </IconButton>
         <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
           {pageWindow.map((item, index) =>
@@ -240,7 +243,7 @@ export const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
           )}
         </div>
         <IconButton onClick={() => onPageChange(currentPage + 1)} disabled={currentPage >= totalPages} label="Next page">
-          <ChevronRightIcon />
+          <ChevronRightIcon size={16} />
         </IconButton>
       </div>
     );
