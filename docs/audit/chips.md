@@ -194,6 +194,11 @@ Every correction above is implemented in `packages/ui/src/components/chip/chip.t
 
 User feedback: `md`/`lg` chip padding looked "a bit too much... looks like a button." Before changing anything, re-verified `md` (node `66075:28885`) and `lg` (node `66075:28800`) fresh against Figma: **both were confirmed byte-for-byte exact** — `md` is `p-8` (8px uniform), `lg` is `px-12 py-8` (12px horizontal, 8px vertical). This is not a bug like the earlier `Textarea`/`InputField` fixes; the implementation already matched Figma precisely.
 
-Requested anyway, as a deliberate deviation (same category as §18's `active`-color override in the Input audit): `lg`'s horizontal padding reduced from the confirmed 12px to 10px, then — on a direct follow-up ("reduce 2px more") — down again to 8px, now uniform with `lg`'s own 8px vertical padding (matching `md`'s already-uniform proportions). `md` is unchanged throughout — it was already uniform (8px horizontal = 8px vertical, matching its own confirmed value), so there was no "extra" asymmetric horizontal padding to trim there. `sm` untouched (not named in the request).
+Requested anyway, as a deliberate deviation (same category as §18's `active`-color override in the Input audit), across several rounds of direct feedback:
+1. `lg`'s horizontal padding: 12px (confirmed) → 10px → 8px (uniform with `lg`'s own 8px vertical padding).
+2. User reported the change "didn't happen" — re-verified live (correct, 8px confirmed via computed style) and confirmed the user was checking the same local build; the reduction had simply been too subtle to read as a change, and `md` (never touched so far) needed cutting too.
+3. Given an exact target this time: `md` 8px → 4px uniform (both horizontal AND vertical — `height` is a separately fixed, still-Figma-confirmed 32px, so padding no longer constrains it), `lg` 8px → 6px uniform.
 
-Tests updated in `chip.test.tsx` to assert the new `lg` padding, with the override called out inline rather than presented as a Figma value.
+Current: `md` = 4px all sides, `lg` = 6px all sides. `sm` untouched throughout (never named in any round).
+
+Tests updated in `chip.test.tsx` to assert the current padding, with the override called out inline rather than presented as a Figma value.

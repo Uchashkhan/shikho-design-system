@@ -29,12 +29,15 @@ interface ChipSizeMetrics {
 
 const SIZE_METRICS: Record<ChipSize, ChipSizeMetrics> = {
   sm: { height: 24, padding: "0.25rem 0.375rem", gap: "0", iconSize: 14, fontSize: 11, lineHeight: "16px" },
-  md: { height: 32, padding: "0.5rem", gap: "0.125rem", iconSize: 16, fontSize: 12, lineHeight: "16px" },
-  // `lg`'s horizontal padding was confirmed exact against Figma (12px, node 66075:28800) but
-  // requested down first to 10px, then a further 2px to 8px — a deliberate code-only override,
-  // not a Figma correction: at 12px it read as button-like rather than a compact chip. Now
-  // uniform with `lg`'s own 8px vertical padding, matching `md`'s already-uniform proportions.
-  lg: { height: 40, padding: "0.5rem", gap: "0.25rem", iconSize: 18, fontSize: 13, lineHeight: "20px" },
+  // `md`/`lg` padding below is a deliberate, requested code-only override, not a Figma value —
+  // both were confirmed byte-for-byte exact against Figma (md: 8px uniform, node 66075:28885;
+  // lg: 12px horizontal / 8px vertical, node 66075:28800; docs/audit/chips.md §14) but read as
+  // button-like at those sizes. Reduced across several rounds of direct feedback: md 8px -> 4px
+  // uniform, lg 12px -> 10px -> 8px -> 6px uniform. `height` (the actual Figma-confirmed 32px/
+  // 40px) is untouched — these are real `inline-flex`/`items-center` buttons, so padding no
+  // longer constrains height, only how snug the content sits.
+  md: { height: 32, padding: "0.25rem", gap: "0.125rem", iconSize: 16, fontSize: 12, lineHeight: "16px" },
+  lg: { height: 40, padding: "0.375rem", gap: "0.25rem", iconSize: 18, fontSize: 13, lineHeight: "20px" },
 };
 
 const chipRadius = radius.full; // radius/border_radius_round (1000) — the ONLY radius token, §7/§9
