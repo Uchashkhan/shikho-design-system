@@ -208,3 +208,16 @@ Two items of direct user feedback, both deliberate code-only overrides — no Fi
    - A new white ring added, reusing the *same* per-size border-width scale already defined for `status` (`statusBorder`: 2px at xs/sm, 3px at md/lg/xl) so the two corner indicators read as a consistent pair rather than two independently-invented values.
 
 Tests updated in `avatar.test.tsx` to assert the new opaque border color and the new verification size/ring. 697/697 passing (`@shikho/ui`, up from 696). Typecheck clean. Docs build clean. Verified live: computed status border reads `3px solid rgb(255, 255, 255)`; verification renders at 14px (md) with the same white ring.
+
+## 14. Follow-up fix: the §13 changes broke proportion and shape — a real bug, not another override
+
+User feedback with a screenshot: the verification badge looked "peel shaped" (an oval/capsule, not a circle), and the status dot's green fill had visibly shrunk once its ring went opaque ("make it proportional"). Both traced to a real implementation bug in the §13 change, not a further design request:
+
+- Both `status` and `verification` used `box-sizing: border-box`, meaning `metrics.status`/`metrics.verification` specified the TOTAL outer size and the border ATE INTO it. At `md`, a 10px status box with an opaque 3px border left only a 4px visible green center — a real, disproportionate shrink. This was invisible before §13 because the OLD translucent border let the green bleed through the ring itself, visually masking how little of the box was actually opaque green.
+- `verification`'s container had no `overflow: hidden`. A consumer-supplied `verificationContent` glyph sized independently of the container (the common case — a fixed-size icon, not one that shrinks to fit) could overflow the ring's inner edge, reading as a pill/capsule rather than a clean circle once the ring shrank the inner content area.
+
+Fixed by switching both to `box-sizing: content-box` — `status`/`verification` now specify the pure fill/content diameter, and the ring is added AROUND it (growing the total footprint, e.g. `status` at `md`: 10px fill + 3px ring each side = 16px total) rather than eating into it — and adding `overflow: hidden` to `verification` so any oversized consumer content clips to the circle rather than bulging past it.
+
+**Important implementation note:** `box-sizing` must be set EXPLICITLY to `"content-box"` — simply removing the `border-box` override is not enough. Both the docs app and most real consumer apps (e.g. anything using Tailwind's preflight) apply a global `* { box-sizing: border-box }` reset, which silently wins over an unset inline style. This was caught only by checking `getComputedStyle`/`getBoundingClientRect` live in the browser after the first attempt (which removed the property instead of overriding it) produced no visible change at all.
+
+Tests added: both `status` and `verification` now assert `boxSizing === "content-box"` explicitly (not just `!== "border-box"`), and `verification` asserts `overflow === "hidden"`. 699/699 passing (`@shikho/ui`, up from 697). Typecheck clean. Docs build clean. Verified live at 4x zoom: both indicators render as clean circles, with the green status fill visibly restored to its full proportioned size.

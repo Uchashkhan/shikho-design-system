@@ -192,7 +192,20 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
               position: "absolute",
               bottom: 0,
               right: 0,
-              boxSizing: "border-box",
+              // Explicit `content-box` — NOT just "leave box-sizing unset": the docs app (and
+              // most real consumers, e.g. Tailwind's preflight) apply a global `* { box-sizing:
+              // border-box }` reset, so merely removing this property silently inherited
+              // border-box right back rather than falling through to the CSS default. `status`/
+              // `statusBorder` below are the confirmed FILL diameter and border width as two
+              // independent values, not one budget the border eats into. With `border-box`, an
+              // opaque 3px border on a 10px (md) box left only a 4px visible green center —
+              // barely perceptible, and disproportionate once the border stopped being
+              // translucent (translucency previously let green bleed through the ring itself,
+              // masking the disproportion). Content-box instead ADDS the ring around the full
+              // confirmed fill size, so the green dot keeps its real proportions and the ring
+              // simply grows the total footprint (e.g. md: 10px fill + 3px ring each side = 16px
+              // total), matching how status rings are drawn everywhere else in software.
+              boxSizing: "content-box",
               width: metrics.status,
               height: metrics.status,
               borderRadius: radius.full,
@@ -209,13 +222,23 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
               position: "absolute",
               top: 0,
               right: 0,
-              boxSizing: "border-box",
+              // Explicit content-box, same reasoning (and same "must be explicit, not just
+              // unset" caveat) as `status` above — `verification` is the confirmed (now
+              // +2px-requested) content diameter; the ring adds around it rather than eating
+              // into it.
+              boxSizing: "content-box",
               width: metrics.verification,
               height: metrics.verification,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               borderRadius: radius.full,
+              // Clips any consumer-supplied `verificationContent` to the circle — without this, a
+              // glyph sized independently of `verification` (the common case: a fixed-size icon,
+              // not one that shrinks to fit) can overflow the ring's inner edge and read as a
+              // pill/capsule rather than a circle, since nothing was clipping it to the round
+              // boundary.
+              overflow: "hidden",
               // Requested addition — see verificationBorderColor's own comment above. Reuses
               // status's own per-size border-width scale (2px xs/sm, 3px md/lg/xl) so the two
               // corner indicators feel consistent with each other.

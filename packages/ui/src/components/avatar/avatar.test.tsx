@@ -82,6 +82,18 @@ describe("confirmed status indicator (§8)", () => {
     expect(badge.style.border).toContain("rgb(255, 255, 255)");
     expect(badge.style.border).not.toContain("0.72");
   });
+
+  // Fix: an opaque border on a border-box-sized dot ate into the declared size (10px minus 2x3px
+  // border left only a 4px visible green center) — disproportionate, since the border no longer
+  // hides that shrinkage behind translucency. content-box keeps the fill at its full confirmed
+  // size and adds the ring around it instead. Must be an EXPLICIT "content-box", not just an
+  // absence of "border-box" — the docs app (and most real consumers, e.g. Tailwind's preflight)
+  // apply a global `* { box-sizing: border-box }` reset that silently wins if left unset.
+  it("is explicitly box-sizing: content-box — the ring adds around the fill rather than eating into it", () => {
+    render(<Avatar type="image" src="/photo.jpg" status />);
+    const badge = screen.getByTestId("avatar-status");
+    expect(badge.style.boxSizing).toBe("content-box");
+  });
 });
 
 describe("confirmed verification badge (§8)", () => {
@@ -102,6 +114,17 @@ describe("confirmed verification badge (§8)", () => {
     expect(badge.style.borderRadius).toBe("1000px");
     expect(badge.style.border).toContain("rgb(255, 255, 255)");
     expect(badge.style.border).toContain("3px"); // md's own statusBorder width, reused
+  });
+
+  // Fix: a fixed-size consumer glyph bigger than the ring's inner content area (which shrinks
+  // under border-box) overflowed the circular boundary and read as a pill/capsule, not a circle.
+  it("is explicitly box-sizing: content-box, and clips content to the circle via overflow: hidden", () => {
+    render(
+      <Avatar type="image" src="/photo.jpg" verification verificationContent={<span>✓</span>} />,
+    );
+    const badge = screen.getByTestId("avatar-verification");
+    expect(badge.style.boxSizing).toBe("content-box");
+    expect(badge.style.overflow).toBe("hidden");
   });
 });
 
