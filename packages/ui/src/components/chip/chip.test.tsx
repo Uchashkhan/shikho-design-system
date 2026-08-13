@@ -58,6 +58,20 @@ describe("confirmed boolean slots", () => {
     expect(screen.queryByText("Chip")).not.toBeInTheDocument();
     expect(container).toBeDefined();
   });
+
+  // Fix: leftIcon/rightIcon default to true (confirmed, §9), but with no selectLeftIcon/
+  // selectRightIcon content, this used to still render an EMPTY icon-slot span that reserved its
+  // full iconSize width — invisible, but ~18px of dead space per side on the very common
+  // icon-less chip. That's what a "horizontal padding still looks bigger than vertical" report
+  // turned out to actually be about, not padding at all. Now the slot only renders when there's
+  // real content to show.
+  it("does not render an icon slot at all when left/rightIcon are true but no icon content is supplied", () => {
+    const { container } = render(<Chip textContent="Chip" />);
+    const root = container.firstChild as HTMLElement;
+    // Only the text span should exist as a child — no empty leading/trailing icon spans.
+    expect(root.children.length).toBe(1);
+    expect(root.children[0].textContent).toBe("Chip");
+  });
 });
 
 describe("disabled", () => {

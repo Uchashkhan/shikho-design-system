@@ -149,9 +149,14 @@ export interface ChipProps
   size?: ChipSize;
   type?: ChipType;
   state?: ChipState;
-  /** Confirmed boolean property, default true (§9). */
+  /** Confirmed boolean property, default true (§9). Only actually renders (and reserves layout
+   * space for) an icon slot when `selectLeftIcon` is also supplied — see the fix note on §15/§16
+   * in docs/audit/chips.md: previously this rendered an EMPTY, invisible-but-space-reserving slot
+   * whenever left true with no icon content, which on the (very common) icon-less chip added
+   * ~18px of dead horizontal space per side — the real cause of a "the horizontal padding still
+   * looks bigger than vertical" report that turned out not to be about padding at all. */
   leftIcon?: boolean;
-  /** Confirmed boolean property, default true (§9). */
+  /** Confirmed boolean property, default true (§9). Same fix as `leftIcon` — see its own comment. */
   rightIcon?: boolean;
   /** Confirmed boolean property, default true (§9). */
   text?: boolean;
@@ -231,7 +236,7 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(
         }}
         {...props}
       >
-        {leftIcon && <span style={iconSlotStyle}>{selectLeftIcon}</span>}
+        {leftIcon && selectLeftIcon && <span style={iconSlotStyle}>{selectLeftIcon}</span>}
         {text && (
           <span
             style={{
@@ -247,7 +252,7 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(
             {textContent}
           </span>
         )}
-        {rightIcon && <span style={iconSlotStyle}>{selectRightIcon}</span>}
+        {rightIcon && selectRightIcon && <span style={iconSlotStyle}>{selectRightIcon}</span>}
       </button>
     );
   },
