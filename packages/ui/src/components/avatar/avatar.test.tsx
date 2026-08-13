@@ -73,6 +73,15 @@ describe("confirmed status indicator (§8)", () => {
     expect(badge.style.border).toContain("3px");
     expect(badge.style.backgroundColor).toBe("rgb(80, 223, 58)"); // surface/success_med_em
   });
+
+  // Requested override: opaque white, not the Figma-confirmed translucent white[800] (72% alpha)
+  // — at that alpha the ring let the green fill show through, reading as a washed/greenish ring.
+  it("the status border is opaque white, not the confirmed 72%-alpha white", () => {
+    render(<Avatar type="image" src="/photo.jpg" status />);
+    const badge = screen.getByTestId("avatar-status");
+    expect(badge.style.border).toContain("rgb(255, 255, 255)");
+    expect(badge.style.border).not.toContain("0.72");
+  });
 });
 
 describe("confirmed verification badge (§8)", () => {
@@ -81,14 +90,18 @@ describe("confirmed verification badge (§8)", () => {
     expect(screen.queryByTestId("avatar-verification")).not.toBeInTheDocument();
   });
 
-  it("renders the confirmed 12x12 container when verification is true", () => {
+  it("renders at the requested +2px size (14px at md — was the confirmed 12px) with a white ring", () => {
     render(
       <Avatar type="image" src="/photo.jpg" verification verificationContent={<span>✓</span>} />,
     );
     const badge = screen.getByTestId("avatar-verification");
-    expect(badge.style.width).toBe("12px");
-    expect(badge.style.height).toBe("12px");
+    expect(badge.style.width).toBe("14px");
+    expect(badge.style.height).toBe("14px");
     expect(screen.getByText("✓")).toBeInTheDocument();
+    // Requested addition — Figma's own confirmed verification_tick carries no border at all.
+    expect(badge.style.borderRadius).toBe("1000px");
+    expect(badge.style.border).toContain("rgb(255, 255, 255)");
+    expect(badge.style.border).toContain("3px"); // md's own statusBorder width, reused
   });
 });
 
@@ -133,12 +146,13 @@ describe("type=text and type=icon render brand gradients, not a flat gray fill",
 });
 
 describe("per-size metrics are independent, not extrapolated from md", () => {
+  // `verification` column is the requested +2px-per-size bump (was 8/10/12/14/18).
   const cases = [
-    ["xs", "11px", 6, "2px", 8],
-    ["sm", "12px", 8, "2px", 10],
-    ["md", "13px", 10, "3px", 12],
-    ["lg", "13px", 12, "3px", 14],
-    ["xl", "22px", 14, "3px", 18],
+    ["xs", "11px", 6, "2px", 10],
+    ["sm", "12px", 8, "2px", 12],
+    ["md", "13px", 10, "3px", 14],
+    ["lg", "13px", 12, "3px", 16],
+    ["xl", "22px", 14, "3px", 20],
   ] as const;
 
   it.each(cases)(

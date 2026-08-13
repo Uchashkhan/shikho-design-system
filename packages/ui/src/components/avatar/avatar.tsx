@@ -24,11 +24,15 @@ interface AvatarSizeMetrics {
 }
 
 export const AVATAR_SIZE_METRICS: Record<AvatarSize, AvatarSizeMetrics> = {
-  xs: { box: 24, fontSize: 11, lineHeight: "16px", status: 6, statusBorder: 2, verification: 8 },
-  sm: { box: 32, fontSize: 12, lineHeight: "16px", status: 8, statusBorder: 2, verification: 10 },
-  md: { box: 40, fontSize: 13, lineHeight: "20px", status: 10, statusBorder: 3, verification: 12 },
-  lg: { box: 48, fontSize: 13, lineHeight: "20px", status: 12, statusBorder: 3, verification: 14 },
-  xl: { box: 64, fontSize: 22, lineHeight: "32px", status: 14, statusBorder: 3, verification: 18 },
+  // `verification` below is a requested +2px bump at every size (was 8/10/12/14/18, confirmed
+  // exact against Figma, docs/audit/avatars.md §8) — a deliberate code-only override, not a
+  // Figma correction. See the `verification` render below for the new white ring, also requested
+  // (Figma's own confirmed `verification_tick` carries no border at all).
+  xs: { box: 24, fontSize: 11, lineHeight: "16px", status: 6, statusBorder: 2, verification: 10 },
+  sm: { box: 32, fontSize: 12, lineHeight: "16px", status: 8, statusBorder: 2, verification: 12 },
+  md: { box: 40, fontSize: 13, lineHeight: "20px", status: 10, statusBorder: 3, verification: 14 },
+  lg: { box: 48, fontSize: 13, lineHeight: "20px", status: 12, statusBorder: 3, verification: 16 },
+  xl: { box: 64, fontSize: 22, lineHeight: "32px", status: 14, statusBorder: 3, verification: 20 },
 };
 
 /**
@@ -48,7 +52,13 @@ const initialsColor = color.white[900];
 // docs/audit/avatars.md §8 — status is filled `surface/success_med_em` (matches success[400]
 // exactly) with a `neutral_transparent_white/white-72` border (matches white[800]).
 const statusFill = color.success[400];
-const statusBorderColor = color.white[800];
+// Requested: opaque white, not the confirmed-exact translucent `white[800]` (72% alpha) above —
+// a deliberate code-only override. At 72% alpha the ring lets the avatar's own fill/image show
+// through, reading as a slightly greenish/washed ring rather than a clean white one.
+const statusBorderColor = color.white[950];
+// Requested: the verification badge gets a solid white ring too — not part of the original
+// Figma audit at all (§8's confirmed `verification_tick` carries no border/outline whatsoever).
+const verificationBorderColor = color.white[950];
 
 // Confirmed on `type=icon`: the glyph carries `elevation/e2` expressed as a CSS `filter:
 // drop-shadow()` pair (so the shadow follows the glyph silhouette, not its bounding box) — the
@@ -199,11 +209,17 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
               position: "absolute",
               top: 0,
               right: 0,
+              boxSizing: "border-box",
               width: metrics.verification,
               height: metrics.verification,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              borderRadius: radius.full,
+              // Requested addition — see verificationBorderColor's own comment above. Reuses
+              // status's own per-size border-width scale (2px xs/sm, 3px md/lg/xl) so the two
+              // corner indicators feel consistent with each other.
+              border: `${metrics.statusBorder}px solid ${verificationBorderColor}`,
             }}
           >
             {verificationContent}

@@ -197,3 +197,14 @@ Confirmed reuse of: `elevation/e2`, `elevation/e5` (Button Group, Input audits �
 - Which specific color/typography token binds to which `avatar` type/size combination beyond what was directly confirmed for `md/image` — the flat variable export lists everything bound in the subtree without attributing values to specific properties.
 - Default variant configuration for any of the three component sets.
 - Variable Collection / Mode metadata — not retrievable, consistent with every prior audit in this series.
+
+## 13. Requested: status ring made opaque, verification badge enlarged with a new white ring
+
+Two items of direct user feedback, both deliberate code-only overrides — no Figma re-check contradicted anything here; §8 already confirmed both underlying facts (status border `neutral_transparent_white/white-72`, 72% alpha; `verification_tick` with no border at all), the user just wants a different result than Figma specifies:
+
+1. **Status ring color.** The confirmed border is `white[800]` — 72% translucent white — which lets the avatar's own fill/image show through at the edge, reading as a slightly greenish/washed ring against the green `status` fill rather than a clean white one. Changed to opaque `white[950]`.
+2. **Verification badge.** Figma's own confirmed `verification_tick` (§8) is a bare 12×12 (at `md`) container with no border/outline whatsoever. Two changes, both requested with no Figma basis:
+   - Size bumped +2px at every step: xs 8→10, sm 10→12, md 12→14, lg 14→16, xl 18→20.
+   - A new white ring added, reusing the *same* per-size border-width scale already defined for `status` (`statusBorder`: 2px at xs/sm, 3px at md/lg/xl) so the two corner indicators read as a consistent pair rather than two independently-invented values.
+
+Tests updated in `avatar.test.tsx` to assert the new opaque border color and the new verification size/ring. 697/697 passing (`@shikho/ui`, up from 696). Typecheck clean. Docs build clean. Verified live: computed status border reads `3px solid rgb(255, 255, 255)`; verification renders at 14px (md) with the same white ring.
