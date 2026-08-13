@@ -25,11 +25,14 @@ describe("confirmed binding (state=danger)", () => {
     expect((container.firstChild as HTMLElement).style.alignItems).toBe("center");
   });
 
-  it("applies the confirmed asymmetric padding (12/16/16), not alert's uniform 24", () => {
+  it("applies equal top/bottom padding (14/14/16), not alert's uniform 24 nor the confirmed asymmetric 12/16", () => {
+    // Requested override (docs/audit/toasts.md §16): Figma's own confirmed value here is
+    // asymmetric pt-12/pb-16, which visibly pushed the content off the card's true vertical
+    // center. Splitting the same 28px total evenly centers the content instead.
     const { container } = render(<Toast titleContent="Title" />);
     const root = container.firstChild as HTMLElement;
-    expect(root.style.paddingTop).toBe("0.75rem");
-    expect(root.style.paddingBottom).toBe("1rem");
+    expect(root.style.paddingTop).toBe("0.875rem");
+    expect(root.style.paddingBottom).toBe("0.875rem");
     expect(root.style.paddingLeft).toBe("1rem");
   });
 });

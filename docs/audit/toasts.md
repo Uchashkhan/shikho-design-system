@@ -241,3 +241,11 @@ Two items genuinely weren't done yet:
 2. **The leading severity icon is a bit bigger**: slot 24px→28px, glyph 18px (previously unset, the icon's own native default)→22px (explicit `size` prop) — the identical bump already applied to Alert's own icon. `alignItems: "center"` on the icon's row was already in place, so it stays vertically aligned with the title at the new size without any layout change.
 
 Tests updated: the `state=default` action-button color assertion, plus new tests for its hover transition and the icon's new size at every state. 713/713 passing (`@shikho/ui`, up from 711). Typecheck clean. Docs build clean. Verified live: `default`'s "Learn more" computes to `rgb(84, 104, 255)` (`primary/500`); the icon slot/glyph compute to 28px/22px respectively, unchanged across states.
+
+## 16. Requested: center the content vertically — the confirmed asymmetric padding read as off-center
+
+Directly reported against a screenshot of the preview: the icon/title/button/dismiss row looked visibly off-center within the card. Measured live before touching anything — every direct child (icon span, text+button row, dismiss button) already shared one exact `centerY` (`276.28px`), so the children were already centered *relative to each other*; the card's own box was centered at `278.28px` instead, a 2px mismatch. The cause is the confirmed asymmetric root padding from §9 (`pt-[spacing/12]` / `pb-[spacing/16]`) — real Figma data, faithfully reproduced, but it pushes the shared content centerline 2px above the card's true vertical center, which reads as visibly off in a compact 78px-tall card.
+
+Requested override, not a Figma correction: `paddingTop`/`paddingBottom` both changed to `0.875rem` (14px), splitting the same 28px total evenly instead of 12/16. This keeps the card's overall height unchanged while centering the content inside it. `paddingLeft`/`paddingRight` (`1rem` each) are untouched.
+
+Test updated (the asymmetric-padding assertion now checks the equal 14px/14px split). 42/42 toast tests, 713/713 full suite passing. Typecheck clean. Verified live: root centerY and every child's centerY now both compute to `278.28px`.

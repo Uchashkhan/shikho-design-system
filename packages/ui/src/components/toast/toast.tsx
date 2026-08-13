@@ -297,8 +297,14 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
           width: 528, // w-[528px] Fixed — §9
           gap: "1rem", // root gap not explicitly re-stated for toast; derived reuse of alert's
           // confirmed spacing/16 root gap, documented as unconfirmed for toast specifically
-          paddingTop: "0.75rem", // pt-[spacing/12] — §9, first asymmetric padding in the series
-          paddingBottom: "1rem", // pb-[spacing/16] — §9
+          // Requested override, not a Figma correction (docs/audit/toasts.md §16): Figma's own
+          // confirmed value is asymmetric pt-[spacing/12]/pb-[spacing/16] (§9), which visibly
+          // pushes every child's shared centerline ~2px above the card's true vertical center
+          // (measured live: content centerY 276.28 vs. root centerY 278.28 at the confirmed
+          // values). Splitting the same 28px total evenly keeps the card's overall height
+          // unchanged while centering the content inside it, per direct request.
+          paddingTop: "0.875rem",
+          paddingBottom: "0.875rem",
           paddingLeft: "1rem", // px-[spacing/16] — §9
           paddingRight: "1rem",
           backgroundColor: color.white[950], // Color/smoke_base — §9, identical to alert

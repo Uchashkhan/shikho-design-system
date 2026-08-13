@@ -51,6 +51,8 @@ Same feedback item number/framing as Alert's own §15/§16, resubmitted because 
 - **`state="default"`'s action button now uses `primary/500`** instead of the confirmed `secondary/500` pink — "instead of the current accent/pink treatment," matching the reasoning behind Alert's own Dismiss-button color change. `warning`/`info`'s neutral button and `danger`/`success`'s tinted `ButtonDanger`/`ButtonSuccess` are unchanged — Toast's request, unlike Alert's, only named `default`'s color.
 - **The leading severity icon is bigger**: slot 24px→28px, glyph 18px→22px — the same bump already applied to Alert's own icon, consistent across every state.
 
+**§16, a follow-up report against the rendered preview:** the confirmed asymmetric root padding (`pt-12/pb-16` above) pushed the whole content row 2px above the card's true vertical center — real Figma data, faithfully reproduced, but visibly off-center in a compact 78px-tall card. Requested override: `paddingTop`/`paddingBottom` both changed to `14px`, splitting the same 28px total evenly. Card height and left/right padding are unchanged.
+
 ## Not implemented
 
 - The `feature_icon` slot's real glyph — confirmed placeholder content, not implemented as a default.
