@@ -21,6 +21,11 @@ interface AvatarSizeMetrics {
   status: number;
   statusBorder: number;
   verification: number;
+  /** Requested addition, not part of the original Figma audit — see the `ring` prop's own doc
+   * comment. 3px confirmed at `xl` (node 66200:18587's avatar ring example); scaled to the other
+   * 4 sizes by the same box-ratio approach used for `status`/`statusBorder` above (3 / 64 =
+   * 0.046875 of the avatar box), since no other size has a confirmed sample. */
+  ringWidth: number;
 }
 
 export const AVATAR_SIZE_METRICS: Record<AvatarSize, AvatarSizeMetrics> = {
@@ -42,11 +47,11 @@ export const AVATAR_SIZE_METRICS: Record<AvatarSize, AvatarSizeMetrics> = {
   // against Figma, docs/audit/avatars.md §8) — a deliberate code-only override, not a Figma
   // correction. See the `verification` render below for its own white ring, also requested
   // (Figma's own confirmed `verification_tick` carries no border at all).
-  xs: { box: 24, fontSize: 11, lineHeight: "16px", status: 6, statusBorder: 0.9375, verification: 10 },
-  sm: { box: 32, fontSize: 12, lineHeight: "16px", status: 8, statusBorder: 1.25, verification: 12 },
-  md: { box: 40, fontSize: 13, lineHeight: "20px", status: 10, statusBorder: 1.5625, verification: 14 },
-  lg: { box: 48, fontSize: 13, lineHeight: "20px", status: 12, statusBorder: 1.875, verification: 16 },
-  xl: { box: 64, fontSize: 22, lineHeight: "32px", status: 16, statusBorder: 2.5, verification: 20 },
+  xs: { box: 24, fontSize: 11, lineHeight: "16px", status: 6, statusBorder: 0.9375, verification: 10, ringWidth: 1.125 },
+  sm: { box: 32, fontSize: 12, lineHeight: "16px", status: 8, statusBorder: 1.25, verification: 12, ringWidth: 1.5 },
+  md: { box: 40, fontSize: 13, lineHeight: "20px", status: 10, statusBorder: 1.5625, verification: 14, ringWidth: 1.875 },
+  lg: { box: 48, fontSize: 13, lineHeight: "20px", status: 12, statusBorder: 1.875, verification: 16, ringWidth: 2.25 },
+  xl: { box: 64, fontSize: 22, lineHeight: "32px", status: 16, statusBorder: 2.5, verification: 20, ringWidth: 3 },
 };
 
 /**
@@ -96,6 +101,17 @@ export interface AvatarProps extends Omit<HTMLAttributes<HTMLDivElement>, "child
   /** Confirmed boolean, default `false` (§8). */
   verification?: boolean;
   verificationContent?: ReactNode;
+  /** Not part of the original Figma audit — a requested addition. Draws a solid ring around the
+   * whole avatar (e.g. to mark "currently active"/"currently viewing"), reusing the confirmed
+   * 3px stroke width from a reference example (node 66200:18587, an xl avatar with a purple
+   * `#8f45f5` ring), scaled per size the same way `statusBorder` was (§15). No confirmed reusable
+   * "ring" property exists on the actual `avatar` component set — that example was a one-off
+   * demo instance with a hardcoded border, not a documented variant — so this is a genuine
+   * addition, not a Figma value applied as-is. Default `false`. */
+  ring?: boolean;
+  /** `ring`'s color — no default; required when `ring` is true (the reference's purple was that
+   * one example's own choice, not a confirmed universal "ring color"). */
+  ringColor?: string;
 }
 
 /**
@@ -119,6 +135,8 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
       status = false,
       verification = false,
       verificationContent,
+      ring = false,
+      ringColor,
       style,
       ...props
     },
@@ -132,9 +150,16 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
         ref={ref}
         data-size={size}
         data-type={type}
+        data-ring={ring || undefined}
         style={{
           position: "relative",
           display: "inline-block",
+          // Explicit content-box (see `status`'s own comment on this same caveat) — without it,
+          // a global `box-sizing: border-box` reset (present in the docs app, and in most real
+          // consumer apps via e.g. Tailwind's preflight) would make `ring`'s border eat into the
+          // declared `box` size, shrinking the avatar image itself rather than adding a ring
+          // around it.
+          boxSizing: "content-box",
           width: box,
           height: box,
           flexShrink: 0,
@@ -142,6 +167,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
           // Confirmed: the gradient lives on the root for text/icon; image has no fallback fill.
           background:
             type === "text" ? TEXT_GRADIENT : type === "icon" ? ICON_GRADIENT : undefined,
+          border: ring ? `${metrics.ringWidth}px solid ${ringColor}` : undefined,
           ...style,
         }}
         {...props}

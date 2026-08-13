@@ -136,6 +136,40 @@ describe("no auto-layout, no elevation — confirmed architectural differences",
   });
 });
 
+// Requested addition, not part of the original Figma audit (docs/audit/avatars.md §15) — no
+// confirmed reusable "ring" property exists on the actual `avatar` component set; this reuses the
+// 3px stroke width from a one-off reference example (node 66200:18587), scaled per size.
+describe("ring (requested addition)", () => {
+  it("does not render a border by default", () => {
+    const { container } = render(<Avatar type="image" src="/photo.jpg" />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.border).toBe("");
+  });
+
+  it("draws a solid ring in the given color at the confirmed md ratio (1.875px, 3px * 40/64)", () => {
+    const { container } = render(
+      <Avatar type="image" src="/photo.jpg" ring ringColor="#8f45f5" />,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.border).toContain("1.875px");
+    expect(root.style.border).toContain("rgb(143, 69, 245)"); // #8f45f5
+  });
+
+  it("scales the ring width per size the same way statusBorder does", () => {
+    const { container, rerender } = render(<Avatar type="image" src="/photo.jpg" size="xl" ring ringColor="#8f45f5" />);
+    expect((container.firstChild as HTMLElement).style.border).toContain("3px");
+    rerender(<Avatar type="image" src="/photo.jpg" size="xs" ring ringColor="#8f45f5" />);
+    expect((container.firstChild as HTMLElement).style.border).toContain("1.125px");
+  });
+
+  it("is explicitly box-sizing: content-box, so the ring adds around the avatar rather than shrinking it", () => {
+    const { container } = render(<Avatar type="image" src="/photo.jpg" ring ringColor="#8f45f5" />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.boxSizing).toBe("content-box");
+    expect(root.style.width).toBe("40px"); // md's own confirmed box, unaffected by the ring
+  });
+});
+
 // ---------------------------------------------------------------------------
 // v0.1.0 repair pass — corrections verified against live Figma
 // (docs/release-visual-verification.md — Avatar).

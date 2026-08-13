@@ -49,6 +49,7 @@ function ProfileBadge() {
     { name: "children", type: "ReactNode", description: "type=\"icon\" / type=\"text\" content — an icon glyph or initials text. Structurally unconfirmed." },
     { name: "status", type: "boolean", defaultValue: "false", description: "Confirmed 10px circular badge, bottom-right, surface/success_med_em fill." },
     { name: "verification / verificationContent", type: "boolean / ReactNode", defaultValue: "false", description: "Confirmed 12×12 container, top-right. No glyph asset exists yet." },
+    { name: "ring / ringColor", type: "boolean / string", defaultValue: "false", description: "Requested addition, not part of the original Figma audit — a solid ring around the whole avatar (e.g. \"currently active\"). Stroke width (3px at xl) reused from a one-off reference example (node 66200:18587); no confirmed reusable ring color exists, so ringColor has no default and is required when ring is true." },
   ],
   preview: () => <Avatar size="md" type="image" src={PHOTO} alt="Profile" status />,
   playground: {
@@ -83,11 +84,21 @@ function ProfileBadge() {
           { label: "icon", value: "icon" },
         ],
       },
+      {
+        prop: "ring",
+        label: "Ring",
+        defaultValue: "none",
+        options: [
+          { label: "none", value: "none" },
+          { label: "on", value: "on" },
+        ],
+      },
     ],
     render: (v) => {
       const type = v.type as AvatarType;
       const status = v.status === "active";
       const verification = v.badge === "icon";
+      const ring = v.ring === "on";
       if (type === "image") {
         return (
           <Avatar
@@ -98,18 +109,20 @@ function ProfileBadge() {
             status={status}
             verification={verification}
             verificationContent={badgeGlyph}
+            ring={ring}
+            ringColor="#8f45f5"
           />
         );
       }
       if (type === "text") {
         return (
-          <Avatar size={v.size as AvatarSize} type="text" status={status} verification={verification} verificationContent={badgeGlyph}>
+          <Avatar size={v.size as AvatarSize} type="text" status={status} verification={verification} verificationContent={badgeGlyph} ring={ring} ringColor="#8f45f5">
             AB
           </Avatar>
         );
       }
       return (
-        <Avatar size={v.size as AvatarSize} type="icon" status={status} verification={verification} verificationContent={badgeGlyph}>
+        <Avatar size={v.size as AvatarSize} type="icon" status={status} verification={verification} verificationContent={badgeGlyph} ring={ring} ringColor="#8f45f5">
           <span aria-hidden>👤</span>
         </Avatar>
       );
@@ -148,6 +161,18 @@ function ProfileBadge() {
           <Avatar type="image" src={PHOTO} verification verificationContent={badgeGlyph} />
           <Avatar type="image" src={PHOTO} status verification verificationContent={badgeGlyph} />
         </>
+      ),
+    },
+    {
+      title: "Ring — requested addition, all five sizes",
+      description: "Not part of the original Figma audit — reuses the confirmed 3px stroke width from a reference example (node 66200:18587) scaled per size, same ratio used for status's own border. ringColor has no default; #8f45f5 shown here is that reference's own color, not a confirmed universal value.",
+      layout: "stack",
+      render: () => (
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {(["xs", "sm", "md", "lg", "xl"] as AvatarSize[]).map((size) => (
+            <Avatar key={size} size={size} type="image" src={PHOTO} ring ringColor="#8f45f5" />
+          ))}
+        </div>
       ),
     },
   ],
