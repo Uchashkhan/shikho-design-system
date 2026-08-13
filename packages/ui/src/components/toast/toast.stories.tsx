@@ -29,7 +29,8 @@ export const Playground: Story = {};
 /** Every confirmed severity — a fresh re-audit (docs/audit/toasts.md §14) confirmed the border,
  * icon tint, and action-button composition for all 5, not just `danger`. Note `default`'s icon
  * is gray-950 (not primary-tinted like Alert's `Default`), and its own action button uses
- * secondary/500 + white text — distinct from warning/info's neutral gray button. */
+ * primary/500 + white text (requested override, §15 — Figma's own confirmed value is secondary/
+ * 500 pink) — distinct from warning/info's neutral gray button. */
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -63,8 +64,8 @@ export const ComposedButtonDependencyComparison: Story = {
  * Confirmed via a fresh get_design_context re-audit (docs/audit/toasts.md §14): only `danger` and
  * `success` compose a severity-tinted Button family member (`ButtonDanger`/`ButtonSuccess`) with a
  * TINTED background — confirmed different from Alert's equivalent, which tints only the text.
- * `warning`/`info` render a plain neutral gray button; `default` gets its own distinct
- * secondary/500-filled button.
+ * `warning`/`info` render a plain neutral gray button; `default` gets its own distinct primary/
+ * 500-filled button (requested override, §15 — was the confirmed secondary/500 pink).
  */
 export const ActionButtonBySeverity: Story = {
   render: () => (

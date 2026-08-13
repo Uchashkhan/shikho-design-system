@@ -227,3 +227,17 @@ This means Toast's danger/success buttons are confirmed **tinted-background** (u
 **Confirmed unchanged across all 5 severities:** root fill/radius/elevation, the `items-center` row layout, asymmetric padding, and the dismiss button's inline rounded-square shape/position.
 
 **Rebuild:** `toast.tsx` now renders real default icons — the confirmed info-circle (tinted per `state`, with `default`'s own confirmed near-black tint) for the left icon, and the confirmed "X" (`gray-600`) for the dismiss button — both rendered whenever the caller doesn't supply `icon`/`dismissIcon` overrides. The action button now branches on `state`: `ButtonDanger`/`ButtonSuccess` with a tinted background for `danger`/`success`, a `secondary/500`-filled button for `default`, and a plain neutral `gray/100`/`gray/700` button for `warning`/`info`. `default`'s border color was corrected from a derived `gray/200` guess to the confirmed `gray/100`.
+
+## 15. Requested (resubmitted): default button color, leading icon size — the interactive-preview controls and auto-dismiss timer were already done
+
+Same feedback item number and framing as Alert's own §15/§16 — resubmitted because it had only been partially implemented. Checked what already existed before changing anything:
+
+- **The interactive-preview controls (STATE→ICON→SUPPORTING TEXT→BUTTON→AUTO DISMISS) already existed**, in the requested order, in `apps/docs/src/registry/pages/toast.tsx` — no change needed.
+- **The full-width auto-dismiss timer already existed** (`autoDismiss`/`duration` props, §9/§14 above) — a thin bottom progress bar draining over `duration` ms, dismissing on completion, working with or without the action button, and manual dismiss immediately cancels the pending timer. All already matched the spec exactly — no change needed.
+
+Two items genuinely weren't done yet:
+
+1. **`state="default"`'s action button now uses `primary/500`**, replacing the confirmed `secondary/500` pink (§14) — "instead of the current accent/pink treatment," the same override category and reasoning as Alert's own Dismiss-button color change. Hover follows the usual one-step-darker convention (`primary/600`, was `secondary/600`). `warning`/`info`'s neutral button and `danger`/`success`'s tinted `ButtonDanger`/`ButtonSuccess` composition are unchanged — not part of this request (Toast's request, unlike Alert's, didn't ask for a full per-severity color mapping or for the action button to stay neutral across every state).
+2. **The leading severity icon is a bit bigger**: slot 24px→28px, glyph 18px (previously unset, the icon's own native default)→22px (explicit `size` prop) — the identical bump already applied to Alert's own icon. `alignItems: "center"` on the icon's row was already in place, so it stays vertically aligned with the title at the new size without any layout change.
+
+Tests updated: the `state=default` action-button color assertion, plus new tests for its hover transition and the icon's new size at every state. 713/713 passing (`@shikho/ui`, up from 711). Typecheck clean. Docs build clean. Verified live: `default`'s "Learn more" computes to `rgb(84, 104, 255)` (`primary/500`); the icon slot/glyph compute to 28px/22px respectively, unchanged across states.

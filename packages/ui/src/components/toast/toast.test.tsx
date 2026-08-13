@@ -126,6 +126,21 @@ describe("confirmed default icons — previously missing entirely (docs/audit/to
     expect(tint(container)).toBe("rgb(53, 194, 32)");
   });
 
+  // Requested: "increase the leading icon size slightly... consistent across all Toast states" —
+  // same bump as Alert's own severity icon (container 24->28, glyph 18->22).
+  it("renders the leading icon a bit bigger than confirmed (28px slot, 22px glyph), consistent across states", () => {
+    for (const state of ["default", "danger", "success", "warning", "info"] as const) {
+      const { container, unmount } = render(<Toast state={state} />);
+      const iconSlot = container.querySelector('[data-state="' + state + '"] > span:first-child') as HTMLElement;
+      expect(iconSlot.style.width, state).toBe("28px");
+      expect(iconSlot.style.height, state).toBe("28px");
+      const svg = iconSlot.querySelector("svg") as SVGSVGElement;
+      expect(svg.getAttribute("width"), state).toBe("22");
+      expect(svg.getAttribute("height"), state).toBe("22");
+      unmount();
+    }
+  });
+
   it("still allows overriding the default icon via the icon prop", () => {
     render(<Toast icon={<span data-testid="custom-glyph" />} />);
     expect(screen.getByTestId("custom-glyph")).toBeInTheDocument();
@@ -161,11 +176,23 @@ describe("confirmed per-severity action button composition (docs/audit/toasts.md
     }
   });
 
-  it("confirmed: state=default's own action button uses secondary/500 fill + white text, distinct from warning/info", () => {
+  // Requested override — Figma's own confirmed value is secondary/500 (pink); direct request
+  // ("instead of the current accent/pink treatment") changed this to primary/500.
+  it("state=default's own action button uses the requested primary/500 fill + white text, distinct from warning/info", () => {
     render(<Toast state="default" actionContent="UNDO" />);
     const button = screen.getByRole("button", { name: "UNDO" });
-    expect(button.style.backgroundColor).toBe("rgb(226, 0, 141)"); // secondary/500
+    expect(button.style.backgroundColor).toBe("rgb(84, 104, 255)"); // primary/500 (requested)
     expect(button.style.color).toBe("rgb(255, 255, 255)");
+  });
+
+  it("darkens state=default's action button from primary/500 to primary/600 on real hover", () => {
+    render(<Toast state="default" actionContent="UNDO" />);
+    const button = screen.getByRole("button", { name: "UNDO" });
+    expect(button.style.backgroundColor).toBe("rgb(84, 104, 255)");
+    fireEvent.mouseEnter(button);
+    expect(button.style.backgroundColor).toBe("rgb(59, 78, 227)"); // primary/600
+    fireEvent.mouseLeave(button);
+    expect(button.style.backgroundColor).toBe("rgb(84, 104, 255)");
   });
 });
 

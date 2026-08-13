@@ -24,7 +24,12 @@ const iconShadowFilter = `drop-shadow(0px 1px 0.5px ${elevation.e2[1].color}) dr
 // "special_drop" 2-layer inset — same construction reused across this whole library.
 const neutralButtonShadow = `${shadowToCss([elevation.e2[1]])}, inset 0px 1px 3px -2px ${color.white[50]}, inset 0px -1px 3px -2px rgba(0,0,0,0.07)`;
 const neutralButtonHoverBg = color.gray[200]; // one step darker, same convention as alert.tsx
-const defaultActionHoverBg = color.secondary[600];
+// Requested override, not part of the original Figma audit — Figma's own confirmed value here is
+// `Color/secondary/500` (pink) + white text, matching Alert's separate "Dismiss" button (§14).
+// Per direct request ("instead of the current accent/pink treatment"), state=default's action
+// button now uses `primary/500` instead — the same override category as Alert's own Dismiss
+// color change. Hover follows the usual one-step-darker convention (primary/600).
+const defaultActionHoverBg = color.primary[600];
 const dismissButtonHoverBg = color.gray[100]; // transparent -> gray-100, the neutral icon-button convention
 
 // docs/audit/toasts.md §14 — confirmed via a fresh get_design_context on all 5 severities:
@@ -255,14 +260,15 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
             // has no border class at all in Figma (matching Alert's own neutral "Learn more",
             // which likewise has none). The outer+inset shadow IS shared by all three — unchanged.
             border: state === "default" ? `1px solid ${color.black[50]}` : "none",
-            // docs/audit/toasts.md §14 — confirmed: default's own action button uses
-            // secondary/500 + white text (matching Alert's separate "Dismiss" styling), while
-            // warning/info use the plain neutral gray/100 + gray-700 combination.
+            // Figma's own confirmed value is secondary/500 + white text (§14, matching Alert's
+            // separate "Dismiss" styling) — requested override: primary/500 instead, see
+            // `defaultActionHoverBg`'s own comment. warning/info are unchanged (plain neutral
+            // gray/100 + gray-700), not part of this request.
             backgroundColor:
               state === "default"
                 ? actionHover
                   ? defaultActionHoverBg
-                  : color.secondary[500]
+                  : color.primary[500]
                 : actionHover
                   ? neutralButtonHoverBg
                   : color.gray[100],
@@ -308,10 +314,16 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
         {...props}
       >
         {leftIcon && (
+          // Requested: "increase the leading icon size slightly... vertically aligned with the
+          // title, consistent across all states." Same bump already applied to Alert's own
+          // severity icon (§16 there): container 24->28, glyph 18 (previously unset, the icon's
+          // own native default)->22 (explicit size prop). `alignItems: "center"` on this row (and
+          // the icon's own centered flex container) already keeps it vertically centered against
+          // the title regardless of slot size — unaffected by this change, just larger now.
           <span
             style={{
-              width: 24,
-              height: 24,
+              width: 28,
+              height: 28,
               flexShrink: 0,
               display: "flex",
               alignItems: "center",
@@ -319,7 +331,7 @@ export const Toast = forwardRef<HTMLDivElement, ToastProps>(
               filter: iconShadowFilter,
             }}
           >
-            {icon ?? <InfoCircleIcon style={{ color: iconColorByState[state] }} />}
+            {icon ?? <InfoCircleIcon size={22} style={{ color: iconColorByState[state] }} />}
           </span>
         )}
 

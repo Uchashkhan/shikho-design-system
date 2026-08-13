@@ -44,10 +44,17 @@ Implements the `toast` component set audited in `docs/audit/toasts.md` — deep-
 
 `ButtonDanger`'s `style` prop previously **replaced** its entire computed style object instead of merging with it, because the JSX spread `{...props}` came after the explicit `style={style}`. Composing it here (to apply Toast's confirmed fill override without discarding its radius/padding/typography) required fixing this: `style={{ ...computedStyle, ...style }}`. This doesn't change `ButtonDanger`'s own default rendering — Alert's existing usage is unaffected (verified: all prior Button/Alert tests still pass) — it only enables a composing component to override a single confirmed property.
 
+## Implementation note (post-audit changes, docs/audit/toasts.md §15)
+
+Same feedback item number/framing as Alert's own §15/§16, resubmitted because it had only been partially implemented. Checked what already existed first: the interactive-preview STATE→ICON→SUPPORTING TEXT→BUTTON→AUTO DISMISS controls and the full auto-dismiss timer (§9/§14 above) were already built exactly to spec — no change needed there. Two items genuinely weren't done:
+
+- **`state="default"`'s action button now uses `primary/500`** instead of the confirmed `secondary/500` pink — "instead of the current accent/pink treatment," matching the reasoning behind Alert's own Dismiss-button color change. `warning`/`info`'s neutral button and `danger`/`success`'s tinted `ButtonDanger`/`ButtonSuccess` are unchanged — Toast's request, unlike Alert's, only named `default`'s color.
+- **The leading severity icon is bigger**: slot 24px→28px, glyph 18px→22px — the same bump already applied to Alert's own icon, consistent across every state.
+
 ## Not implemented
 
 - The `feature_icon` slot's real glyph — confirmed placeholder content, not implemented as a default.
 
 ## Token dependencies
 
-`@shikho/tokens`: `color.white[950]`, `color.gray[100/600/700/950]`, `color.danger[500]`, `color.success[500]`, `color.warning[500]`, `color.info[500]`, `color.secondary[500]`, `radius.md`, `radius.sm`, `radius.lg`, `radius["2xl"]`, and `elevation.e2`/`e6` (converted to CSS `box-shadow` strings). Plus the same two literal, cited hex constants as Alert (`outline/warning_alpha`, `outline/info_alpha`) not yet represented in `@shikho/tokens`.
+`@shikho/tokens`: `color.white[950]`, `color.gray[100/600/700/950]`, `color.primary[500]` (requested override, §15), `color.danger[500]`, `color.success[500]`, `color.warning[500]`, `color.info[500]`, `radius.md`, `radius.sm`, `radius.lg`, `radius["2xl"]`, and `elevation.e2`/`e6` (converted to CSS `box-shadow` strings). Plus the same two literal, cited hex constants as Alert (`outline/warning_alpha`, `outline/info_alpha`) not yet represented in `@shikho/tokens`.

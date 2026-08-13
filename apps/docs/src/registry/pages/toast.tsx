@@ -21,6 +21,8 @@ export const pageConfig: ComponentPageConfig = {
     "secondary_button_effect (2 of 4 layers confirmed applied to the action button) is not implemented — the same gap ButtonDanger itself already has.",
     "The feature_icon slot's real glyph is confirmed to be a plain filled circle with no distinguishing shape in the audited instance — generic placeholder content, not implemented as a default.",
     "autoDismiss/duration are requested additions with no Figma source — no timer/progress affordance exists anywhere in the audited component set. Manual dismiss cancels the pending timer immediately (spec); the progress bar animates via a CSS transition rather than @keyframes, keeping this component's existing inline-styles-only architecture.",
+    "Requested override: state=\"default\"'s action button uses primary/500 (was the confirmed secondary/500 pink) — \"instead of the current accent/pink treatment.\" warning/info's neutral button and danger/success's tinted ButtonDanger/ButtonSuccess composition are unchanged; only default's color was named in the request.",
+    "Requested: the leading severity icon is a bit bigger — slot 24px→28px, glyph 18px→22px, consistent across all 5 states.",
   ],
   usageExample: `import { Toast } from "@shikho/ui";
 
@@ -38,11 +40,11 @@ function DangerToast() {
 }`,
   props: [
     { name: "state", type: "default | danger | success | warning | info", defaultValue: "danger", description: "Severity/theme axis, same architecture as Alert." },
-    { name: "leftIcon", type: "boolean", defaultValue: "true", description: "Confirmed boolean for the 24×24 leading icon slot." },
+    { name: "leftIcon", type: "boolean", defaultValue: "true", description: "Confirmed boolean for the leading icon slot — rendered a bit bigger than confirmed (28×28 slot, 22px glyph) per request, consistent across all states." },
     { name: "featureIcon / featureIconContent", type: "boolean / ReactNode", defaultValue: "false", description: "A 28×28 slot with no equivalent in Alert — the only boolean across Alert/Toast that defaults off." },
     { name: "titleContent", type: "ReactNode", description: "15px/24px SemiBold, identical to Alert's." },
     { name: "desc / descriptionContent", type: "boolean / ReactNode", defaultValue: "true", description: "13px/20px Regular, Text/Gray 600 — confirmed different from Alert's Gray 700." },
-    { name: "actionButton / actionContent / onActionClick", type: "boolean / ReactNode / () => void", defaultValue: "true", description: "danger/success compose ButtonDanger/ButtonSuccess with a tinted background; warning/info are neutral; default is secondary/500-filled." },
+    { name: "actionButton / actionContent / onActionClick", type: "boolean / ReactNode / () => void", defaultValue: "true", description: "danger/success compose ButtonDanger/ButtonSuccess with a tinted background; warning/info are neutral; default is primary/500-filled (requested override — Figma's own confirmed value is secondary/500 pink)." },
     { name: "rightIcon / dismissIcon / onDismissClick / dismissButtonLabel", type: "boolean / ReactNode / () => void / string", defaultValue: "true / … / … / \"Dismiss\"", description: "Inline rounded-square dismiss button — confirmed not absolutely positioned, unlike Alert's corner button. Renders a confirmed default 'X' icon unless overridden." },
     { name: "autoDismiss / duration", type: "boolean / number", defaultValue: "false / 5000", description: "Requested addition. A full-width progress bar drains over duration ms, then calls onDismissClick — the same callback the manual dismiss button uses. Toast never removes itself; the consumer still owns whether/how it leaves the DOM." },
   ],
@@ -119,7 +121,7 @@ function DangerToast() {
   showcases: [
     {
       title: "All five severities",
-      description: "Every severity is now deep-audited: danger/success get a tinted-background button, warning/info stay neutral, and default gets its own secondary/500 button.",
+      description: "Every severity is now deep-audited: danger/success get a tinted-background button, warning/info stay neutral, and default gets its own primary/500 button (requested override — was secondary/500 pink).",
       layout: "stack",
       render: () => (
         <>
