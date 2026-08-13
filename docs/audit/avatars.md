@@ -221,3 +221,18 @@ Fixed by switching both to `box-sizing: content-box` — `status`/`verification`
 **Important implementation note:** `box-sizing` must be set EXPLICITLY to `"content-box"` — simply removing the `border-box` override is not enough. Both the docs app and most real consumer apps (e.g. anything using Tailwind's preflight) apply a global `* { box-sizing: border-box }` reset, which silently wins over an unset inline style. This was caught only by checking `getComputedStyle`/`getBoundingClientRect` live in the browser after the first attempt (which removed the property instead of overriding it) produced no visible change at all.
 
 Tests added: both `status` and `verification` now assert `boxSizing === "content-box"` explicitly (not just `!== "border-box"`), and `verification` asserts `overflow === "hidden"`. 699/699 passing (`@shikho/ui`, up from 697). Typecheck clean. Docs build clean. Verified live at 4x zoom: both indicators render as clean circles, with the green status fill visibly restored to its full proportioned size.
+
+## 15. `status` re-confirmed against a real reference example — corrects §14's own guess
+
+User follow-up: a direct Figma link to node `66200:18587`, an xl/64px avatar example carrying a real "online-badge" child instance, asked to "take reference and update accordingly on every size." Unlike everything else in §13/§14 (deliberate requested overrides with no Figma basis), this is a genuine confirmed data point — `get_design_context` returned the actual downloaded SVG asset, not a description:
+
+```
+<circle cx="8" cy="8" r="6.75" fill="#2ECC70" stroke="white" stroke-width="2.5" />
+```
+in a 16×16 slot, positioned at the avatar's bottom-right corner (matching `status`, not `verification`).
+
+That gives, at `xl`: **total 16px, 2.5px stroke, 11px inner fill** — i.e. `status` really is the confirmed TOTAL diameter (border-box, matching §8's original `size-[10px]` framing) and the stroke sits INSIDE it, but at a fill/total ratio of 68.75% — nowhere near the ~40% the original `10px/3px` (md) guess produced, which is what actually caused §14's "disproportionate" complaint. §14's content-box fix corrected the *symptom* with an invented ratio; this corrects it with the *real* one, which turns out to still be border-box, just with much larger totals and much thinner (relatively) borders than guessed.
+
+Applied via two confirmed ratios, held constant across all 5 sizes: `status` = avatar `box` ÷ 4 exactly; `statusBorder` = `status` × 0.15625 exactly (both derived from the one confirmed `xl` sample, since this reference doesn't cover the other 4 sizes independently). Only `xl`'s own `status` value actually changes (14 → 16, correcting what the original v0.1.0 measurement apparently got slightly wrong); `xs`/`sm`/`md`/`lg` already sat exactly on the `box÷4` ratio by coincidence, so their `status` values are untouched — only their `statusBorder` values change, from the old flat 2px/3px two-step guess to the newly-derived 0.9375/1.25/1.5625/1.875/2.5px scale. `status`'s `box-sizing` reverts to `border-box` (see its own render comment). `verification` is unrelated to this reference (no sample exists for it here) and stays as `content-box` — but it still reuses `statusBorder` for its own ring width (an intentional shared value, §14), so its ring thinned along with `status`'s.
+
+Tests updated to the new per-size `statusBorder` values and `xl`'s corrected `status`. 699/699 passing (`@shikho/ui`). Typecheck clean. Docs build clean. Verified live at 4x zoom: the green fill is now clearly the dominant visual, with a thin, clean white ring — matching the reference screenshot's proportions.

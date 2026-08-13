@@ -70,7 +70,7 @@ describe("confirmed status indicator (§8)", () => {
     expect(badge.style.width).toBe("10px");
     expect(badge.style.height).toBe("10px");
     expect(badge.style.borderRadius).toBe("1000px");
-    expect(badge.style.border).toContain("3px");
+    expect(badge.style.border).toContain("1.5625px"); // md's re-derived border, see below
     expect(badge.style.backgroundColor).toBe("rgb(80, 223, 58)"); // surface/success_med_em
   });
 
@@ -83,16 +83,14 @@ describe("confirmed status indicator (§8)", () => {
     expect(badge.style.border).not.toContain("0.72");
   });
 
-  // Fix: an opaque border on a border-box-sized dot ate into the declared size (10px minus 2x3px
-  // border left only a 4px visible green center) — disproportionate, since the border no longer
-  // hides that shrinkage behind translucency. content-box keeps the fill at its full confirmed
-  // size and adds the ring around it instead. Must be an EXPLICIT "content-box", not just an
-  // absence of "border-box" — the docs app (and most real consumers, e.g. Tailwind's preflight)
-  // apply a global `* { box-sizing: border-box }` reset that silently wins if left unset.
-  it("is explicitly box-sizing: content-box — the ring adds around the fill rather than eating into it", () => {
+  // Re-confirmed against a fresh reference (node 66200:18587's "online-badge": SVG circle
+  // r=6.75 stroke-width=2.5 in a 16x16 slot, at xl/64px) — this IS the real model: `status` is
+  // the total diameter, and border-box is correct, just with a much larger total/thinner-relative
+  // border than the original 10px/3px guess that caused the earlier disproportion complaint.
+  it("is explicitly box-sizing: border-box, matching the confirmed online-badge reference", () => {
     render(<Avatar type="image" src="/photo.jpg" status />);
     const badge = screen.getByTestId("avatar-status");
-    expect(badge.style.boxSizing).toBe("content-box");
+    expect(badge.style.boxSizing).toBe("border-box");
   });
 });
 
@@ -113,7 +111,7 @@ describe("confirmed verification badge (§8)", () => {
     // Requested addition — Figma's own confirmed verification_tick carries no border at all.
     expect(badge.style.borderRadius).toBe("1000px");
     expect(badge.style.border).toContain("rgb(255, 255, 255)");
-    expect(badge.style.border).toContain("3px"); // md's own statusBorder width, reused
+    expect(badge.style.border).toContain("1.5625px"); // md's own statusBorder width, reused
   });
 
   // Fix: a fixed-size consumer glyph bigger than the ring's inner content area (which shrinks
@@ -170,12 +168,15 @@ describe("type=text and type=icon render brand gradients, not a flat gray fill",
 
 describe("per-size metrics are independent, not extrapolated from md", () => {
   // `verification` column is the requested +2px-per-size bump (was 8/10/12/14/18).
+  // `statusBorder` column is re-derived from the confirmed online-badge reference (node
+  // 66200:18587): border = 0.15625 * status, at every size. `xl`'s own `status` corrects from a
+  // previously-measured 14 to the newly-confirmed 16 (xs/sm/md/lg unchanged).
   const cases = [
-    ["xs", "11px", 6, "2px", 10],
-    ["sm", "12px", 8, "2px", 12],
-    ["md", "13px", 10, "3px", 14],
-    ["lg", "13px", 12, "3px", 16],
-    ["xl", "22px", 14, "3px", 20],
+    ["xs", "11px", 6, "0.9375px", 10],
+    ["sm", "12px", 8, "1.25px", 12],
+    ["md", "13px", 10, "1.5625px", 14],
+    ["lg", "13px", 12, "1.875px", 16],
+    ["xl", "22px", 16, "2.5px", 20],
   ] as const;
 
   it.each(cases)(

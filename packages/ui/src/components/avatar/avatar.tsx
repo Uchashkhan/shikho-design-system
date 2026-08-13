@@ -24,15 +24,29 @@ interface AvatarSizeMetrics {
 }
 
 export const AVATAR_SIZE_METRICS: Record<AvatarSize, AvatarSizeMetrics> = {
-  // `verification` below is a requested +2px bump at every size (was 8/10/12/14/18, confirmed
-  // exact against Figma, docs/audit/avatars.md §8) — a deliberate code-only override, not a
-  // Figma correction. See the `verification` render below for the new white ring, also requested
+  // `status`/`statusBorder`: re-confirmed against a fresh reference example (node 66200:18587,
+  // an xl/64px avatar with an "online-badge" instance — real vector data, not a guess: SVG
+  // `circle cx=8 cy=8 r=6.75 stroke-width=2.5` in a 16x16 slot). That gives, at xl: total 16px,
+  // 2.5px stroke, an 11px inner fill — badge = exactly 1/4 of the avatar box, stroke = exactly
+  // 0.15625 of the badge. Both ratios applied uniformly to derive the other 4 sizes (xs/sm/md/lg
+  // unchanged from the original §8 confirmed 6/8/10/12 for `status` — only `xl` corrects from a
+  // previously-measured 14 to the newly-confirmed 16; `statusBorder` recalculated at every size
+  // from the confirmed 2.5-of-16 ratio, replacing the old flat 2px/3px two-step guess). This ALSO
+  // restores `box-sizing: border-box` for `status` (see its own render comment below) — the
+  // earlier "make it proportional" content-box fix corrected the SYMPTOM using invented numbers;
+  // this fixes it with the actual confirmed ratio instead, which turns out to be border-box after
+  // all, just with a much bigger fill/total ratio (68.75%) than the original guess had.
+  //
+  // `verification` is unrelated to this reference (no confirmed sample exists for it here) and is
+  // unchanged: still a requested +2px bump at every size (was 8/10/12/14/18, confirmed exact
+  // against Figma, docs/audit/avatars.md §8) — a deliberate code-only override, not a Figma
+  // correction. See the `verification` render below for its own white ring, also requested
   // (Figma's own confirmed `verification_tick` carries no border at all).
-  xs: { box: 24, fontSize: 11, lineHeight: "16px", status: 6, statusBorder: 2, verification: 10 },
-  sm: { box: 32, fontSize: 12, lineHeight: "16px", status: 8, statusBorder: 2, verification: 12 },
-  md: { box: 40, fontSize: 13, lineHeight: "20px", status: 10, statusBorder: 3, verification: 14 },
-  lg: { box: 48, fontSize: 13, lineHeight: "20px", status: 12, statusBorder: 3, verification: 16 },
-  xl: { box: 64, fontSize: 22, lineHeight: "32px", status: 14, statusBorder: 3, verification: 20 },
+  xs: { box: 24, fontSize: 11, lineHeight: "16px", status: 6, statusBorder: 0.9375, verification: 10 },
+  sm: { box: 32, fontSize: 12, lineHeight: "16px", status: 8, statusBorder: 1.25, verification: 12 },
+  md: { box: 40, fontSize: 13, lineHeight: "20px", status: 10, statusBorder: 1.5625, verification: 14 },
+  lg: { box: 48, fontSize: 13, lineHeight: "20px", status: 12, statusBorder: 1.875, verification: 16 },
+  xl: { box: 64, fontSize: 22, lineHeight: "32px", status: 16, statusBorder: 2.5, verification: 20 },
 };
 
 /**
@@ -192,20 +206,16 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
               position: "absolute",
               bottom: 0,
               right: 0,
-              // Explicit `content-box` — NOT just "leave box-sizing unset": the docs app (and
-              // most real consumers, e.g. Tailwind's preflight) apply a global `* { box-sizing:
-              // border-box }` reset, so merely removing this property silently inherited
-              // border-box right back rather than falling through to the CSS default. `status`/
-              // `statusBorder` below are the confirmed FILL diameter and border width as two
-              // independent values, not one budget the border eats into. With `border-box`, an
-              // opaque 3px border on a 10px (md) box left only a 4px visible green center —
-              // barely perceptible, and disproportionate once the border stopped being
-              // translucent (translucency previously let green bleed through the ring itself,
-              // masking the disproportion). Content-box instead ADDS the ring around the full
-              // confirmed fill size, so the green dot keeps its real proportions and the ring
-              // simply grows the total footprint (e.g. md: 10px fill + 3px ring each side = 16px
-              // total), matching how status rings are drawn everywhere else in software.
-              boxSizing: "content-box",
+              // Explicit `box-sizing: border-box` — restored after a fresh confirmed reference
+              // (node 66200:18587's "online-badge": SVG `circle r=6.75 stroke-width=2.5` in a
+              // 16x16 slot) showed this actually IS the real model: `status` is the TOTAL
+              // diameter, and the ring is drawn INSIDE it, not added around it. The previous
+              // "make it proportional" fix (content-box) corrected the visible symptom using an
+              // invented ratio; this uses the real one (fill/total = 68.75% at every size, per
+              // `AVATAR_SIZE_METRICS`'s own comment) instead, which happens to also be
+              // border-box, just with much larger total sizes / much thinner borders than the
+              // original 2px/3px guess that caused the disproportion in the first place.
+              boxSizing: "border-box",
               width: metrics.status,
               height: metrics.status,
               borderRadius: radius.full,
