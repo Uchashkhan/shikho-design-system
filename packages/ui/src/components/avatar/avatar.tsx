@@ -54,23 +54,26 @@ export const AVATAR_SIZE_METRICS: Record<AvatarSize, AvatarSizeMetrics> = {
 };
 
 /**
- * Confirmed background fills. `type=text` and `type=icon` are NOT neutral gray — each carries a
- * top-to-bottom brand gradient, confirmed identical across all five sizes:
- *   text  — `color/primary_med_em` (#85a4ff) -> `color/primary_base` (#5468ff)
- *   icon  — `color/secondary_med_em` (#ea42b2) -> `color/secondary_base` (#e2008d)
- * The prior implementation rendered both as a flat `gray[200]` fill with `gray[700]` text, which
- * was the single largest visual defect found in the verification pass.
+ * Confirmed background fills. `type=text` carries a top-to-bottom brand gradient, confirmed
+ * identical across all five sizes: `color/primary_med_em` (#85a4ff) -> `color/primary_base`
+ * (#5468ff). The prior implementation rendered it (and `type=icon`) as a flat `gray[200]` fill
+ * with `gray[700]` text, which was the single largest visual defect found in the verification
+ * pass. `type=icon` was ALSO confirmed to carry an equivalent secondary/pink gradient
+ * (`color/secondary_med_em` #ea42b2 -> `color/secondary_base` #e2008d) — since superseded by a
+ * requested flat override, see `iconFillColor` below (§20).
  */
 const TEXT_GRADIENT = `linear-gradient(180deg, ${color.primary[400]}, ${color.primary[500]})`;
-const ICON_GRADIENT = `linear-gradient(180deg, ${color.secondary[400]}, ${color.secondary[500]})`;
 
 // Confirmed `color/white/900` (rgba(255,255,255,0.88)) — matches token `white[900]` (#ffffffe0).
 const initialsColor = color.white[900];
 
-// Requested override, not a Figma value — the default `UserIcon` glyph on `type="icon"` (§18)
-// was white/900 (matching `type="text"`'s initials); changed to `gray/500` (#afb3bb) per direct
-// follow-up request.
-const iconGlyphColor = color.gray[500];
+// Requested override, not a Figma value (§20) — `type="icon"`'s root fill (previously the
+// confirmed secondary/pink gradient documented above) is now a flat `gray/500` (#afb3bb).
+const iconFillColor = color.gray[500];
+// Requested override, not a Figma value — the default `UserIcon` glyph on `type="icon"` was
+// white/900 (§10, matching `type="text"`'s initials), then `gray/500` (§18/§19), now `gray/50`
+// (#f9f9fa) per the same follow-up request that changed the frame fill above (§20).
+const iconGlyphColor = color.gray[50];
 
 // docs/audit/avatars.md §8 — status is filled `surface/success_med_em` (matches success[400]
 // exactly) with a `neutral_transparent_white/white-72` border (matches white[800]).
@@ -165,8 +168,10 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
           flexShrink: 0,
           borderRadius: radius.full,
           // Confirmed: the gradient lives on the root for text/icon; image has no fallback fill.
+          // type="icon" uses a requested flat override (`iconFillColor`, §20) instead of its
+          // confirmed pink gradient.
           background:
-            type === "text" ? TEXT_GRADIENT : type === "icon" ? ICON_GRADIENT : undefined,
+            type === "text" ? TEXT_GRADIENT : type === "icon" ? iconFillColor : undefined,
           border: badge ? `${metrics.badgeWidth}px solid ${badgeColor}` : undefined,
           ...style,
         }}

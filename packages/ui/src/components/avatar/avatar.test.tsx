@@ -53,10 +53,10 @@ describe("type=icon / type=text — structurally unconfirmed, derived fallback f
     expect(svg).toBeInTheDocument();
   });
 
-  it("paints the default icon glyph gray/500, a requested override (was white/900)", () => {
+  it("paints the default icon glyph gray/50, a requested override (was white/900, then gray/500)", () => {
     const { container } = render(<Avatar type="icon" />);
     const slot = container.querySelector('svg[data-icon="user"]')?.parentElement as HTMLElement;
-    expect(slot.style.color).toBe("rgb(175, 179, 187)"); // color/gray/500 (#afb3bb)
+    expect(slot.style.color).toBe("rgb(249, 249, 250)"); // color/gray/50 (#f9f9fa)
   });
 
   it("prefers explicit children over the default UserIcon glyph", () => {
@@ -180,11 +180,10 @@ describe("type=text and type=icon render brand gradients, not a flat gray fill",
     expect(initials.style.color).toBe("rgba(255, 255, 255, 0.88)"); // color/white/900
   });
 
-  it("fills type=icon with the secondary gradient", () => {
+  it("fills type=icon with a flat gray/500, a requested override (was the secondary gradient)", () => {
     const { container } = render(<Avatar type="icon" />);
     const root = container.firstChild as HTMLElement;
-    expect(root.style.background).toContain("#ea42b2"); // secondary_med_em
-    expect(root.style.background).toContain("#e2008d"); // secondary_base
+    expect(root.style.background).toBe("rgb(175, 179, 187)"); // color/gray/500 (#afb3bb)
   });
 
   it("leaves type=image with no background fill", () => {

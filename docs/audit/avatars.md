@@ -276,3 +276,14 @@ Tests added: `@shikho/icons` gets a dedicated `UserIcon` describe block (name, v
 Direct follow-up: "on the Type - Icon can you the color grey 500 - #afb3bb?" `#afb3bb` is `@shikho/tokens`' `color.gray[500]` exactly. The default `UserIcon` glyph added in §18 painted `color.white[900]` (matching `type="text"`'s initials); changed to `color.gray[500]` per this request. Not a Figma value either way — `type="icon"` has no deep audit at all (§10).
 
 One-line change: the icon-slot span's `color` (which the glyph inherits via `currentColor`) now reads `iconGlyphColor = color.gray[500]` instead of reusing `initialsColor`. Test added asserting the slot computes to `rgb(175, 179, 187)`. 716/716 full `@shikho/ui` suite (up from 715). Typecheck clean. Verified live: the icon-type avatar's glyph now renders `#afb3bb` gray on the pink gradient at every size.
+
+## 20. Requested, immediate follow-up: swap the whole fill/glyph color scheme
+
+Direct correction to §19, in the same breath: "No no, currently the pink color on the main frame, and inside the icon you make it grey, so the pink one make it #afb3bb and icon itself make it #f9f9fa." Clarifies the actual target — not just the glyph, but the root fill too:
+
+- **`type="icon"`'s root fill** — previously the confirmed `color/secondary_med_em` → `color/secondary_base` pink gradient (§9) — is now a flat `#afb3bb`, exactly `@shikho/tokens`' `color.gray[500]`. The confirmed gradient's own values stay documented in `TEXT_GRADIENT`'s block comment as history; the now-unused `ICON_GRADIENT` constant was removed rather than left dead.
+- **The default `UserIcon` glyph** — `gray/500` as of §19, one message ago — moves to `#f9f9fa`, exactly `color.gray[50]`.
+
+Neither value is a Figma value — `type="icon"` has no deep audit at all (§10), and this whole fill/glyph pairing has now been requested three times in a row (white/900 → gray/500 → this).
+
+Tests updated: the "fills type=icon with the secondary gradient" test now asserts a flat `rgb(175, 179, 187)` background instead of the two gradient hex stops; the glyph-color test now asserts `rgb(249, 249, 250)`. 716/716 full `@shikho/ui` suite (same count as §19 — one fill assertion and one color assertion changed in place, no new tests needed). Typecheck clean. Docs build/test clean. Verified live via computed styles: root `backgroundColor` reads `rgb(175, 179, 187)` and the icon slot's `color` reads `rgb(249, 249, 250)` — both exact.

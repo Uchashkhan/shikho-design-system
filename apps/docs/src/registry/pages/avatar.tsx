@@ -26,6 +26,7 @@ export const pageConfig: ComponentPageConfig = {
     "Requested: status's border is opaque white (was the confirmed 72%-alpha white[800]) and its size/border-width were re-derived per size from a reference example (node 66200:18587), replacing the original flat 10px/3px.",
     "Requested: the confirmed verification badge (a top-right checkmark container) was removed entirely, replaced by badge — a solid ring around the WHOLE avatar. badge has no Figma basis at all: reuses a 3px stroke width sampled from that same one-off reference example, scaled per size. badgeColor has no default.",
     "Requested: type=\"icon\" now renders a default UserIcon glyph (@shikho/icons) when no children are supplied, replacing the previous bare/emoji placeholder. Not sourced from a Figma audit — a generic person icon added directly per request, overridable via children.",
+    "Requested: type=\"icon\"'s root fill is now a flat gray/500 (#afb3bb), replacing the confirmed secondary/pink gradient (#ea42b2 -> #e2008d) entirely. The default glyph on top is gray/50 (#f9f9fa), was gray/500 before this same request.",
   ],
   usageExample: `import { Avatar } from "@shikho/ui";
 
@@ -44,7 +45,7 @@ function ProfileBadge() {
     { name: "size", type: "xl | lg | md | sm | xs", defaultValue: "md", description: "Confirmed square dimension, rendered as a full circle." },
     { name: "type", type: "icon | text | image", defaultValue: "image", description: "Only image has confirmed internal structure." },
     { name: "src / alt", type: "string", description: "type=\"image\" only — the confirmed plain <img> fill." },
-    { name: "children", type: "ReactNode", description: "type=\"icon\" / type=\"text\" content — an icon glyph or initials text. type=\"icon\" renders a requested default UserIcon glyph (gray/500, not a Figma value) when omitted; pass children to override it. Structurally unconfirmed." },
+    { name: "children", type: "ReactNode", description: "type=\"icon\" / type=\"text\" content — an icon glyph or initials text. type=\"icon\" renders a requested default UserIcon glyph (gray/50, not a Figma value) on a flat gray/500 fill when omitted; pass children to override the glyph. Structurally unconfirmed." },
     { name: "status", type: "boolean", defaultValue: "false", description: "Confirmed circular badge, bottom-right, surface/success_med_em fill. Border color/proportions requested and re-derived — see gaps." },
     { name: "badge / badgeColor", type: "boolean / string", defaultValue: "false", description: "Requested addition, not part of the original Figma audit — replaces the removed verification prop. A solid ring around the whole avatar (e.g. \"currently active\"). Stroke width (3px at xl) reused from a one-off reference example (node 66200:18587); no confirmed reusable badge color exists, so badgeColor has no default and is required when badge is true." },
   ],
