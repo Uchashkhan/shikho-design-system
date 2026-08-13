@@ -44,7 +44,7 @@ function ProfileBadge() {
     { name: "size", type: "xl | lg | md | sm | xs", defaultValue: "md", description: "Confirmed square dimension, rendered as a full circle." },
     { name: "type", type: "icon | text | image", defaultValue: "image", description: "Only image has confirmed internal structure." },
     { name: "src / alt", type: "string", description: "type=\"image\" only — the confirmed plain <img> fill." },
-    { name: "children", type: "ReactNode", description: "type=\"icon\" / type=\"text\" content — an icon glyph or initials text. type=\"icon\" renders a requested default UserIcon glyph (white/900, not a Figma value) when omitted; pass children to override it. Structurally unconfirmed." },
+    { name: "children", type: "ReactNode", description: "type=\"icon\" / type=\"text\" content — an icon glyph or initials text. type=\"icon\" renders a requested default UserIcon glyph (gray/500, not a Figma value) when omitted; pass children to override it. Structurally unconfirmed." },
     { name: "status", type: "boolean", defaultValue: "false", description: "Confirmed circular badge, bottom-right, surface/success_med_em fill. Border color/proportions requested and re-derived — see gaps." },
     { name: "badge / badgeColor", type: "boolean / string", defaultValue: "false", description: "Requested addition, not part of the original Figma audit — replaces the removed verification prop. A solid ring around the whole avatar (e.g. \"currently active\"). Stroke width (3px at xl) reused from a one-off reference example (node 66200:18587); no confirmed reusable badge color exists, so badgeColor has no default and is required when badge is true." },
   ],

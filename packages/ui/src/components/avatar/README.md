@@ -36,7 +36,7 @@ The confirmed/derived findings above describe what the original Figma audit foun
 - **`verification` was removed entirely.** It's still accurately described above as a real, confirmed Figma property — but the implementation no longer has it. Removed and replaced by `badge` below.
 - **`badge` (`boolean`) / `badgeColor` (`string`) were added — not confirmed in Figma at all.** Draws a solid ring around the WHOLE avatar (not a corner badge), reusing a 3px stroke width sampled from one reference example (node `66200:18587`, unrelated to the actual `avatar` component set) and scaled per size. `badgeColor` has no default.
 - **`status`'s border is now opaque white**, not the confirmed `72%`-alpha `white[800]` described above, and its size/border-width per step were re-derived from that same reference example rather than the original flat `10px`/`3px`.
-- **`type="icon"` now renders a default `UserIcon` glyph** (`@shikho/icons`, `color.white[900]`) when no `children` are supplied — not sourced from a Figma audit, added directly per request to replace the previous bare/emoji placeholder (docs/audit/avatars.md §18). Passing `children` still overrides it.
+- **`type="icon"` now renders a default `UserIcon` glyph** (`@shikho/icons`, `color.gray[500]` — a follow-up override, was `color.white[900]`) when no `children` are supplied — not sourced from a Figma audit, added directly per request to replace the previous bare/emoji placeholder (docs/audit/avatars.md §18/§19). Passing `children` still overrides it.
 
 See `docs/audit/avatars.md` §13 onward for the full reasoning behind each change.
 
@@ -66,4 +66,4 @@ function ProfileBadge() {
 
 ## Token dependencies
 
-`@shikho/tokens`: `color.success[400]`, `color.white[800/900]`, `color.gray[200/700]`, and `radius.full`. Also `@shikho/icons`' `UserIcon` (requested override, §18 — not part of the original Figma audit).
+`@shikho/tokens`: `color.success[400]`, `color.white[800/900]`, `color.gray[200/500/700]`, and `radius.full`. Also `@shikho/icons`' `UserIcon` (requested override, §18 — not part of the original Figma audit).

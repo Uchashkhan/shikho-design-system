@@ -270,3 +270,9 @@ Not a Figma correction — this glyph doesn't exist anywhere in the audited `ava
 Updated everywhere the 👤 placeholder appeared: `avatar.stories.tsx` (`Types` story), `apps/docs/src/registry/pages/avatar.tsx` (playground render, "The three types" showcase, `children` prop description, gaps), and `README.md`.
 
 Tests added: `@shikho/icons` gets a dedicated `UserIcon` describe block (name, viewBox, two-subpath path) kept separate from the existing "real bezier data" assertion, which doesn't apply to this arc-based glyph. `avatar.test.tsx` gets two new tests — the default glyph renders when `children` is omitted, and explicit `children` still take priority over it. 14/14 `@shikho/icons` tests (up from 11), 41/41 avatar+avatar_group tests, 715/715 full `@shikho/ui` suite. Typecheck clean in both packages. Docs build/test clean.
+
+## 19. Requested: default icon glyph color, gray/500
+
+Direct follow-up: "on the Type - Icon can you the color grey 500 - #afb3bb?" `#afb3bb` is `@shikho/tokens`' `color.gray[500]` exactly. The default `UserIcon` glyph added in §18 painted `color.white[900]` (matching `type="text"`'s initials); changed to `color.gray[500]` per this request. Not a Figma value either way — `type="icon"` has no deep audit at all (§10).
+
+One-line change: the icon-slot span's `color` (which the glyph inherits via `currentColor`) now reads `iconGlyphColor = color.gray[500]` instead of reusing `initialsColor`. Test added asserting the slot computes to `rgb(175, 179, 187)`. 716/716 full `@shikho/ui` suite (up from 715). Typecheck clean. Verified live: the icon-type avatar's glyph now renders `#afb3bb` gray on the pink gradient at every size.

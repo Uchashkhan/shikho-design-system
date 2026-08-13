@@ -53,6 +53,12 @@ describe("type=icon / type=text — structurally unconfirmed, derived fallback f
     expect(svg).toBeInTheDocument();
   });
 
+  it("paints the default icon glyph gray/500, a requested override (was white/900)", () => {
+    const { container } = render(<Avatar type="icon" />);
+    const slot = container.querySelector('svg[data-icon="user"]')?.parentElement as HTMLElement;
+    expect(slot.style.color).toBe("rgb(175, 179, 187)"); // color/gray/500 (#afb3bb)
+  });
+
   it("prefers explicit children over the default UserIcon glyph", () => {
     const { container } = render(
       <Avatar type="icon">

@@ -67,6 +67,11 @@ const ICON_GRADIENT = `linear-gradient(180deg, ${color.secondary[400]}, ${color.
 // Confirmed `color/white/900` (rgba(255,255,255,0.88)) — matches token `white[900]` (#ffffffe0).
 const initialsColor = color.white[900];
 
+// Requested override, not a Figma value — the default `UserIcon` glyph on `type="icon"` (§18)
+// was white/900 (matching `type="text"`'s initials); changed to `gray/500` (#afb3bb) per direct
+// follow-up request.
+const iconGlyphColor = color.gray[500];
+
 // docs/audit/avatars.md §8 — status is filled `surface/success_med_em` (matches success[400]
 // exactly) with a `neutral_transparent_white/white-72` border (matches white[800]).
 const statusFill = color.success[400];
@@ -213,10 +218,9 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              // Requested default glyph paints via `currentColor` — white/900 here matches the
-              // same token `type="text"` already uses for its initials, so both derived fills
-              // read consistently on their respective gradients.
-              color: initialsColor,
+              // Requested default glyph paints via `currentColor` — gray/500 per direct request
+              // (was white/900, matching `type="text"`'s initials; §18 follow-up).
+              color: iconGlyphColor,
               filter: iconShadowFilter,
             }}
           >
