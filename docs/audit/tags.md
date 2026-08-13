@@ -239,3 +239,20 @@ Direct request: "sm looks perfect — treat it as the base; scale md 1.5x from s
 This directly supersedes §17's md font-size override (11→12, matching lg) and §18's md/lg `labelPadding` zeroing (done specifically to avoid the inner/outer padding stacking that caused chips.md §15's asymmetry bug) — under the new sm-based model, `labelPadding` deliberately scales up *with* `sm`'s own non-zero value, by design, since the whole point is reproducing `sm`'s exact internal structure at a larger size rather than avoiding a stacking problem `sm` itself never had. `shape="pill"`'s own `PILL_PADDING` table was not part of this request and is unchanged — it no longer relates proportionally to `SIZE_METRICS`' own new numbers the way it originally did when both were independently-confirmed Figma values.
 
 Tests rewritten for the new sm-based values (heights 20/30/45, font sizes 11/16.5/24.75, label padding 0.125rem/0.1875rem/0.28125rem, default-shape radius/padding 9px at md). 705/705 passing (`@shikho/ui`). Typecheck clean. Docs build clean. Verified live: computed height/width/padding/radius/fontSize at each size confirm an exact 1.5x ratio step to step (e.g. width 36.3px → 54.5px → 81.7px, each exactly 1.5× the last).
+
+## 20. Follow-up: 1.5x was "too much bigger" — reduced to 1.25x/step
+
+Direct follow-up, same day: 1.5x per step read as too large a jump. Reduced to **1.25x/step** (1.5625x from `sm` to `lg`) — same base (`sm`, untouched), same mechanical, non-rounded derivation approach as §19, just a smaller multiplier:
+
+| Metric | `sm` (base) | `md` (×1.25) | `lg` (×1.5625) |
+|---|---|---|---|
+| height | 20 | 25 | 31.25 |
+| horizontal padding | 6px | 7.5px | 9.375px |
+| `rootGap` | 2 | 2.5 | 3.125 |
+| `radius` | 6 (`radius.xs`) | 7.5 | 9.375 |
+| `iconSize` | 12 | 15 | 18.75 |
+| `fontSize` | 11 | 13.75 | 17.1875 |
+| `lineHeight` | 16px | 20px | 25px |
+| `labelPadding` | 2 | 2.5 | 3.125 |
+
+All §19 reasoning still applies (pure geometric derivation from `sm`, no rounding, no token-snapping, `PILL_PADDING` untouched). Tests updated to the new 1.25x values throughout. 705/705 passing (`@shikho/ui`). Typecheck clean. Docs build clean. Verified live: width steps 36.3px → 45.4px → 56.7px, each exactly 1.25× the last; height 20px → 25px → 31.25px.

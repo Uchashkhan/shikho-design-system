@@ -24,15 +24,15 @@ export type TagState = "disabled" | "hover" | "default";
  * horizontal padding so it still reads as a Tag rather than a Button, per spec. */
 export type TagShape = "default" | "pill";
 
-// docs/audit/tags.md §19 (superseding §14's own per-size numbers for md/lg — see that section for
-// the full history). Direct request: "sm looks perfect — treat it as the base and scale md/lg up
-// proportionally, 1.5x each step, like Figma's Scale tool (K)." `sm` below is untouched — still
-// §14's own confirmed values. `md` = every one of `sm`'s numbers x1.5; `lg` = x1.5 again (x2.25
-// from `sm`). This REPLACES md/lg's own independently-confirmed Figma values (previously: height
-// 24/32, padding 6px/8px horizontal, radius.sm/radius.md, iconSize 14/16, fontSize 11/12,
-// labelPadding 4/2) with a pure geometric derivation from `sm` — a deliberate, wholesale
-// departure from confirmed data, not a correction. `sm` keeps its own confirmed §14 values,
-// including having no icon slot at all (`showIcons` below, unaffected by this scale).
+// docs/audit/tags.md §19/§20 (superseding §14's own per-size numbers for md/lg — see §19 for the
+// full history). Direct request: "sm looks perfect — treat it as the base and scale md/lg up
+// proportionally, like Figma's Scale tool (K)." First tried at 1.5x/step (§19) — reported back as
+// "too much bigger," reduced to 1.25x/step (§20). `sm` below is untouched — still §14's own
+// confirmed values. `md` = every one of `sm`'s numbers x1.25; `lg` = x1.25 again (x1.5625 from
+// `sm`). This REPLACES md/lg's own independently-confirmed Figma values with a pure geometric
+// derivation from `sm` — a deliberate, wholesale departure from confirmed data, not a correction.
+// `sm` keeps its own confirmed §14 values, including having no icon slot at all (`showIcons`
+// below, unaffected by this scale).
 interface SizeMetrics {
   height: number;
   padding: string;
@@ -48,20 +48,21 @@ const SIZE_METRICS: Record<TagSize, SizeMetrics> = {
   // The base — confirmed exact against Figma (§14), unchanged. Every other size below is derived
   // from these numbers alone, not independently confirmed.
   sm: { height: 20, padding: "0 0.375rem", rootGap: 2, radius: radius.xs, iconSize: 12, fontSize: 11, lineHeight: "16px", labelPadding: 2 },
-  // sm x1.5, exactly: height 20->30, padding 6px->9px horizontal, rootGap 2->3, radius 6->9,
-  // iconSize 12->18, fontSize 11->16.5, lineHeight 16->24, labelPadding 2->3. `radius`/`padding`
-  // are raw computed numbers now, not named tokens — 9px and 13.5px (lg) don't match any
-  // existing radius scale step.
-  md: { height: 30, padding: "0 9px", rootGap: 3, radius: 9, iconSize: 18, fontSize: 16.5, lineHeight: "24px", labelPadding: 3 },
-  // sm x2.25 (md x1.5 again): height 20->45, padding 6px->13.5px horizontal, rootGap 2->4.5,
-  // radius 6->13.5, iconSize 12->27, fontSize 11->24.75, lineHeight 16->36, labelPadding 2->4.5.
-  lg: { height: 45, padding: "0 13.5px", rootGap: 4.5, radius: 13.5, iconSize: 27, fontSize: 24.75, lineHeight: "36px", labelPadding: 4.5 },
+  // sm x1.25, exactly: height 20->25, padding 6px->7.5px horizontal, rootGap 2->2.5, radius 6->7.5,
+  // iconSize 12->15, fontSize 11->13.75, lineHeight 16->20, labelPadding 2->2.5. `radius`/`padding`
+  // are raw computed numbers now, not named tokens — none of these match any existing radius
+  // scale step.
+  md: { height: 25, padding: "0 7.5px", rootGap: 2.5, radius: 7.5, iconSize: 15, fontSize: 13.75, lineHeight: "20px", labelPadding: 2.5 },
+  // sm x1.5625 (md x1.25 again): height 20->31.25, padding 6px->9.375px horizontal, rootGap
+  // 2->3.125, radius 6->9.375, iconSize 12->18.75, fontSize 11->17.1875, lineHeight 16->25,
+  // labelPadding 2->3.125.
+  lg: { height: 31.25, padding: "0 9.375px", rootGap: 3.125, radius: 9.375, iconSize: 18.75, fontSize: 17.1875, lineHeight: "25px", labelPadding: 3.125 },
 };
 
 // Requested addition, not part of the original Figma audit. A couple more px of horizontal
 // padding than SIZE_METRICS' own value, per spec ("the Pill variant can have slightly more
 // horizontal padding than the default, but it should still clearly read as a Tag rather than a
-// Button") — vertical padding is untouched. NOT part of §19's sm-based 1.5x scale — untouched by
+// Button") — vertical padding is untouched. NOT part of §19/§20's sm-based scale — untouched by
 // that request, so md/lg here no longer relate proportionally to SIZE_METRICS' own new numbers
 // the way they originally did when both were confirmed Figma values.
 const PILL_PADDING: Record<TagSize, string> = {

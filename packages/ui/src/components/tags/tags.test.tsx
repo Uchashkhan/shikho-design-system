@@ -81,27 +81,27 @@ describe("all 11 confirmed types render with distinct confirmed/derived colours 
   });
 });
 
-describe("sm-based 1.5x scale (docs/audit/tags.md §19, superseding §14's own md/lg numbers)", () => {
-  // sm's own height (20px) is the confirmed §14 base, unchanged. md/lg are now sm x1.5/x2.25,
-  // not their own independently-confirmed Figma values (previously 24px/32px).
-  it("md/lg heights are sm x1.5 and x2.25 (30px, 45px) — not their own former confirmed values", () => {
+describe("sm-based 1.25x scale (docs/audit/tags.md §20, reduced from §19's own 1.5x — reported as too big)", () => {
+  // sm's own height (20px) is the confirmed §14 base, unchanged. md/lg are now sm x1.25/x1.5625,
+  // not their own independently-confirmed Figma values (previously 24px/32px) or §19's own 1.5x
+  // attempt (30px/45px).
+  it("md/lg heights are sm x1.25 and x1.5625 (25px, 31.25px)", () => {
     const { container, rerender } = render(<Tags size="sm">Tag</Tags>);
     expect((container.firstChild as HTMLElement).style.height).toBe("20px");
     rerender(<Tags size="md">Tag</Tags>);
-    expect((container.firstChild as HTMLElement).style.height).toBe("30px");
+    expect((container.firstChild as HTMLElement).style.height).toBe("25px");
     rerender(<Tags size="lg">Tag</Tags>);
-    expect((container.firstChild as HTMLElement).style.height).toBe("45px");
+    expect((container.firstChild as HTMLElement).style.height).toBe("31.25px");
   });
 
-  // sm's own font size (11px, confirmed) x1.5 = 16.5px at md, x2.25 = 24.75px at lg — replacing
-  // the earlier requested override (md bumped to 12px to match lg) with the full sm-based scale.
-  it("md/lg font sizes are sm x1.5 and x2.25 (16.5px, 24.75px)", () => {
+  // sm's own font size (11px, confirmed) x1.25 = 13.75px at md, x1.5625 = 17.1875px at lg.
+  it("md/lg font sizes are sm x1.25 and x1.5625 (13.75px, 17.1875px)", () => {
     const { rerender } = render(<Tags size="sm">Tag</Tags>);
     expect(screen.getByText("Tag").style.fontSize).toBe("11px");
     rerender(<Tags size="md">Tag</Tags>);
-    expect(screen.getByText("Tag").style.fontSize).toBe("16.5px");
+    expect(screen.getByText("Tag").style.fontSize).toBe("13.75px");
     rerender(<Tags size="lg">Tag</Tags>);
-    expect(screen.getByText("Tag").style.fontSize).toBe("24.75px");
+    expect(screen.getByText("Tag").style.fontSize).toBe("17.1875px");
   });
 
   it("confirmed: icon slots carry the elevation/e2 drop-shadow filter (previously entirely absent)", () => {
@@ -110,17 +110,16 @@ describe("sm-based 1.5x scale (docs/audit/tags.md §19, superseding §14's own m
     expect(iconSlot.style.filter).toContain("drop-shadow");
   });
 
-  // sm's own labelPadding (2px, confirmed) x1.5 = 3px (0.1875rem) at md, x2.25 = 4.5px
-  // (0.28125rem) at lg — replacing the earlier requested override (zeroed at md/lg) with the
-  // full sm-based scale, which reintroduces non-zero inner padding by design (mirroring sm's own
+  // sm's own labelPadding (2px, confirmed) x1.25 = 2.5px (0.15625rem) at md, x1.5625 = 3.125px
+  // (0.1953125rem) at lg — reintroduces non-zero inner padding by design (mirroring sm's own
   // structure exactly, rather than avoiding the stacking asymmetry that motivated zeroing it).
-  it("the label's internal padding is sm x1.5/x2.25 at md/lg (0.1875rem, 0.28125rem)", () => {
+  it("the label's internal padding is sm x1.25/x1.5625 at md/lg (0.15625rem, 0.1953125rem)", () => {
     const { rerender } = render(<Tags size="sm">Tag</Tags>);
     expect(screen.getByText("Tag").style.padding).toBe("0px 0.125rem");
     rerender(<Tags size="md">Tag</Tags>);
-    expect(screen.getByText("Tag").style.padding).toBe("0px 0.1875rem");
+    expect(screen.getByText("Tag").style.padding).toBe("0px 0.15625rem");
     rerender(<Tags size="lg">Tag</Tags>);
-    expect(screen.getByText("Tag").style.padding).toBe("0px 0.28125rem");
+    expect(screen.getByText("Tag").style.padding).toBe("0px 0.1953125rem");
   });
 
   // Confirmed via get_metadata on every sampled `sm` instance (primary, danger, secondary, info,
@@ -202,13 +201,13 @@ describe("confirmed hover corrections from a fresh re-audit (docs/audit/tags.md 
 
 // Requested addition, not part of the original Figma audit.
 describe("shape (requested addition)", () => {
-  it("default uses the sm-based 1.5x-scaled rectangle radius and padding at md (§19)", () => {
+  it("default uses the sm-based 1.25x-scaled rectangle radius and padding at md (§20)", () => {
     const { container } = render(<Tags size="md">Tag</Tags>);
     const root = container.firstChild as HTMLElement;
-    // radius.xs (6px, sm's confirmed value) x1.5 = 9px — no longer a named radius token, a
+    // radius.xs (6px, sm's confirmed value) x1.25 = 7.5px — no longer a named radius token, a
     // computed derivation from sm. See tags.tsx's own SIZE_METRICS comment.
-    expect(root.style.borderRadius).toBe("9px");
-    expect(root.style.padding).toBe("0px 9px");
+    expect(root.style.borderRadius).toBe("7.5px");
+    expect(root.style.padding).toBe("0px 7.5px");
     expect(root).toHaveAttribute("data-shape", "default");
   });
 
