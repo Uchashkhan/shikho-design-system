@@ -190,3 +190,11 @@ Same user feedback and same shape as chips.md §14: `md`/`lg` Tags padding looke
 Requested anyway, as a deliberate deviation: `md`'s horizontal padding reduced from the confirmed 6px to 4px (now uniform with its own 4px vertical padding). `lg` is unchanged — already uniform (8px horizontal = 8px vertical), no asymmetric "extra" to trim. `sm` untouched (not named). `PILL_PADDING` (the `shape="pill"` requested addition) was left as-is — not part of this request, and the pill shape already intentionally carries more horizontal padding than the default shape by design.
 
 Tests updated in `tags.test.tsx` to assert the new `md` padding, with the override called out inline rather than presented as a Figma value.
+
+## 17. Requested: the remaining horizontal-only asymmetry (`labelPadding`)
+
+Same follow-up and same root cause as chips.md §15: even with the OUTER `padding` above uniform at `md`/`lg`, the sides still looked bigger than top/bottom, because the inner `text_wrap` span carries its own confirmed `labelPadding` (§15/§16 — non-monotonic 2px/4px/2px at sm/md/lg, horizontal-only) STACKED on top of the now-uniform outer padding. At `md`: 4 (outer) + 4 (label) = 8px horizontal vs. 4px vertical.
+
+Fixed by zeroing `labelPadding` at `md`/`lg` (was the confirmed 4px/2px) — `sm` keeps its confirmed 2px, since it wasn't named in this request. Total inset is now genuinely equal on all 4 sides: `md` = 4px everywhere, `lg` = 8px everywhere. `PILL_PADDING` is unaffected (separate, still not part of any request). Verified live: computed outer padding 4px/8px, inner label span padding 0px, matching at both sizes.
+
+Tests updated asserting the label's own padding per size. 703/703 passing (`@shikho/ui`). Typecheck clean. Docs build clean.

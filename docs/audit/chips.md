@@ -202,3 +202,11 @@ Requested anyway, as a deliberate deviation (same category as §18's `active`-co
 Current: `md` = 4px all sides, `lg` = 6px all sides. `sm` untouched throughout (never named in any round).
 
 Tests updated in `chip.test.tsx` to assert the current padding, with the override called out inline rather than presented as a Figma value.
+
+## 15. Requested: the remaining horizontal-only asymmetry (the inner text span's own padding)
+
+User follow-up: even with the OUTER `padding` above uniform at `md`/`lg` (4px/6px on all sides), the sides still looked bigger than top/bottom. Root cause: the inner text `<span>` carries its own confirmed `px-[spacing/2, 2px]` padding (`0 0.125rem`, horizontal-only, "confirmed identical at all 3 sizes") — that STACKS on top of the now-uniform outer padding, so the true total edge-to-text inset was still `outer + 2px` horizontally vs. just `outer` vertically. At `md`: 4+2=6px horizontal vs. 4px vertical.
+
+Fixed by zeroing this inner padding at `md`/`lg` (a new `textPadding` field on `ChipSizeMetrics`) — `sm` keeps the confirmed `2px` value, since it wasn't named in this request. Total inset is now genuinely equal on all 4 sides: `md` = 4px everywhere, `lg` = 6px everywhere. Verified live: computed outer padding 4px/6px, inner text span padding 0px, matching at both sizes.
+
+Tests added asserting the inner text span's own padding per size. 703/703 passing (`@shikho/ui`). Typecheck clean. Docs build clean.

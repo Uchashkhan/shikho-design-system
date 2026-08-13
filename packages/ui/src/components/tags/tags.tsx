@@ -57,8 +57,13 @@ const SIZE_METRICS: Record<TagSize, SizeMetrics> = {
   // requested down to 4px anyway — a deliberate code-only override, not a Figma correction: at
   // 6px vs. 4px vertical it read as button-like rather than a compact tag. `lg` stays as-is
   // (already uniform 8px, matching its own confirmed vertical padding — no "extra" to trim).
-  md: { height: 24, padding: "0.25rem", rootGap: 0, radius: radius.sm, iconSize: 14, fontSize: 11, lineHeight: "16px", labelPadding: 4 },
-  lg: { height: 32, padding: "0.5rem", rootGap: 2, radius: radius.md, iconSize: 16, fontSize: 12, lineHeight: "16px", labelPadding: 2 },
+  // `labelPadding` at md/lg requested down to 0 (was the confirmed 4px/2px, §14 above) — same
+  // reasoning as `padding`'s own comment: even after the OUTER `padding` was made uniform, this
+  // inner text_wrap padding stacked on top of it horizontally only, so the total edge-to-label
+  // inset was still visibly bigger on the sides than top/bottom. Zeroing it makes the total inset
+  // (outer + inner) genuinely equal on all 4 sides. `sm` keeps its confirmed 2px (not requested).
+  md: { height: 24, padding: "0.25rem", rootGap: 0, radius: radius.sm, iconSize: 14, fontSize: 11, lineHeight: "16px", labelPadding: 0 },
+  lg: { height: 32, padding: "0.5rem", rootGap: 2, radius: radius.md, iconSize: 16, fontSize: 12, lineHeight: "16px", labelPadding: 0 },
 };
 
 // Requested addition, not part of the original Figma audit. A couple more px of horizontal

@@ -104,16 +104,17 @@ describe("confirmed per-size metrics (docs/audit/tags.md §14) — previously ev
     expect(iconSlot.style.filter).toContain("drop-shadow");
   });
 
-  // Corrected (2026-08-12) — the label's own internal horizontal padding is size-dependent and
-  // non-monotonic (2px/4px/2px), not a flat 2px shared by every size; `md` previously rendered
-  // 2px too little padding around its label.
-  it("confirmed: the label's internal padding is 2px/4px/2px at sm/md/lg, not a flat 2px", () => {
+  // Originally confirmed non-monotonic (2px/4px/2px at sm/md/lg, was a flat 2px bug). Requested
+  // follow-up: md/lg zeroed out entirely — even after the OUTER padding was made uniform, this
+  // inner label padding stacked on top of it horizontally only, so the total edge-to-label inset
+  // was still bigger on the sides than top/bottom. sm keeps its confirmed 2px (not requested).
+  it("the label's internal padding is 2px/0/0 at sm/md/lg — zeroed at md/lg so total inset is equal on all sides", () => {
     const { rerender } = render(<Tags size="sm">Tag</Tags>);
     expect(screen.getByText("Tag").style.padding).toBe("0px 0.125rem");
     rerender(<Tags size="md">Tag</Tags>);
-    expect(screen.getByText("Tag").style.padding).toBe("0px 0.25rem");
+    expect(screen.getByText("Tag").style.padding).toBe("0px 0rem");
     rerender(<Tags size="lg">Tag</Tags>);
-    expect(screen.getByText("Tag").style.padding).toBe("0px 0.125rem");
+    expect(screen.getByText("Tag").style.padding).toBe("0px 0rem");
   });
 
   // Confirmed via get_metadata on every sampled `sm` instance (primary, danger, secondary, info,

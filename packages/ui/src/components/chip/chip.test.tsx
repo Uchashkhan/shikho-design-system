@@ -161,3 +161,21 @@ describe("per-size metrics are independent (P1 repair)", () => {
     expect(label?.style.fontSize).toBe(fontSize);
   });
 });
+
+// Requested follow-up: the outer padding above was already uniform at md/lg, but the inner text
+// span's own confirmed horizontal-only padding (px-[spacing/2, 2px]) stacked on top of it, so the
+// total edge-to-text inset was still bigger on the sides than top/bottom. Zeroed at md/lg so the
+// total inset is genuinely equal on all 4 sides; sm keeps the confirmed 2px (not requested).
+describe("inner text padding — zeroed at md/lg so total inset is equal on all sides", () => {
+  const rows = [
+    ["sm", "0px 0.125rem"],
+    ["md", "0px"],
+    ["lg", "0px"],
+  ] as const;
+
+  it.each(rows)("size=%s inner text span padding is %s", (size, padding) => {
+    render(<Chip size={size} textContent="Chip" />);
+    const label = screen.getByText("Chip");
+    expect(label.style.padding).toBe(padding);
+  });
+});

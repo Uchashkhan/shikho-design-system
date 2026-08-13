@@ -25,10 +25,18 @@ interface ChipSizeMetrics {
   iconSize: number;
   fontSize: number;
   lineHeight: string;
+  /** The inner text span's own horizontal-only padding — confirmed `px-[spacing/2, 2px]`,
+   * identical at all 3 sizes. Requested zeroed at `md`/`lg` (see this table's own comment on
+   * `padding`): even after the OUTER `padding` above was made uniform, this inner padding stacked
+   * on top of it horizontally only, so the total edge-to-text inset was still visibly bigger on
+   * the sides than top/bottom. Zeroing it at `md`/`lg` makes the total inset (outer + inner)
+   * genuinely equal on all 4 sides — not just the outer container's own padding. `sm` keeps the
+   * confirmed 2px value (not part of the request). */
+  textPadding: string;
 }
 
 const SIZE_METRICS: Record<ChipSize, ChipSizeMetrics> = {
-  sm: { height: 24, padding: "0.25rem 0.375rem", gap: "0", iconSize: 14, fontSize: 11, lineHeight: "16px" },
+  sm: { height: 24, padding: "0.25rem 0.375rem", gap: "0", iconSize: 14, fontSize: 11, lineHeight: "16px", textPadding: "0 0.125rem" },
   // `md`/`lg` padding below is a deliberate, requested code-only override, not a Figma value —
   // both were confirmed byte-for-byte exact against Figma (md: 8px uniform, node 66075:28885;
   // lg: 12px horizontal / 8px vertical, node 66075:28800; docs/audit/chips.md §14) but read as
@@ -36,8 +44,8 @@ const SIZE_METRICS: Record<ChipSize, ChipSizeMetrics> = {
   // uniform, lg 12px -> 10px -> 8px -> 6px uniform. `height` (the actual Figma-confirmed 32px/
   // 40px) is untouched — these are real `inline-flex`/`items-center` buttons, so padding no
   // longer constrains height, only how snug the content sits.
-  md: { height: 32, padding: "0.25rem", gap: "0.125rem", iconSize: 16, fontSize: 12, lineHeight: "16px" },
-  lg: { height: 40, padding: "0.375rem", gap: "0.25rem", iconSize: 18, fontSize: 13, lineHeight: "20px" },
+  md: { height: 32, padding: "0.25rem", gap: "0.125rem", iconSize: 16, fontSize: 12, lineHeight: "16px", textPadding: "0" },
+  lg: { height: 40, padding: "0.375rem", gap: "0.25rem", iconSize: 18, fontSize: 13, lineHeight: "20px", textPadding: "0" },
 };
 
 const chipRadius = radius.full; // radius/border_radius_round (1000) — the ONLY radius token, §7/§9
@@ -229,7 +237,7 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(
             style={{
               display: "flex",
               alignItems: "center",
-              padding: "0 0.125rem", // px-[spacing/2, 2px] — confirmed identical at all 3 sizes
+              padding: metrics.textPadding,
               gap: "0.5rem", // gap-[spacing/8, 8px] — §9
               fontSize: metrics.fontSize,
               lineHeight: metrics.lineHeight,
