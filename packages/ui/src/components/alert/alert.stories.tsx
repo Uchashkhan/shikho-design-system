@@ -27,9 +27,10 @@ export const ConfirmedBinding: Story = {};
 
 export const Playground: Story = {};
 
-/** Every confirmed severity — a fresh re-audit (docs/audit/alerts.md §14) confirmed the border,
- * icon tint, and primary-button composition for all 5, not just `danger`. `Default`'s border is
- * confirmed `gray/100` (not a derived guess), and its icon is confirmed primary-tinted. */
+/** Every confirmed severity — a fresh re-audit (docs/audit/alerts.md §14) confirmed the border
+ * and icon tint for all 5, not just `danger`. `Default`'s border is confirmed `gray/100` (not a
+ * derived guess), and its icon is confirmed primary-tinted. Root fill and Dismiss's color are a
+ * requested override (§15) layered on top — see `DismissInheritsStateColor` below. */
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -48,19 +49,12 @@ export const AllVariants: Story = {
 };
 
 /**
- * Demonstrates that the confirmed action button composes the real `ButtonDanger` component
- * (`button_danger/md/secondary/default`, docs/audit/alerts.md §11) rather than a re-drawn
- * button — inspect the rendered button's class names/data attributes to confirm.
+ * Requested override (docs/audit/alerts.md §15) — "Learn more" is now the same plain neutral
+ * gray/700-on-gray/100 button at EVERY severity, including danger/success. Figma's own confirmed
+ * construction composed the real `ButtonDanger`/`ButtonSuccess` there instead (§11/§14); this
+ * intentionally departs from that.
  */
-export const ComposedButtonDependency: Story = {};
-
-/**
- * Confirmed via a fresh get_design_context re-audit (docs/audit/alerts.md §14): only `danger` and
- * `success` compose a severity-tinted Button family member (`ButtonDanger`/`ButtonSuccess`) for
- * the first action, with matching tinted text. `Default`/`warning`/`info` render a plain neutral
- * gray button instead — NOT color-tinted, despite the alert itself being colored by severity.
- */
-export const PrimaryButtonBySeverity: Story = {
+export const LearnMoreStaysNeutral: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {states.map((state) => (
@@ -68,7 +62,31 @@ export const PrimaryButtonBySeverity: Story = {
           key={state}
           state={state}
           titleContent={state}
-          descriptionContent="danger/success get a tinted button; Default/warning/info stay neutral gray."
+          descriptionContent="Learn more stays neutral gray regardless of severity — only Dismiss inherits the state color."
+          primaryActionContent="Learn more"
+          dismissContent="Dismiss"
+        />
+      ))}
+    </div>
+  ),
+};
+
+/**
+ * Requested color mapping (docs/audit/alerts.md §15) — Dismiss ("the primary semantic action")
+ * now inherits each severity's own 500 color instead of the confirmed flat secondary/500 pink
+ * (§11). warning's text is warning/950 specifically (contrast); every other state's text is
+ * white. The root surface fill is also severity-tinted (X/50) now, except Default (unchanged
+ * white).
+ */
+export const DismissInheritsStateColor: Story = {
+  render: () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {states.map((state) => (
+        <Alert
+          key={state}
+          state={state}
+          titleContent={state}
+          descriptionContent="Dismiss's fill/text now maps to this severity's own color."
           primaryActionContent="Learn more"
           dismissContent="Dismiss"
         />

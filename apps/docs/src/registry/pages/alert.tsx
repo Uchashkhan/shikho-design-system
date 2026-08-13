@@ -5,7 +5,7 @@ const STATES: AlertState[] = ["Default", "danger", "success", "warning", "info"]
 
 export const pageConfig: ComponentPageConfig = {
   longDescription:
-    "Deep-audited across all 5 severities via get_design_context. The primary action button's construction genuinely differs by severity: danger composes the real ButtonDanger and success composes the real ButtonSuccess (both confirmed nested Figma instance paths, with severity-tinted text), while Default/warning/info render a plain neutral gray button instead. Both icon slots (the left severity icon and the corner close 'X') now render real default glyphs by default, downloaded directly from Figma's own SVG source and confirmed identical in shape across every severity — only the severity icon's fill color changes, matching that severity's own 500 token exactly.",
+    "Deep-audited across all 5 severities via get_design_context, with a requested color-mapping override layered on top (docs/audit/alerts.md §15): \"Learn more\" (the first action button) now stays plain neutral gray at every severity — it no longer composes the real ButtonDanger/ButtonSuccess for danger/success the way Figma's own confirmed instances do. \"Dismiss\" (the second action button) inherits each severity's own color instead of the confirmed flat secondary/500 pink, and the root surface fill is severity-tinted (X/50) too, except Default which keeps its confirmed white fill. Both icon slots (the left severity icon, bumped a bit bigger per request, and the corner close 'X') render real default glyphs by default, downloaded directly from Figma's own SVG source.",
   variants: [
     {
       name: "state",
@@ -15,11 +15,13 @@ export const pageConfig: ComponentPageConfig = {
   ],
   states: [],
   gaps: [
-    "Only danger and success compose a severity-tinted Button family member for the primary action (ButtonDanger/ButtonSuccess) — Default/warning/info are confirmed to use a plain neutral gray/gray-700 button instead, not tinted.",
     "warning/info border colors (outline/warning_alpha, outline/info_alpha) are confirmed exact hex values with no equivalent yet in @shikho/tokens, so they're used as cited literal constants rather than added to the tokens package.",
-    "The second action button (\"Dismiss\") has an exact confirmed fill/text, identical across all 5 severities, but is not confirmed to be drawn from any named component set — implemented as its own inline <button>.",
     "Whether the visible \"Dismiss\" text button and the corner close button are two distinct intended controls or redundant was never determined — both are implemented as independent, separately-clickable controls rather than collapsing them into one.",
     "primaryAction/dismissAction are requested additions with no Figma source — Figma's own sampled instances always show both action buttons; these default to true to keep that appearance unchanged.",
+    "Requested override, not part of the original Figma audit: \"Learn more\" no longer composes ButtonDanger/ButtonSuccess for danger/success (Figma's own confirmed construction) — it's now the same plain neutral gray/700-on-gray/100 button at every severity.",
+    "Requested override: \"Dismiss\" now inherits state's own 500 color (Default→primary, danger→danger, success→success, warning→warning with warning/950 text specifically for contrast) instead of the confirmed flat secondary/500 pink. info wasn't named in the request — extended by analogy to info/500.",
+    "Requested override: the root surface fill is now severity-tinted (X/50) for danger/success/warning/info — Default keeps its confirmed white fill, unchanged (not named in the request).",
+    "Requested: the severity icon is a bit bigger — slot 24px→28px, glyph 18px→22px.",
   ],
   usageExample: `import { Alert } from "@shikho/ui";
 
@@ -38,13 +40,13 @@ function DangerBanner() {
   );
 }`,
   props: [
-    { name: "state", type: "Default | danger | success | warning | info", defaultValue: "danger", description: "Severity/theme axis, confirmed across all 5 values." },
+    { name: "state", type: "Default | danger | success | warning | info", defaultValue: "danger", description: "Severity/theme axis, confirmed across all 5 values. Now also drives the root surface fill and Dismiss button color (requested override, §15)." },
     { name: "leftIcon", type: "boolean", defaultValue: "true", description: "The one confirmed boolean property — no boolean exists for title, description, or actions." },
-    { name: "icon", type: "ReactNode", description: "Overrides the confirmed default info-circle icon, tinted per state — rarely needed." },
+    { name: "icon", type: "ReactNode", description: "Overrides the confirmed default info-circle icon, tinted per state (now rendered a bit bigger — requested). Rarely needed." },
     { name: "titleContent / descriptionContent", type: "ReactNode", description: "Title (15px/24px SemiBold) and description (13px/20px Regular) content." },
-    { name: "primaryActionContent / onPrimaryActionClick", type: "ReactNode / () => void", description: "Composes real ButtonDanger/ButtonSuccess for danger/success; a plain neutral button for Default/warning/info." },
+    { name: "primaryActionContent / onPrimaryActionClick", type: "ReactNode / () => void", description: "\"Learn more\" — always a plain neutral gray button now, at every severity (requested override; Figma's own confirmed construction composed ButtonDanger/ButtonSuccess for danger/success)." },
     { name: "primaryAction / dismissAction", type: "boolean", defaultValue: "true", description: "Requested addition. Independently show/hide each action button — Figma's own sampled instances always show both." },
-    { name: "dismissContent / onDismissClick", type: "ReactNode / () => void", description: "The second action button, confirmed structurally identical across all 5 severities but not confirmed to be a named component set." },
+    { name: "dismissContent / onDismissClick", type: "ReactNode / () => void", description: "\"Dismiss\" — the primary semantic action. Now inherits state's own color (requested override; Figma's own confirmed value is a flat secondary/500 pink regardless of severity)." },
     { name: "closeIcon / onCloseClick / closeButtonLabel", type: "ReactNode / () => void / string", defaultValue: "\"Close\"", description: "The absolutely-positioned corner icon button — renders a confirmed default 'X' icon unless overridden." },
   ],
   preview: () => (
@@ -100,7 +102,7 @@ function DangerBanner() {
   showcases: [
     {
       title: "All five severities",
-      description: "Every severity is now deep-audited: only danger/success get a tinted primary button; Default/warning/info stay neutral.",
+      description: "Root fill and Dismiss's color are now severity-tinted (requested override, §15) — Learn more stays neutral gray at every severity.",
       layout: "stack",
       render: () => (
         <>
@@ -119,13 +121,13 @@ function DangerBanner() {
       ),
     },
     {
-      title: "A confirmed nested ButtonDanger dependency",
-      description: "The primary action is the real ButtonDanger component (md/Secondary), not a re-drawn button.",
+      title: "\"Learn more\" stays neutral, \"Dismiss\" inherits the state color",
+      description: "The core rule from the request: state controls the semantic surface + the semantic primary action (Dismiss); the secondary action (Learn more) stays unchanged.",
       render: () => (
         <Alert
-          state="danger"
-          titleContent="Cross-component confirmation"
-          descriptionContent="button_danger/md/secondary/default"
+          state="success"
+          titleContent="Consistent secondary action"
+          descriptionContent="Learn more is neutral here too, even though the surface and Dismiss are success-tinted."
           primaryActionContent="Learn more"
           dismissContent="Dismiss"
         />

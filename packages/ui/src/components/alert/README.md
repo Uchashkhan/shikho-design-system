@@ -42,6 +42,17 @@ This audit's confirmed nested-instance path (`button_danger/md/secondary/default
 
 See `packages/ui/src/components/button/README.md` for the full note.
 
+## Implementation note (post-audit changes, docs/audit/alerts.md §15)
+
+The confirmed/derived findings above describe what the original Figma audit found — kept intact as history. The actual component has since diverged from it, per direct user request:
+
+- **"Learn more" (the primary action button) no longer composes `ButtonDanger`/`ButtonSuccess`.** It's now the same plain neutral `gray/100`/`gray/700` button at every severity, including `danger`/`success` — the opposite of what §11/§14 confirmed. The `ButtonDanger`/`ButtonSuccess` imports were removed from `alert.tsx` entirely.
+- **"Dismiss" (the second action button) now inherits `state`'s own color** instead of the confirmed flat `secondary/500` pink: `Default`→`primary/500`, `danger`→`danger/500`, `success`→`success/500`, `warning`→`warning/500` (text `warning/950` specifically — contrast), `info`→`info/500` (extended by analogy, not explicitly named in the request).
+- **The root surface fill is now severity-tinted** (`X/50`) for `danger`/`success`/`warning`/`info` — `Default` keeps its confirmed white fill, unchanged.
+- **The severity icon is bigger**: slot 24px→28px, glyph 18px→22px (was previously unset, defaulting to the icon's own native 18px).
+
+See `docs/audit/alerts.md` §15 for the full reasoning behind each change.
+
 ## Not implemented
 
 - Whether the "Dismiss" button and the corner close button are intentionally redundant — unconfirmed, both remain independent controls.

@@ -10,12 +10,14 @@ describe("root export", () => {
 });
 
 describe("confirmed binding (state=danger)", () => {
-  it("renders the exactly confirmed border color, fill, radius, and shadow", () => {
+  // Requested override, docs/audit/alerts.md §15 — the root fill is now severity-tinted
+  // (danger/50), not the confirmed flat white/smoke_base (§11).
+  it("renders the requested danger/50 fill, the confirmed border color, radius, and shadow", () => {
     const { container } = render(
       <Alert titleContent="Notification text" descriptionContent="A short description." />,
     );
     const root = container.firstChild as HTMLElement;
-    expect(root.style.backgroundColor).toBe("rgb(255, 255, 255)"); // Color/smoke_base
+    expect(root.style.backgroundColor).toBe("rgb(254, 236, 236)"); // Color/danger/50 (requested)
     expect(root.style.border).toContain("rgba(240, 61, 61, 0.24)"); // outline/danger_alpha #f03d3d3d
     expect(root.style.borderRadius).toBe("20px"); // radius/border_radius_xl
     expect(root.style.width).toBe("424px");
@@ -28,15 +30,18 @@ describe("confirmed binding (state=danger)", () => {
   });
 });
 
-describe("composes the real ButtonDanger, not a re-implementation", () => {
-  it("renders the primary action via ButtonDanger with the confirmed Secondary styling", () => {
+// Requested override, §15 — "Learn more" no longer composes ButtonDanger/ButtonSuccess for
+// danger/success (Figma's own confirmed construction, §11/§14); it now stays plain neutral gray
+// at every severity, matching what Default/warning/info always rendered.
+describe("\"Learn more\" stays neutral at every severity (requested override, no more ButtonDanger/ButtonSuccess)", () => {
+  it("renders neutral gray/100 fill + gray/700 text on state=danger, not danger-tinted", () => {
     render(<Alert primaryActionContent="Learn more" />);
     const button = screen.getByRole("button", { name: "Learn more" });
     expect(button.style.backgroundColor).toBe("rgb(244, 244, 246)"); // Color/gray/100
-    expect(button.style.color).toBe("rgb(233, 32, 32)"); // text/danger-600
+    expect(button.style.color).toBe("rgb(91, 97, 109)"); // gray/700, not danger-tinted
   });
 
-  it("fires onPrimaryActionClick through the composed ButtonDanger", () => {
+  it("fires onPrimaryActionClick", () => {
     let clicked = false;
     render(<Alert primaryActionContent="Learn more" onPrimaryActionClick={() => (clicked = true)} />);
     fireEvent.click(screen.getByRole("button", { name: "Learn more" }));
@@ -45,10 +50,12 @@ describe("composes the real ButtonDanger, not a re-implementation", () => {
 });
 
 describe("the second action button and corner close button", () => {
-  it("renders the confirmed Dismiss button styling", () => {
+  // Requested override, §15 — Dismiss now inherits state's own color (danger/500 for the default
+  // state=danger), not the confirmed flat secondary/500 pink (§11).
+  it("renders the requested state-tinted Dismiss button styling (danger/500, white text)", () => {
     render(<Alert dismissContent="Dismiss" />);
     const button = screen.getByRole("button", { name: "Dismiss" });
-    expect(button.style.backgroundColor).toBe("rgb(226, 0, 141)"); // Color/secondary/500
+    expect(button.style.backgroundColor).toBe("rgb(240, 61, 61)"); // Color/danger/500 (requested)
     expect(button.style.color).toBe("rgb(255, 255, 255)"); // text/white-950
   });
 
@@ -88,6 +95,17 @@ describe("confirmed default icons — previously missing entirely (docs/audit/al
     const { container } = render(<Alert state="danger" />);
     const iconSlot = container.querySelector('[data-state="danger"] > span:first-child') as HTMLElement;
     expect(iconSlot.querySelector("svg")).toBeInTheDocument();
+  });
+
+  // Requested: "make the icon a little bit bigger" — container 24->28px, glyph 18->22px.
+  it("renders the severity icon a bit bigger than confirmed (28px slot, 22px glyph)", () => {
+    const { container } = render(<Alert state="danger" />);
+    const iconSlot = container.querySelector('[data-state="danger"] > span:first-child') as HTMLElement;
+    expect(iconSlot.style.width).toBe("28px");
+    expect(iconSlot.style.height).toBe("28px");
+    const svg = iconSlot.querySelector("svg") as SVGSVGElement;
+    expect(svg.getAttribute("width")).toBe("22");
+    expect(svg.getAttribute("height")).toBe("22");
   });
 
   it("confirmed: the same info-circle glyph is tinted per severity's own 500 color", () => {
@@ -135,21 +153,38 @@ describe("confirmed default icons — previously missing entirely (docs/audit/al
   });
 });
 
-describe("confirmed per-severity primary button composition (docs/audit/alerts.md §14)", () => {
-  it("composes the real ButtonSuccess (not ButtonDanger) for state=success, with success-tinted text", () => {
-    render(<Alert state="success" primaryActionContent="Learn more" />);
-    const button = screen.getByRole("button", { name: "Learn more" });
-    expect(button.style.color).toBe("rgb(42, 153, 25)"); // text/success-600
-  });
-
-  it("confirmed: Default/warning/info render a plain NEUTRAL button — not tinted by severity", () => {
-    for (const state of ["Default", "warning", "info"] as const) {
+// Requested override, §15 — ALL 5 severities now render the same plain neutral "Learn more"
+// button; none are severity-tinted (previously danger/success were, via composed ButtonDanger/
+// ButtonSuccess, §14).
+describe("\"Learn more\" is neutral at every severity, including danger/success (requested override)", () => {
+  it("renders the same neutral gray/100 fill + gray/700 text at every one of the 5 confirmed severities", () => {
+    for (const state of ["Default", "danger", "success", "warning", "info"] as const) {
       const { unmount } = render(<Alert state={state} primaryActionContent="Learn more" />);
       const button = screen.getByRole("button", { name: "Learn more" });
-      expect(button.style.backgroundColor).toBe("rgb(244, 244, 246)"); // gray/100, not severity-tinted
-      expect(button.style.color).toBe("rgb(91, 97, 109)"); // gray/700, not severity-tinted
+      expect(button.style.backgroundColor, state).toBe("rgb(244, 244, 246)"); // gray/100
+      expect(button.style.color, state).toBe("rgb(91, 97, 109)"); // gray/700
       unmount();
     }
+  });
+});
+
+// Requested color mapping, §15 — Dismiss inherits state's own 500 color; warning's text is
+// warning/950 specifically (contrast — warning/500 is a bright yellow), every other state is
+// white. Default -> primary/500 ("instead of the current pink/accent action treatment").
+describe("Dismiss button inherits the requested per-state color mapping (§15)", () => {
+  const rows = [
+    ["Default", "rgb(84, 104, 255)", "rgb(255, 255, 255)"], // primary/500, white
+    ["danger", "rgb(240, 61, 61)", "rgb(255, 255, 255)"], // danger/500, white
+    ["success", "rgb(53, 194, 32)", "rgb(255, 255, 255)"], // success/500, white
+    ["warning", "rgb(252, 191, 4)", "rgb(45, 32, 0)"], // warning/500, warning/950 (explicit contrast override)
+    ["info", "rgb(17, 139, 232)", "rgb(255, 255, 255)"], // info/500 (extended by analogy), white
+  ] as const;
+
+  it.each(rows)("state=%s renders Dismiss with %s fill and %s text", (state, bg, textColor) => {
+    render(<Alert state={state} dismissContent="Dismiss" />);
+    const button = screen.getByRole("button", { name: "Dismiss" });
+    expect(button.style.backgroundColor).toBe(bg);
+    expect(button.style.color).toBe(textColor);
   });
 });
 
@@ -167,20 +202,21 @@ describe("confirmed corrections to root/corner styling (docs/audit/alerts.md §1
   });
 });
 
-// P6 repair — the composed ButtonDanger/ButtonSuccess defaulted leftIcon/rightIcon to true,
-// rendering two empty 18px icon slots that don't exist on the confirmed Figma instance (only a
-// text_wrap label), making "Learn more" visibly wider on danger/success than on Default/warning/
-// info/Dismiss. Fixed by passing leftIcon={false} rightIcon={false} and giving the hand-rolled
-// buttons the same confirmed text_wrap 4px label padding.
-describe("primary action button has no icon slots, matching the confirmed text-only instance (P6 repair)", () => {
-  it("ButtonDanger renders with no icon slot spans", () => {
+// P6 repair, historical — originally fixed a bug where the composed ButtonDanger/ButtonSuccess
+// defaulted leftIcon/rightIcon to true, rendering two empty 18px icon slots. §15's override
+// removed that composition entirely (see above), so this now just confirms the plain neutral
+// "Learn more" button has no icon slots at any severity, matching the confirmed text-only
+// instance — a stronger, simpler guarantee than the original ButtonDanger/ButtonSuccess-specific
+// fix it replaced.
+describe("primary action button has no icon slots, matching the confirmed text-only instance", () => {
+  it("state=danger renders with no icon slot spans", () => {
     render(<Alert state="danger" primaryActionContent="Learn more" />);
     const button = screen.getByRole("button", { name: "Learn more" });
-    // Only the label span (plus the inset-shadow overlay) should remain — no 18px icon slots.
+    // Only the label span should remain — no 18px icon slots.
     expect(button.querySelector('[style*="18px"]')).not.toBeInTheDocument();
   });
 
-  it("ButtonSuccess renders with no icon slot spans", () => {
+  it("state=success renders with no icon slot spans", () => {
     render(<Alert state="success" primaryActionContent="Learn more" />);
     const button = screen.getByRole("button", { name: "Learn more" });
     expect(button.querySelector('[style*="18px"]')).not.toBeInTheDocument();
@@ -249,14 +285,16 @@ describe("Dismiss button matches the primary action button's confirmed size (P4 
 // fix; every fill was a static inline style regardless of hover, the same "no interactivity"
 // defect already fixed across every other component this session.
 describe("real pointer-driven hover on the alert's own buttons (P3 repair)", () => {
-  it("darkens the Dismiss button on real hover and reverts on mouse-leave", () => {
+  // Requested override, §15 — Dismiss's hover now darkens from its own state color (danger/500 ->
+  // danger/600 for the default state=danger), not the confirmed flat secondary/500 -> 600.
+  it("darkens the Dismiss button from its own state color on real hover and reverts on mouse-leave", () => {
     render(<Alert dismissContent="Dismiss" />);
     const dismiss = screen.getByRole("button", { name: "Dismiss" });
-    expect(dismiss.style.backgroundColor).toBe("rgb(226, 0, 141)"); // secondary/500
+    expect(dismiss.style.backgroundColor).toBe("rgb(240, 61, 61)"); // danger/500
     fireEvent.mouseEnter(dismiss);
-    expect(dismiss.style.backgroundColor).toBe("rgb(204, 1, 119)"); // secondary/600
+    expect(dismiss.style.backgroundColor).toBe("rgb(233, 32, 32)"); // danger/600
     fireEvent.mouseLeave(dismiss);
-    expect(dismiss.style.backgroundColor).toBe("rgb(226, 0, 141)");
+    expect(dismiss.style.backgroundColor).toBe("rgb(240, 61, 61)");
   });
 
   it("darkens the corner close button on real hover and reverts on mouse-leave", () => {
@@ -269,7 +307,7 @@ describe("real pointer-driven hover on the alert's own buttons (P3 repair)", () 
     expect(close.style.backgroundColor).toBe("rgb(244, 244, 246)");
   });
 
-  it("darkens the plain neutral primary button (Default/warning/info) on real hover", () => {
+  it("darkens the plain neutral \"Learn more\" button on real hover, at every severity", () => {
     render(<Alert state="warning" primaryActionContent="Learn more" />);
     const button = screen.getByRole("button", { name: "Learn more" });
     expect(button.style.backgroundColor).toBe("rgb(244, 244, 246)"); // gray/100
@@ -279,25 +317,21 @@ describe("real pointer-driven hover on the alert's own buttons (P3 repair)", () 
     expect(button.style.backgroundColor).toBe("rgb(244, 244, 246)");
   });
 
-  it("drives the composed ButtonDanger to its real hover state on pointer-over", () => {
-    render(<Alert state="danger" primaryActionContent="Learn more" />);
-    const button = screen.getByRole("button", { name: "Learn more" });
-    expect(button).toHaveAttribute("data-state", "default");
-    fireEvent.mouseEnter(button);
-    expect(button).toHaveAttribute("data-state", "hover");
-    expect(button.style.backgroundColor).toBe("rgb(235, 236, 240)"); // gray/200, confirmedSecondaryHover
-    fireEvent.mouseLeave(button);
-    expect(button).toHaveAttribute("data-state", "default");
-  });
-
-  it("drives the composed ButtonSuccess to its real hover state on pointer-over", () => {
-    render(<Alert state="success" primaryActionContent="Learn more" />);
-    const button = screen.getByRole("button", { name: "Learn more" });
-    expect(button).toHaveAttribute("data-state", "default");
-    fireEvent.mouseEnter(button);
-    expect(button).toHaveAttribute("data-state", "hover");
-    fireEvent.mouseLeave(button);
-    expect(button).toHaveAttribute("data-state", "default");
+  // Requested override, §15 — "Learn more" no longer composes ButtonDanger/ButtonSuccess (which
+  // set their own `data-state`), so this now asserts the same plain neutral hover behavior
+  // directly, matching every other severity.
+  it("hovers the same as every other severity on state=danger/success — no more composed Button data-state", () => {
+    for (const state of ["danger", "success"] as const) {
+      const { unmount } = render(<Alert state={state} primaryActionContent="Learn more" />);
+      const button = screen.getByRole("button", { name: "Learn more" });
+      expect(button, state).not.toHaveAttribute("data-state");
+      expect(button.style.backgroundColor, state).toBe("rgb(244, 244, 246)"); // gray/100
+      fireEvent.mouseEnter(button);
+      expect(button.style.backgroundColor, state).toBe("rgb(235, 236, 240)"); // gray/200
+      fireEvent.mouseLeave(button);
+      expect(button.style.backgroundColor, state).toBe("rgb(244, 244, 246)");
+      unmount();
+    }
   });
 });
 

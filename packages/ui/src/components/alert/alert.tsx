@@ -1,8 +1,6 @@
 import { type HTMLAttributes, type ReactNode, forwardRef, useState } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
 import { InfoCircleIcon, CloseIcon } from "@shikho/icons";
-import { ButtonDanger } from "../button/button_danger";
-import { ButtonSuccess } from "../button/button_success";
 
 // docs/audit/alerts.md §2 — alert: exactly one property, `state`, functioning as a severity/
 // theme axis (not an interaction state, §4/§10). Casing preserved exactly: `Default` is
@@ -30,11 +28,7 @@ const neutralButtonShadow = `${shadowToCss([elevation.e2[1]])}, inset 0px 1px 3p
 // P3: none of the alert's own buttons (the plain neutral primary action, "Dismiss", and the
 // corner close icon_button) responded to a real pointer at all — every fill was a static inline
 // style, the same "no hover" defect already fixed across every other component this session.
-// `ButtonDanger`/`ButtonSuccess` already support a real `hover` phase (§11/§14); the hand-rolled
-// buttons get one-step-darker hover fills, matching the same darkening convention already
-// confirmed for the Secondary button family (button_danger.tsx's `confirmedSecondaryHover`).
 const neutralButtonHoverBg = color.gray[200];
-const dismissButtonHoverBg = color.secondary[600];
 const cornerButtonHoverBg = color.gray[200];
 
 // docs/audit/alerts.md §14 — confirmed via a fresh get_design_context on all 5 severities: the
@@ -48,19 +42,66 @@ const borderColorByState: Record<AlertState, string> = {
   Default: color.gray[100], // outline/gray-100 — confirmed §14, corrects the prior gray[200] guess
 };
 
+// Requested override — not part of the original Figma audit. Figma's own confirmed root fill is
+// a flat white/smoke_base regardless of severity (§11); this replaces that with each severity's
+// own "50" step so the whole card reads as themed, not just the icon/border. `Default` keeps its
+// confirmed white fill — not named in the request. `info` wasn't explicitly named either; extended
+// by the same X/50 pattern as danger/success/warning for consistency with the stated "Alert state
+// controls the semantic surface" rule, not a literal instruction.
+const fillByState: Record<AlertState, string> = {
+  Default: color.white[950], // unchanged, confirmed — §11
+  danger: color.danger[50],
+  success: color.success[50],
+  warning: color.warning[50],
+  info: color.info[50], // extended by analogy — not explicitly named in the request
+};
+
 // docs/audit/alerts.md §14 — confirmed via downloading the real SVG behind all 5 severities: the
 // left icon is the SAME info-circle glyph in every state (matching the literal, previously
 // unexplained "icon / info" layer name — it turns out not to be a mislabeling artifact, the icon
 // generally IS an info-circle regardless of severity), tinted with that severity's own 500 color.
 // P2: the glyph itself now lives in `@shikho/icons` as `InfoCircleIcon` — Toast used a
 // byte-identical copy, so it is a genuine shared glyph rather than two look-alikes.
-
 const iconColorByState: Record<AlertState, string> = {
   Default: color.primary[500], // confirmed #5468FF — Default's icon is primary-tinted, not neutral
   danger: color.danger[500],
   success: color.success[500],
   warning: color.warning[500],
   info: color.info[500],
+};
+
+// Requested override — not part of the original Figma audit. Figma's own confirmed construction
+// composes the real ButtonDanger/ButtonSuccess for danger/success' FIRST action button (tinted
+// text on a neutral gray/100 fill) and leaves the SECOND action button ("Dismiss") a flat
+// secondary/500 pink regardless of severity (§11/§14) — the opposite of what's requested here.
+// Per direct request: the first action button ("Learn more") now stays neutral/gray at every
+// severity (see `primaryButton` below — no more ButtonDanger/ButtonSuccess composition), and the
+// SECOND button ("Dismiss", "the primary semantic action") inherits the state color instead.
+// `Default` -> primary/500 (explicitly named — "instead of the current pink/accent action
+// treatment"); danger/success/warning explicitly named; `info` extended by analogy (info/500,
+// matching its own already-confirmed icon tint) since the request's mapping list didn't cover it.
+const dismissColorByState: Record<AlertState, string> = {
+  Default: color.primary[500],
+  danger: color.danger[500],
+  success: color.success[500],
+  warning: color.warning[500],
+  info: color.info[500],
+};
+const dismissHoverColorByState: Record<AlertState, string> = {
+  Default: color.primary[600],
+  danger: color.danger[600],
+  success: color.success[600],
+  warning: color.warning[600],
+  info: color.info[600],
+};
+// Explicitly requested: warning/500 is a bright yellow that fails contrast with white text, so
+// warning's Dismiss text is warning/950 specifically — every other state keeps white text.
+const dismissTextColorByState: Record<AlertState, string> = {
+  Default: color.white[950],
+  danger: color.white[950],
+  success: color.white[950],
+  warning: color.warning[950],
+  info: color.white[950],
 };
 
 // docs/audit/alerts.md §14 — confirmed via downloading the real SVG behind 2 severities: the
@@ -76,10 +117,10 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, "childr
   icon?: ReactNode;
   titleContent?: ReactNode;
   descriptionContent?: ReactNode;
-  /** Content for the primary action button. `danger`/`success` compose the real `ButtonDanger`/
-   * `ButtonSuccess` components (confirmed nested dependencies, §11/§14); `Default`/`warning`/
-   * `info` render a plain neutral gray button — confirmed NOT color-tinted for those 3 states,
-   * unlike `danger`/`success` (§14). */
+  /** Content for the primary action button ("Learn more" in the confirmed examples). Requested:
+   * stays plain neutral gray at every severity — no longer composes `ButtonDanger`/`ButtonSuccess`
+   * for `danger`/`success` the way Figma's own confirmed instances do (§11/§14); see `alert.tsx`'s
+   * own module comment on `dismissColorByState` for why. */
   primaryActionContent?: ReactNode;
   onPrimaryActionClick?: () => void;
   /** Not part of the original Figma audit — a requested addition. Figma's own sampled instances
@@ -88,8 +129,10 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, "childr
    * zero or one action button now have an explicit way to ask for it instead of passing empty
    * content into an always-rendered button. */
   primaryAction?: boolean;
-  /** Content for the second action button — confirmed identical construction across all 5
-   * severities (`secondary/500` fill, white text, §11/§14). */
+  /** Content for the second action button ("the primary semantic action" per direct request).
+   * Figma's own confirmed construction is a flat `secondary/500` fill identical across all 5
+   * severities (§11/§14); requested override: now inherits `state`'s own color instead — see
+   * `dismissColorByState`. */
   dismissContent?: ReactNode;
   onDismissClick?: () => void;
   /** Not part of the original Figma audit — a requested addition. See `primaryAction`. */
@@ -105,18 +148,22 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, "childr
 }
 
 /**
- * `alert` (docs/audit/alerts.md, ground-truth re-audited across all 5 severities, §14). Composes
- * the real `ButtonDanger`/`ButtonSuccess` components for the confirmed nested action button on
- * `danger`/`success` (literal instance paths `button_danger/md/secondary/default` and
- * `button_success/md/secondary/default`) — `Default`/`warning`/`info` render a plain neutral
- * button instead, confirmed NOT to compose a severity-specific Button family member. Renders the
- * confirmed default info-circle severity icon and "X" close icon by default (both downloaded as
- * real SVG source and confirmed identical in shape across every severity, differing only in the
- * severity icon's tint color) — overridable via `icon`/`closeIcon` but no longer required just to
- * see a complete alert. Unlike every other component in this library, `alert` has **no boolean
- * for title/description/actions** — they render unconditionally (§11) — so this component's
- * structural surface intentionally has just one boolean (`leftIcon`), matching that confirmed
- * rigidity rather than inventing toggles Figma doesn't expose.
+ * `alert` (docs/audit/alerts.md, ground-truth re-audited across all 5 severities, §14; color
+ * mapping overridden per direct request, §15). Renders the confirmed default info-circle severity
+ * icon and "X" close icon by default (both downloaded as real SVG source and confirmed identical
+ * in shape across every severity, differing only in the severity icon's tint color) — overridable
+ * via `icon`/`closeIcon` but no longer required just to see a complete alert. Unlike every other
+ * component in this library, `alert` has **no boolean for title/description/actions** — they
+ * render unconditionally (§11) — so this component's structural surface intentionally has just
+ * one boolean (`leftIcon`), matching that confirmed rigidity rather than inventing toggles Figma
+ * doesn't expose.
+ *
+ * Requested color override (§15, superseding §11/§14 for this one axis): Figma's own confirmed
+ * construction composes `ButtonDanger`/`ButtonSuccess` for the FIRST action button on danger/
+ * success and leaves the SECOND ("Dismiss") a flat pink regardless of severity. This now does the
+ * opposite — "Learn more" (first button) stays neutral gray at every severity; "Dismiss" (second
+ * button) inherits `state`'s own color, and the root surface fill is severity-tinted too (was a
+ * flat white). See the module-level color table comments for the exact reasoning per table.
  *
  * See packages/ui/src/components/alert/README.md for exactly what's confirmed vs. derived, and
  * why the second action button and the corner close button are implemented inline rather than
@@ -151,74 +198,39 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
     const [dismissHover, setDismissHover] = useState(false);
     const [cornerHover, setCornerHover] = useState(false);
 
-    const primaryButton =
-      state === "danger" ? (
-        // P6 repair — a fresh get_design_context re-pull on node 66071:28147 confirmed the
-        // nested instance has only a `text_wrap` label, no icon slots at all. ButtonDanger
-        // defaults leftIcon/rightIcon to true, so without this it rendered two empty 18px icon
-        // slots, inflating the button ~54px wider than the neutral buttons on the other
-        // severities — the inconsistency was real, not just a color mismatch.
-        <ButtonDanger
-          size="md"
-          type="Secondary"
-          state={primaryHover ? "hover" : "default"}
-          leftIcon={false}
-          rightIcon={false}
-          onClick={onPrimaryActionClick}
-          onMouseEnter={() => setPrimaryHover(true)}
-          onMouseLeave={() => setPrimaryHover(false)}
-          style={{ height: 40 }}
-        >
-          {primaryActionContent}
-        </ButtonDanger>
-      ) : state === "success" ? (
-        <ButtonSuccess
-          size="md"
-          type="Secondary"
-          state={primaryHover ? "hover" : "default"}
-          leftIcon={false}
-          rightIcon={false}
-          onClick={onPrimaryActionClick}
-          onMouseEnter={() => setPrimaryHover(true)}
-          onMouseLeave={() => setPrimaryHover(false)}
-          style={{ height: 40 }}
-        >
-          {primaryActionContent}
-        </ButtonSuccess>
-      ) : (
-        // docs/audit/alerts.md §14 — confirmed: Default/warning/info's first action button is a
-        // plain neutral gray/100 fill + gray-700 text button, NOT drawn from a severity-tinted
-        // Button family member (unlike danger/success).
-        <button
-          type="button"
-          onClick={onPrimaryActionClick}
-          onMouseEnter={() => setPrimaryHover(true)}
-          onMouseLeave={() => setPrimaryHover(false)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: 40,
-            padding: "0.5rem 0.75rem",
-            gap: "0.25rem",
-            borderRadius: radius.md,
-            border: "none",
-            backgroundColor: primaryHover ? neutralButtonHoverBg : color.gray[100],
-            boxShadow: neutralButtonShadow,
-            color: color.gray[700],
-            fontSize: 13,
-            lineHeight: "20px",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          {/* Figma's "text_wrap" nests the label in its own px-[spacing/4,4px] padding on every
-              confirmed action button (this one and the composed ButtonDanger/ButtonSuccess
-              alike) — previously only applied here via the outer button's own padding, which
-              left this button narrower than the composed ones for the same label. */}
-          <span style={{ padding: "0 0.25rem" }}>{primaryActionContent}</span>
-        </button>
-      );
+    // Requested override (§15): "Learn more" stays plain neutral gray at EVERY severity now — no
+    // more composing ButtonDanger/ButtonSuccess for danger/success (Figma's own confirmed
+    // construction, §11/§14). Single unconditional neutral button, matching what Default/warning/
+    // info already rendered.
+    const primaryButton = (
+      <button
+        type="button"
+        onClick={onPrimaryActionClick}
+        onMouseEnter={() => setPrimaryHover(true)}
+        onMouseLeave={() => setPrimaryHover(false)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 40,
+          padding: "0.5rem 0.75rem",
+          gap: "0.25rem",
+          borderRadius: radius.md,
+          border: "none",
+          backgroundColor: primaryHover ? neutralButtonHoverBg : color.gray[100],
+          boxShadow: neutralButtonShadow,
+          color: color.gray[700],
+          fontSize: 13,
+          lineHeight: "20px",
+          fontWeight: 600,
+          cursor: "pointer",
+        }}
+      >
+        {/* Figma's "text_wrap" nests the label in its own px-[spacing/4,4px] padding on every
+            confirmed action button. */}
+        <span style={{ padding: "0 0.25rem" }}>{primaryActionContent}</span>
+      </button>
+    );
 
     return (
       <div
@@ -231,7 +243,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
           width: 424, // w-[424px] Fixed — §11
           gap: "1rem", // gap-[spacing/16, 16px] — §11
           padding: "1.5rem", // p-[spacing/24, 24px] uniform — §11
-          backgroundColor: color.white[950], // Color/smoke_base — §11
+          backgroundColor: fillByState[state], // requested severity-tinted surface — §15
           border: `1px solid ${borderColorByState[state]}`,
           borderRadius: radius["2xl"], // radius/border_radius_xl (20) — §11, radius.ts
           boxShadow: rootShadow,
@@ -240,10 +252,13 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
         {...props}
       >
         {leftIcon && (
+          // Requested: "make the icon a little bit bigger" — confirmed container was 24px
+          // (§11) with the glyph itself rendering at its own native 18px default, unfilled.
+          // Bumped both: container 24->28, glyph 18->22 (an explicit size prop, was unset).
           <span
             style={{
-              width: 24,
-              height: 24,
+              width: 28,
+              height: 28,
               flexShrink: 0,
               display: "flex",
               alignItems: "center",
@@ -251,7 +266,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
               filter: iconShadowFilter,
             }}
           >
-            {icon ?? <InfoCircleIcon style={{ color: iconColorByState[state] }} />}
+            {icon ?? <InfoCircleIcon size={22} style={{ color: iconColorByState[state] }} />}
           </span>
         )}
 
@@ -304,8 +319,11 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
                     // highlight/shadow pair already applied to the primary neutral button — previously
                     // missing here entirely.
                     boxShadow: neutralButtonShadow,
-                    backgroundColor: dismissHover ? dismissButtonHoverBg : color.secondary[500], // confirmed — §11
-                    color: color.white[950], // text/white-950 — §11
+                    // Requested override — was a flat secondary/500 pink regardless of severity
+                    // (confirmed, §11); now inherits `state`'s own color — see
+                    // `dismissColorByState`'s own module comment for the full reasoning.
+                    backgroundColor: dismissHover ? dismissHoverColorByState[state] : dismissColorByState[state],
+                    color: dismissTextColorByState[state],
                     fontSize: 13,
                     lineHeight: "20px",
                     fontWeight: 600, // web/Body/13 Semibold — §11
