@@ -59,6 +59,23 @@ describe("type=icon / type=text — structurally unconfirmed, derived fallback f
     expect(slot.style.color).toBe("rgb(249, 249, 250)"); // color/gray/50 (#f9f9fa)
   });
 
+  it("renders the default glyph at 130% of its confirmed inset container, a requested increase (§21)", () => {
+    // size="md": box=40, container=box/2=20, glyph=20*1.3=26.
+    const { container } = render(<Avatar type="icon" size="md" />);
+    const svg = container.querySelector('svg[data-icon="user"]');
+    expect(svg?.getAttribute("width")).toBe("26");
+    expect(svg?.getAttribute("height")).toBe("26");
+  });
+
+  it("keeps the bigger glyph from being squished by the flex row's default shrink behavior", () => {
+    // A real bug caught live: without flex-shrink: 0, the flex row only shrinks the glyph's
+    // WIDTH to fit its container, leaving height at the full 130% — a visibly non-uniform,
+    // squished-looking glyph. flex-shrink: 0 keeps both dimensions equal.
+    const { container } = render(<Avatar type="icon" />);
+    const svg = container.querySelector('svg[data-icon="user"]') as SVGSVGElement;
+    expect(svg.style.flexShrink).toBe("0");
+  });
+
   it("prefers explicit children over the default UserIcon glyph", () => {
     const { container } = render(
       <Avatar type="icon">

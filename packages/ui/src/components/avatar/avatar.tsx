@@ -229,7 +229,17 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
               filter: iconShadowFilter,
             }}
           >
-            {children ?? <UserIcon width="100%" height="100%" />}
+            {/* Requested: the default glyph is a bit bigger than its confirmed 25%-inset
+                container (§21) — 130% of the slot, centered by the flex container above.
+                `flexShrink: 0` matters here: without it, the flex row above only shrinks the
+                glyph's WIDTH to fit the container while leaving height at its full 130% (a real
+                bug caught live — a visibly non-uniform, squished-looking glyph), since flexbox
+                only auto-resolves the main-axis (width) dimension, not the cross-axis (height)
+                one. The container itself is untouched (still exactly half the avatar box,
+                confirmed), so a consumer-supplied `children` glyph is unaffected. */}
+            {children ?? (
+              <UserIcon width={(box / 2) * 1.3} height={(box / 2) * 1.3} style={{ flexShrink: 0 }} />
+            )}
           </span>
         )}
 

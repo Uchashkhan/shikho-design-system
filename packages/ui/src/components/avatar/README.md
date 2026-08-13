@@ -29,7 +29,7 @@ Implements the `avatar` component set audited in `docs/audit/avatars.md` — dee
 - Whether `status`/`verification` scale, reposition, or behave differently across the other four sizes and the `icon`/`text` types — out of scope, no sibling inference performed.
 - Default variant configuration for any of the three component sets — not confirmed.
 
-## Implementation note (post-audit changes, docs/audit/avatars.md §13–§20)
+## Implementation note (post-audit changes, docs/audit/avatars.md §13–§21)
 
 The confirmed/derived findings above describe what the original Figma audit found — kept intact as history. The actual component has since diverged from it, per direct user requests:
 
@@ -38,6 +38,7 @@ The confirmed/derived findings above describe what the original Figma audit foun
 - **`status`'s border is now opaque white**, not the confirmed `72%`-alpha `white[800]` described above, and its size/border-width per step were re-derived from that same reference example rather than the original flat `10px`/`3px`.
 - **`type="icon"` now renders a default `UserIcon` glyph** (`@shikho/icons`) when no `children` are supplied — not sourced from a Figma audit, added directly per request to replace the previous bare/emoji placeholder (docs/audit/avatars.md §18). Passing `children` still overrides it.
 - **`type="icon"`'s whole fill/glyph color scheme was requested again**, twice: first the glyph alone went `white/900` → `gray/500` (§19), then a follow-up replaced the ROOT's confirmed secondary/pink gradient with a flat `gray/500` (`#afb3bb`) and moved the glyph to `gray/50` (`#f9f9fa`) (§20) — the final state.
+- **The default glyph is now 30% bigger** than its confirmed 25%-inset container (§21) — `(box / 2) * 1.3` px, with `flexShrink: 0` on the glyph itself. That last part matters: without it, the flex row only shrinks the glyph's *width* to fit the container while leaving *height* at the full 130%, since flexbox only auto-resolves the main-axis dimension — a real, visibly squished glyph caught live before this shipped, not a hypothetical.
 
 See `docs/audit/avatars.md` §13 onward for the full reasoning behind each change.
 
