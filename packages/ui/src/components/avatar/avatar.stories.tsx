@@ -36,15 +36,14 @@ export const Sizes: Story = {
 
 /**
  * The 3 confirmed types. Only `image` was deep-audited (§8) — `icon`/`text` render on a
- * derived neutral fill, not an independently confirmed binding.
+ * derived neutral fill, not an independently confirmed binding. `icon` now renders a requested
+ * default `UserIcon` glyph (docs/audit/avatars.md §18) when no `children` are supplied.
  */
 export const Types: Story = {
   render: () => (
     <div style={{ display: "flex", gap: 12 }}>
       <Avatar type="image" src={PHOTO} alt="Image" />
-      <Avatar type="icon">
-        <span aria-hidden>👤</span>
-      </Avatar>
+      <Avatar type="icon" />
       <Avatar type="text">AB</Avatar>
     </div>
   ),

@@ -47,6 +47,22 @@ describe("type=icon / type=text — structurally unconfirmed, derived fallback f
     expect(screen.getByText("ICON")).toBeInTheDocument();
   });
 
+  it("renders the requested default UserIcon glyph when no children are supplied", () => {
+    const { container } = render(<Avatar type="icon" />);
+    const svg = container.querySelector('svg[data-icon="user"]');
+    expect(svg).toBeInTheDocument();
+  });
+
+  it("prefers explicit children over the default UserIcon glyph", () => {
+    const { container } = render(
+      <Avatar type="icon">
+        <span data-testid="custom-glyph" />
+      </Avatar>,
+    );
+    expect(screen.getByTestId("custom-glyph")).toBeInTheDocument();
+    expect(container.querySelector('svg[data-icon="user"]')).not.toBeInTheDocument();
+  });
+
   it("renders initials content for type=text", () => {
     render(<Avatar type="text">AB</Avatar>);
     expect(screen.getByText("AB")).toBeInTheDocument();

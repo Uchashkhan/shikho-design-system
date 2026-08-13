@@ -1,5 +1,6 @@
 import { type HTMLAttributes, type ReactNode, forwardRef } from "react";
 import { color, elevation, radius } from "@shikho/tokens";
+import { UserIcon } from "@shikho/icons";
 
 // docs/audit/avatars.md §2 — avatar: size (xl, lg, md, sm, xs), type (icon, text, image).
 export type AvatarSize = "xl" | "lg" | "md" | "sm" | "xs";
@@ -86,9 +87,11 @@ export interface AvatarProps extends Omit<HTMLAttributes<HTMLDivElement>, "child
   src?: string;
   alt?: string;
   /**
-   * `type="text"` initials, or the `type="icon"` glyph. For `type="icon"` Figma draws a real
-   * smiley vector; `@shikho/icons` has no glyphs yet, so the glyph itself stays a consumer-supplied
-   * slot — but the container geometry, gradient and drop-shadow around it are now confirmed-exact.
+   * `type="text"` initials, or the `type="icon"` glyph. Figma draws a real smiley vector for
+   * `type="icon"`, which has no equivalent in `@shikho/icons` — this slot renders a requested
+   * generic `UserIcon` glyph by default instead (not a Figma value, see that icon's own doc
+   * comment), overridable by passing `children` explicitly. The container geometry, gradient and
+   * drop-shadow around it are confirmed-exact.
    */
   children?: ReactNode;
   /** Confirmed boolean, default `false` (§8). */
@@ -210,10 +213,14 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              // Requested default glyph paints via `currentColor` — white/900 here matches the
+              // same token `type="text"` already uses for its initials, so both derived fills
+              // read consistently on their respective gradients.
+              color: initialsColor,
               filter: iconShadowFilter,
             }}
           >
-            {children}
+            {children ?? <UserIcon width="100%" height="100%" />}
           </span>
         )}
 

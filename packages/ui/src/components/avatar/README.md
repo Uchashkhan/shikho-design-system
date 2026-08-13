@@ -36,6 +36,7 @@ The confirmed/derived findings above describe what the original Figma audit foun
 - **`verification` was removed entirely.** It's still accurately described above as a real, confirmed Figma property — but the implementation no longer has it. Removed and replaced by `badge` below.
 - **`badge` (`boolean`) / `badgeColor` (`string`) were added — not confirmed in Figma at all.** Draws a solid ring around the WHOLE avatar (not a corner badge), reusing a 3px stroke width sampled from one reference example (node `66200:18587`, unrelated to the actual `avatar` component set) and scaled per size. `badgeColor` has no default.
 - **`status`'s border is now opaque white**, not the confirmed `72%`-alpha `white[800]` described above, and its size/border-width per step were re-derived from that same reference example rather than the original flat `10px`/`3px`.
+- **`type="icon"` now renders a default `UserIcon` glyph** (`@shikho/icons`, `color.white[900]`) when no `children` are supplied — not sourced from a Figma audit, added directly per request to replace the previous bare/emoji placeholder (docs/audit/avatars.md §18). Passing `children` still overrides it.
 
 See `docs/audit/avatars.md` §13 onward for the full reasoning behind each change.
 
@@ -60,9 +61,9 @@ function ProfileBadge() {
 ## Not implemented
 
 - `avatar_face` and `avatar_group` — out of scope; see above.
-- Real icon/checkmark glyph assets — no `@shikho/icons` inventory exists yet.
+- The verification checkmark's own glyph asset — moot now that `verification` has been removed entirely (§17).
 - Any interaction state — the audit found no `hover`/`active`/`disabled` variant anywhere in Avatars; this component is a static display element only.
 
 ## Token dependencies
 
-Only `@shikho/tokens`: `color.success[400]`, `color.white[800]`, `color.gray[200/700]`, and `radius.full`.
+`@shikho/tokens`: `color.success[400]`, `color.white[800/900]`, `color.gray[200/700]`, and `radius.full`. Also `@shikho/icons`' `UserIcon` (requested override, §18 — not part of the original Figma audit).

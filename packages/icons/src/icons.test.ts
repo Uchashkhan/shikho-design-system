@@ -5,6 +5,7 @@ import {
   ChevronRightIcon,
   CloseIcon,
   InfoCircleIcon,
+  UserIcon,
   createIcon,
 } from "./index";
 
@@ -59,5 +60,23 @@ describe("createIcon contract", () => {
     const Custom = createIcon({ name: "test", viewBox: "0 0 10 10", path: "M0 0 L10 10 Z" });
     expect(Custom.definition.viewBox).toBe("0 0 10 10");
     expect(Custom.displayName).toBe("testIcon");
+  });
+});
+
+// Not from a Figma audit (unlike every icon in `ALL` above) — kept separate since the "real
+// bezier data" assertion above doesn't apply: this glyph is arc-based, not curve-based.
+describe("UserIcon — a requested, non-Figma-sourced default glyph for Avatar's type=\"icon\"", () => {
+  it("exports a distinct, correctly-named component", () => {
+    expect(UserIcon.displayName).toBe("userIcon");
+    expect(UserIcon.definition.name).toBe("user");
+  });
+
+  it("preserves its native 64x64 viewBox", () => {
+    expect(UserIcon.definition.viewBox).toBe("0 0 64 64");
+  });
+
+  it("combines two subpaths (shoulders + head) into one path, background circle dropped", () => {
+    const subpathStarts = UserIcon.definition.path.match(/[Mm]/g) ?? [];
+    expect(subpathStarts.length).toBe(2);
   });
 });
