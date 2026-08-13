@@ -208,3 +208,13 @@ Direct follow-up: "do the exact same thing for Tag" (referring to chips.md §16/
 **Padding-rebalance: checked live, not applied.** Unlike Chip (always `radius.full`, a true pill), Tags' `default` shape uses a much smaller per-size corner radius (`radius.sm`/`radius.md`, 8px/10px — not full-round). Verified live at both `md` (28×24px, 8px radius) and `lg` (38×32px, 10px radius) after the icon-slot fix: at that radius, a rounded rectangle with uniform padding does not read as a circle the way Chip's full-pill shape did — screenshotted at 4x zoom to confirm. `shape="pill"` (the one Tags variant that DOES use `radius.full`) already has its own separate `PILL_PADDING` table with a built-in horizontal bias, untouched by any of this and unaffected either way. No padding change made.
 
 Test added asserting an icon-less tag renders exactly one child (the label span) at `md`/`lg`. 704/704 passing (`@shikho/ui`, up from 703). Typecheck clean. Docs build clean.
+
+## 19. Requested: `md`'s font size bumped, and a small horizontal padding bump for `md`/`lg`
+
+Direct follow-up: "sm and md font sizes are the same, increase md's; also add a bit of side padding for md and lg, proportionally."
+
+**Font size.** `sm` and `md` sharing `11px` is a real, previously-confirmed Figma fact (§14 — both bind to the same `caption_1` token; only `lg` differs at `12px`/`caption_2`) — not a bug. Requested override anyway: `md`'s `fontSize` bumped from `11` to `12`, matching `lg`, so `sm`/`md` read as visually distinct. `sm` stays at the confirmed `11px`; `lg` unchanged.
+
+**Padding.** A small horizontal-only bump on top of §18's uniform values, on both `md` and `lg` (vertical untouched at both): `md` `0.25rem` (4px uniform) → `0.25rem 0.375rem` (4px vertical / 6px horizontal); `lg` `0.5rem` (8px uniform) → `0.5rem 0.625rem` (8px vertical / 10px horizontal). `sm` and `shape="pill"`'s own `PILL_PADDING` are both untouched — neither was named in this request.
+
+Tests updated: the per-size font-size test now covers all three sizes explicitly (`sm` 11px, `md`/`lg` both 12px); the default-shape padding test updated to the new `md` value. 705/705 passing (`@shikho/ui`, up from 704). Typecheck clean. Docs build clean. Verified live: computed `padding`/`fontSize` at each size read `sm: 0px 6px / 11px`, `md: 4px 6px / 12px`, `lg: 8px 10px / 12px`.

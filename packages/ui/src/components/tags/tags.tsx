@@ -55,15 +55,23 @@ const SIZE_METRICS: Record<TagSize, SizeMetrics> = {
   sm: { height: 20, padding: "0 0.375rem", rootGap: 2, radius: radius.xs, iconSize: 12, fontSize: 11, lineHeight: "16px", labelPadding: 2 },
   // `md`'s horizontal padding was confirmed exact against Figma (6px, node 66077:29384) but
   // requested down to 4px anyway — a deliberate code-only override, not a Figma correction: at
-  // 6px vs. 4px vertical it read as button-like rather than a compact tag. `lg` stays as-is
-  // (already uniform 8px, matching its own confirmed vertical padding — no "extra" to trim).
+  // 6px vs. 4px vertical it read as button-like rather than a compact tag. Then given a small
+  // horizontal-only bump back (4px -> 6px), same reasoning as `lg` below.
   // `labelPadding` at md/lg requested down to 0 (was the confirmed 4px/2px, §14 above) — same
   // reasoning as `padding`'s own comment: even after the OUTER `padding` was made uniform, this
   // inner text_wrap padding stacked on top of it horizontally only, so the total edge-to-label
   // inset was still visibly bigger on the sides than top/bottom. Zeroing it makes the total inset
   // (outer + inner) genuinely equal on all 4 sides. `sm` keeps its confirmed 2px (not requested).
-  md: { height: 24, padding: "0.25rem", rootGap: 0, radius: radius.sm, iconSize: 14, fontSize: 11, lineHeight: "16px", labelPadding: 0 },
-  lg: { height: 32, padding: "0.5rem", rootGap: 2, radius: radius.md, iconSize: 16, fontSize: 12, lineHeight: "16px", labelPadding: 0 },
+  //
+  // `md`'s `fontSize`: requested up from the confirmed 11px (§14 — real, confirmed identical to
+  // `sm`'s own `caption_1` token, not a bug) to 12px, matching `lg`'s own confirmed size — a
+  // deliberate code-only override so `sm`/`md` read as visually distinct sizes. `lg` unchanged.
+  //
+  // `padding` at md/lg (this round): requested "a little bit" of horizontal padding back on top
+  // of §17's uniform values, proportionally — md 4px uniform -> 4px vertical / 6px horizontal,
+  // lg 8px uniform -> 8px vertical / 10px horizontal. Vertical is untouched at both sizes.
+  md: { height: 24, padding: "0.25rem 0.375rem", rootGap: 0, radius: radius.sm, iconSize: 14, fontSize: 12, lineHeight: "16px", labelPadding: 0 },
+  lg: { height: 32, padding: "0.5rem 0.625rem", rootGap: 2, radius: radius.md, iconSize: 16, fontSize: 12, lineHeight: "16px", labelPadding: 0 },
 };
 
 // Requested addition, not part of the original Figma audit. A couple more px of horizontal

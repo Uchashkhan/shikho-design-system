@@ -91,10 +91,15 @@ describe("confirmed per-size metrics (docs/audit/tags.md §14) — previously ev
     expect((container.firstChild as HTMLElement).style.height).toBe("20px");
   });
 
-  it("confirmed: lg uses caption_2 (12px), md/sm use caption_1 (11px) — a real per-size typography difference", () => {
+  // Originally confirmed: lg uses caption_2 (12px), md/sm both use caption_1 (11px) — a real
+  // Figma fact, not a bug. Requested override: md bumped to 12px (matching lg) so sm/md read as
+  // visually distinct sizes; sm stays at the confirmed 11px.
+  it("md's font size is now 12px (requested, matches lg) — was the confirmed 11px shared with sm", () => {
     const { rerender } = render(<Tags size="lg">Tag</Tags>);
     expect(screen.getByText("Tag").style.fontSize).toBe("12px");
     rerender(<Tags size="md">Tag</Tags>);
+    expect(screen.getByText("Tag").style.fontSize).toBe("12px");
+    rerender(<Tags size="sm">Tag</Tags>);
     expect(screen.getByText("Tag").style.fontSize).toBe("11px");
   });
 
@@ -200,10 +205,10 @@ describe("shape (requested addition)", () => {
     const { container } = render(<Tags size="md">Tag</Tags>);
     const root = container.firstChild as HTMLElement;
     expect(root.style.borderRadius).toBe("8px");
-    // Horizontal padding requested down to 4px — a deliberate override, not the Figma-confirmed
-    // value (6px, node 66077:29384) — reduced because it read as button-like. See tags.tsx's own
-    // SIZE_METRICS comment.
-    expect(root.style.padding).toBe("0.25rem");
+    // Horizontal padding requested down to 4px, then back up to 6px (a little bit, proportionally)
+    // — a deliberate override, not the Figma-confirmed value (6px, node 66077:29384), across
+    // several rounds. See tags.tsx's own SIZE_METRICS comment.
+    expect(root.style.padding).toBe("0.25rem 0.375rem");
     expect(root).toHaveAttribute("data-shape", "default");
   });
 
