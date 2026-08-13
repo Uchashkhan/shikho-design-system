@@ -218,3 +218,11 @@ User pushed back on §15 with a screenshot: even with padding confirmed equal on
 Fixed at the render level: the icon slot now only renders when `leftIcon`/`rightIcon` is true **AND** `selectLeftIcon`/`selectRightIcon` actually has content (`leftIcon && selectLeftIcon`, was just `leftIcon`). A chip with a real icon is unaffected — same slot, same size. A chip without one (no `selectLeftIcon`/`selectRightIcon` passed) now genuinely hugs its own text, with only the confirmed/requested padding around it.
 
 Test added asserting an icon-less chip has exactly one child (the text span) and no phantom icon spans. 704/704 passing (`@shikho/ui`, up from 703). Typecheck clean. Docs build clean. Verified live: the default preview chip's DOM child count dropped from 3 (empty-left-icon, text, empty-right-icon) to 1 (text only), and its rendered width dropped from ~72px to ~36px — visibly hugging the text now.
+
+## 17. Follow-up: fully-uniform padding + no phantom icon slot made it look like a circle
+
+Direct visual follow-up, with a screenshot: with §16's fix in place, an icon-less `md` chip with fully-uniform 4px padding on all sides (§14/§15) rendered at ~36px wide × 32px tall — close enough to square that, combined with `radius.full`, it read as a circle rather than a pill.
+
+Requested: "add a bit of a side padding" back. Reintroduced a deliberate horizontal-only bump on the OUTER `padding` (vertical stays untouched at the confirmed-derived 4px/6px): `md` `0.25rem` → `0.25rem 0.5rem` (4px vertical / 8px horizontal), `lg` `0.375rem` → `0.375rem 0.625rem` (6px vertical / 10px horizontal). The inner text span's own padding (§15's `textPadding` fix) stays zeroed at `md`/`lg` — this horizontal/vertical difference now lives entirely and explicitly in the one outer `padding` value, not stacked across two padding sources like the original §14/§15 bug.
+
+Verified live: `md` chip now computes `padding: 4px 8px`, rendering at 44.5px × 32px (width/height ratio 1.39, up from 1.14) — a clear pill again, without returning to the original button-like 8px/12px. Tests updated to the new padding strings. 704/704 passing (`@shikho/ui`). Typecheck clean. Docs build clean.

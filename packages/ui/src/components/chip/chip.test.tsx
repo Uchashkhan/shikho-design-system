@@ -154,15 +154,16 @@ describe("no unsupported variant is exported", () => {
 });
 
 // P1 repair pass — per-size padding/gap/typography replace md-only extrapolation.
-// `md`/`lg` padding (now 4px/6px uniform) is a requested override across several rounds of
-// direct feedback, not the Figma-confirmed values (md 8px, lg 12px horizontal/8px vertical,
-// node 66075:28885/66075:28800) — reduced because both read as button-like. See chip.tsx's own
-// SIZE_METRICS comment.
+// `md`/`lg` padding is a requested override across several rounds of direct feedback, not the
+// Figma-confirmed values (md 8px, lg 12px horizontal/8px vertical, node 66075:28885/66075:28800)
+// — reduced because both read as button-like, then given a horizontal-only bump back once the
+// empty-icon-slot fix (§16) made a fully-uniform, hug-the-text chip read as a circle rather than
+// a pill. See chip.tsx's own SIZE_METRICS comment.
 describe("per-size metrics are independent (P1 repair)", () => {
   const rows = [
     ["sm", "24px", "0.25rem 0.375rem", "0", "11px"],
-    ["md", "32px", "0.25rem", "0.125rem", "12px"],
-    ["lg", "40px", "0.375rem", "0.25rem", "13px"],
+    ["md", "32px", "0.25rem 0.5rem", "0.125rem", "12px"],
+    ["lg", "40px", "0.375rem 0.625rem", "0.25rem", "13px"],
   ] as const;
 
   it.each(rows)("size=%s → height %s, padding %s, gap %s, font %s", (size, height, padding, gap, fontSize) => {
@@ -176,11 +177,12 @@ describe("per-size metrics are independent (P1 repair)", () => {
   });
 });
 
-// Requested follow-up: the outer padding above was already uniform at md/lg, but the inner text
-// span's own confirmed horizontal-only padding (px-[spacing/2, 2px]) stacked on top of it, so the
-// total edge-to-text inset was still bigger on the sides than top/bottom. Zeroed at md/lg so the
-// total inset is genuinely equal on all 4 sides; sm keeps the confirmed 2px (not requested).
-describe("inner text padding — zeroed at md/lg so total inset is equal on all sides", () => {
+// The inner text span's own confirmed horizontal-only padding (px-[spacing/2, 2px]) was zeroed
+// at md/lg so it wouldn't stack invisibly on top of the OUTER padding (which now carries any
+// deliberate horizontal/vertical difference on its own, explicitly — see SIZE_METRICS' own
+// comment on why md/lg went back to a horizontal bump after briefly being fully uniform).
+// sm keeps the confirmed 2px (never part of any round of this request).
+describe("inner text span padding — md/lg zeroed so the outer padding is the only source of any h/v difference", () => {
   const rows = [
     ["sm", "0px 0.125rem"],
     ["md", "0px"],

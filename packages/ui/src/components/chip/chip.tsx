@@ -41,11 +41,15 @@ const SIZE_METRICS: Record<ChipSize, ChipSizeMetrics> = {
   // both were confirmed byte-for-byte exact against Figma (md: 8px uniform, node 66075:28885;
   // lg: 12px horizontal / 8px vertical, node 66075:28800; docs/audit/chips.md §14) but read as
   // button-like at those sizes. Reduced across several rounds of direct feedback: md 8px -> 4px
-  // uniform, lg 12px -> 10px -> 8px -> 6px uniform. `height` (the actual Figma-confirmed 32px/
-  // 40px) is untouched — these are real `inline-flex`/`items-center` buttons, so padding no
-  // longer constrains height, only how snug the content sits.
-  md: { height: 32, padding: "0.25rem", gap: "0.125rem", iconSize: 16, fontSize: 12, lineHeight: "16px", textPadding: "0" },
-  lg: { height: 40, padding: "0.375rem", gap: "0.25rem", iconSize: 18, fontSize: 13, lineHeight: "20px", textPadding: "0" },
+  // uniform, lg 12px -> 10px -> 8px -> 6px uniform — then, once the empty-icon-slot bug (§16) was
+  // fixed and the chip actually shrank to hug its own text, fully-uniform padding on a short
+  // label made it read as a circle rather than a pill (height 32/40 vs. a barely-wider width).
+  // Restored a deliberate horizontal-only bump — vertical stays at the same 4px/6px, only
+  // horizontal grows back out — enough to read clearly as an elongated pill again without
+  // returning to the original button-like 8px/12px. `height` (Figma-confirmed 32px/40px) is
+  // still untouched throughout.
+  md: { height: 32, padding: "0.25rem 0.5rem", gap: "0.125rem", iconSize: 16, fontSize: 12, lineHeight: "16px", textPadding: "0" },
+  lg: { height: 40, padding: "0.375rem 0.625rem", gap: "0.25rem", iconSize: 18, fontSize: 13, lineHeight: "20px", textPadding: "0" },
 };
 
 const chipRadius = radius.full; // radius/border_radius_round (1000) — the ONLY radius token, §7/§9
