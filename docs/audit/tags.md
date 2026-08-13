@@ -218,3 +218,24 @@ Direct follow-up: "sm and md font sizes are the same, increase md's; also add a 
 **Padding.** A small horizontal-only bump on top of §18's uniform values, on both `md` and `lg` (vertical untouched at both): `md` `0.25rem` (4px uniform) → `0.25rem 0.375rem` (4px vertical / 6px horizontal); `lg` `0.5rem` (8px uniform) → `0.5rem 0.625rem` (8px vertical / 10px horizontal). `sm` and `shape="pill"`'s own `PILL_PADDING` are both untouched — neither was named in this request.
 
 Tests updated: the per-size font-size test now covers all three sizes explicitly (`sm` 11px, `md`/`lg` both 12px); the default-shape padding test updated to the new `md` value. 705/705 passing (`@shikho/ui`, up from 704). Typecheck clean. Docs build clean. Verified live: computed `padding`/`fontSize` at each size read `sm: 0px 6px / 11px`, `md: 4px 6px / 12px`, `lg: 8px 10px / 12px`.
+
+## 19. Superseded: `sm` declared the base, `md`/`lg` rebuilt as a pure 1.5x geometric scale
+
+Direct request: "sm looks perfect — treat it as the base; scale md 1.5x from sm, and lg 1.5x from md (2.25x from sm), like Figma's Scale tool (K)." This **replaces** every one of §14/§17/§18's own independently-confirmed and previously-overridden md/lg values with a pure geometric derivation from `sm` alone — the most wholesale departure from confirmed Figma data in this whole audit series, done because it was asked for directly and unambiguously (an exact, mechanical scale factor, not a vague "a bit more").
+
+`sm` is untouched — still §14's own confirmed values (height 20, padding 6px horizontal, `radius.xs`/6px, no icon slot, `fontSize` 11, `labelPadding` 2). Every `md`/`lg` number below is that same value × 1.5 / × 2.25, exactly, with no rounding to a "nicer" number and no snapping to an existing named radius/spacing token (9px and 13.5px don't correspond to any step in `@shikho/tokens`' radius scale):
+
+| Metric | `sm` (base) | `md` (×1.5) | `lg` (×2.25) |
+|---|---|---|---|
+| height | 20 | 30 | 45 |
+| horizontal padding | 6px | 9px | 13.5px |
+| `rootGap` | 2 | 3 | 4.5 |
+| `radius` | 6 (`radius.xs`) | 9 | 13.5 |
+| `iconSize` | 12 | 18 | 27 |
+| `fontSize` | 11 | 16.5 | 24.75 |
+| `lineHeight` | 16px | 24px | 36px |
+| `labelPadding` | 2 | 3 | 4.5 |
+
+This directly supersedes §17's md font-size override (11→12, matching lg) and §18's md/lg `labelPadding` zeroing (done specifically to avoid the inner/outer padding stacking that caused chips.md §15's asymmetry bug) — under the new sm-based model, `labelPadding` deliberately scales up *with* `sm`'s own non-zero value, by design, since the whole point is reproducing `sm`'s exact internal structure at a larger size rather than avoiding a stacking problem `sm` itself never had. `shape="pill"`'s own `PILL_PADDING` table was not part of this request and is unchanged — it no longer relates proportionally to `SIZE_METRICS`' own new numbers the way it originally did when both were independently-confirmed Figma values.
+
+Tests rewritten for the new sm-based values (heights 20/30/45, font sizes 11/16.5/24.75, label padding 0.125rem/0.1875rem/0.28125rem, default-shape radius/padding 9px at md). 705/705 passing (`@shikho/ui`). Typecheck clean. Docs build clean. Verified live: computed height/width/padding/radius/fontSize at each size confirm an exact 1.5x ratio step to step (e.g. width 36.3px → 54.5px → 81.7px, each exactly 1.5× the last).
