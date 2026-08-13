@@ -56,6 +56,28 @@ const fillByState: Record<AlertState, string> = {
   info: color.info[50], // extended by analogy — not explicitly named in the request
 };
 
+// Requested follow-up — not part of the original Figma audit. §15's neutral gray/100 fill on
+// "Learn more" and the corner close button (both confirmed exact, §11/§14) reads fine against
+// `Default`'s white surface, but loses contrast against the now severity-tinted surfaces above —
+// gray/100 sits too close to e.g. danger/50's own pale pink. Fixed by making both buttons solid
+// white with the SAME border color already used on the alert's own outer border
+// (`borderColorByState`) for every state except `Default`, which keeps its original gray/100 fill
+// and no border unchanged (explicitly confirmed to still look right as-is).
+const neutralButtonBgByState: Record<AlertState, string> = {
+  Default: color.gray[100],
+  danger: color.white[950],
+  success: color.white[950],
+  warning: color.white[950],
+  info: color.white[950],
+};
+const neutralButtonBorderByState: Record<AlertState, string> = {
+  Default: "none",
+  danger: `1px solid ${borderColorByState.danger}`,
+  success: `1px solid ${borderColorByState.success}`,
+  warning: `1px solid ${borderColorByState.warning}`,
+  info: `1px solid ${borderColorByState.info}`,
+};
+
 // docs/audit/alerts.md §14 — confirmed via downloading the real SVG behind all 5 severities: the
 // left icon is the SAME info-circle glyph in every state (matching the literal, previously
 // unexplained "icon / info" layer name — it turns out not to be a mislabeling artifact, the icon
@@ -216,8 +238,8 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
           padding: "0.5rem 0.75rem",
           gap: "0.25rem",
           borderRadius: radius.md,
-          border: "none",
-          backgroundColor: primaryHover ? neutralButtonHoverBg : color.gray[100],
+          border: neutralButtonBorderByState[state],
+          backgroundColor: primaryHover ? neutralButtonHoverBg : neutralButtonBgByState[state],
           boxShadow: neutralButtonShadow,
           color: color.gray[700],
           fontSize: 13,
@@ -358,9 +380,9 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(
             height: 32,
             padding: "0.5rem", // p-[spacing/8] — §11
             gap: "0.375rem", // gap-[spacing/6] — §11
-            border: "none",
+            border: neutralButtonBorderByState[state],
             borderRadius: radius.full,
-            backgroundColor: cornerHover ? cornerButtonHoverBg : color.gray[100],
+            backgroundColor: cornerHover ? cornerButtonHoverBg : neutralButtonBgByState[state],
             boxShadow: cornerButtonShadow,
             cursor: "pointer",
           }}
