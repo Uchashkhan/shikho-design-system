@@ -172,7 +172,11 @@ export interface TagsProps extends Omit<HTMLAttributes<HTMLSpanElement>, "childr
   /** Not part of the original Figma audit — a requested addition. */
   shape?: TagShape;
   /** Confirmed boolean property, default true (§14). No-op at `size="sm"` — confirmed absent from
-   * every sampled `sm` instance, not just toggled off. */
+   * every sampled `sm` instance, not just toggled off. Only actually renders (and reserves layout
+   * space for) an icon slot when `selectLeftIcon` is also supplied — see docs/audit/tags.md's
+   * same fix as chips.md §16: previously this rendered an EMPTY, invisible-but-space-reserving
+   * slot whenever left true with no icon content, adding dead horizontal space on every icon-less
+   * tag (the common case). */
   leftIcon?: boolean;
   /** Confirmed boolean property, default true (§14). No-op at `size="sm"` — see `leftIcon`. */
   rightIcon?: boolean;
@@ -248,7 +252,7 @@ export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
         style={computed}
         {...props}
       >
-        {showIcons && leftIcon && <span style={iconStyle}>{selectLeftIcon}</span>}
+        {showIcons && leftIcon && selectLeftIcon && <span style={iconStyle}>{selectLeftIcon}</span>}
         {text && (
           <span
             style={{
@@ -266,7 +270,7 @@ export const Tags = forwardRef<HTMLSpanElement, TagsProps>(
             {children}
           </span>
         )}
-        {showIcons && rightIcon && <span style={iconStyle}>{selectRightIcon}</span>}
+        {showIcons && rightIcon && selectRightIcon && <span style={iconStyle}>{selectRightIcon}</span>}
       </span>
     );
   },

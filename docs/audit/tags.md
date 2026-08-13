@@ -198,3 +198,13 @@ Same follow-up and same root cause as chips.md §15: even with the OUTER `paddin
 Fixed by zeroing `labelPadding` at `md`/`lg` (was the confirmed 4px/2px) — `sm` keeps its confirmed 2px, since it wasn't named in this request. Total inset is now genuinely equal on all 4 sides: `md` = 4px everywhere, `lg` = 8px everywhere. `PILL_PADDING` is unaffected (separate, still not part of any request). Verified live: computed outer padding 4px/8px, inner label span padding 0px, matching at both sizes.
 
 Tests updated asserting the label's own padding per size. 703/703 passing (`@shikho/ui`). Typecheck clean. Docs build clean.
+
+## 18. Same icon-slot fix as Chip — applied, padding-rebalance checked and found unnecessary
+
+Direct follow-up: "do the exact same thing for Tag" (referring to chips.md §16/§17 — an empty icon slot reserving dead space, then a horizontal padding bump once that was fixed).
+
+**Icon-slot fix: applied, identical bug.** `leftIcon`/`rightIcon` default to `true` (confirmed, §14), and the component rendered an empty icon-slot `<span>` (`width: metrics.iconSize`) whenever that boolean was true, regardless of whether `selectLeftIcon`/`selectRightIcon` actually had content — the exact same bug as Chip's. Fixed the same way: the slot now only renders when `leftIcon && selectLeftIcon` (was just `leftIcon`).
+
+**Padding-rebalance: checked live, not applied.** Unlike Chip (always `radius.full`, a true pill), Tags' `default` shape uses a much smaller per-size corner radius (`radius.sm`/`radius.md`, 8px/10px — not full-round). Verified live at both `md` (28×24px, 8px radius) and `lg` (38×32px, 10px radius) after the icon-slot fix: at that radius, a rounded rectangle with uniform padding does not read as a circle the way Chip's full-pill shape did — screenshotted at 4x zoom to confirm. `shape="pill"` (the one Tags variant that DOES use `radius.full`) already has its own separate `PILL_PADDING` table with a built-in horizontal bias, untouched by any of this and unaffected either way. No padding change made.
+
+Test added asserting an icon-less tag renders exactly one child (the label span) at `md`/`lg`. 704/704 passing (`@shikho/ui`, up from 703). Typecheck clean. Docs build clean.

@@ -216,6 +216,19 @@ describe("shape (requested addition)", () => {
   });
 });
 
+// Same fix as Chip (chips.md §16): leftIcon/rightIcon default to true (confirmed, §14), but with
+// no selectLeftIcon/selectRightIcon content, this used to still render an EMPTY icon-slot span
+// that reserved its full iconSize width — invisible, but dead space on the very common icon-less
+// tag. Now the slot only renders when there's real content to show.
+describe("icon slots do not render (or reserve space) without actual icon content", () => {
+  it("md/lg render only the label span when no icon content is supplied", () => {
+    const { container, rerender } = render(<Tags size="md">Tag</Tags>);
+    expect((container.firstChild as HTMLElement).children.length).toBe(1);
+    rerender(<Tags size="lg">Tag</Tags>);
+    expect((container.firstChild as HTMLElement).children.length).toBe(1);
+  });
+});
+
 describe("no unsupported variant is exported", () => {
   it("rejects a state value outside the confirmed 3-value enum — no focus, no drag", () => {
     // @ts-expect-error - "focus" is not a confirmed tags state (only disabled/hover/default exist, §2)
