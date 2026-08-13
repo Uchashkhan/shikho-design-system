@@ -16,7 +16,7 @@ describe("confirmed binding (size=md, type=selected)", () => {
     expect(chip.style.backgroundColor).toBe("rgb(213, 231, 255)"); // Color/primary/200 #d5e7ff
     expect(chip.style.color).toBe("rgb(59, 78, 227)"); // Text/primary-600 #3b4ee3
     expect(chip.style.borderRadius).toBe("1000px"); // radius/border_radius_round
-    expect(chip.style.height).toBe("32px"); // confirmed exact for md
+    expect(chip.style.height).toBe("30px"); // sm (24px, confirmed) x1.25, chips.md §18
   });
 
   it("applies the confirmed focus ring on state=focus", () => {
@@ -153,17 +153,14 @@ describe("no unsupported variant is exported", () => {
   });
 });
 
-// P1 repair pass — per-size padding/gap/typography replace md-only extrapolation.
-// `md`/`lg` padding is a requested override across several rounds of direct feedback, not the
-// Figma-confirmed values (md 8px, lg 12px horizontal/8px vertical, node 66075:28885/66075:28800)
-// — reduced because both read as button-like, then given a horizontal-only bump back once the
-// empty-icon-slot fix (§16) made a fully-uniform, hug-the-text chip read as a circle rather than
-// a pill. See chip.tsx's own SIZE_METRICS comment.
-describe("per-size metrics are independent (P1 repair)", () => {
+// `sm` is the confirmed base (docs/audit/chips.md §14/§18), unchanged. `md`/`lg` are now sm x1.25
+// and x1.5625, a pure geometric derivation superseding every prior md/lg override (padding
+// rounds, the empty-icon-slot follow-on bump, etc.) — see chip.tsx's own SIZE_METRICS comment.
+describe("sm-based 1.25x scale — md/lg no longer independently confirmed or overridden, purely derived", () => {
   const rows = [
     ["sm", "24px", "0.25rem 0.375rem", "0", "11px"],
-    ["md", "32px", "0.25rem 0.5rem", "0.125rem", "12px"],
-    ["lg", "40px", "0.375rem 0.625rem", "0.25rem", "13px"],
+    ["md", "30px", "5px 7.5px", "0", "13.75px"],
+    ["lg", "37.5px", "6.25px 9.375px", "0", "17.1875px"],
   ] as const;
 
   it.each(rows)("size=%s → height %s, padding %s, gap %s, font %s", (size, height, padding, gap, fontSize) => {
@@ -177,16 +174,15 @@ describe("per-size metrics are independent (P1 repair)", () => {
   });
 });
 
-// The inner text span's own confirmed horizontal-only padding (px-[spacing/2, 2px]) was zeroed
-// at md/lg so it wouldn't stack invisibly on top of the OUTER padding (which now carries any
-// deliberate horizontal/vertical difference on its own, explicitly — see SIZE_METRICS' own
-// comment on why md/lg went back to a horizontal bump after briefly being fully uniform).
-// sm keeps the confirmed 2px (never part of any round of this request).
-describe("inner text span padding — md/lg zeroed so the outer padding is the only source of any h/v difference", () => {
+// sm's own confirmed inner text span padding (2px horizontal) is now the base for md/lg too, at
+// the same 1.25x/1.5625x scale as everything else — reintroducing non-zero inner padding by
+// design (superseding the earlier zeroing fix), since the point is reproducing sm's exact
+// structure at a larger size.
+describe("inner text span padding — sm-based 1.25x scale, matching sm's own outer/inner ratio at every size", () => {
   const rows = [
     ["sm", "0px 0.125rem"],
-    ["md", "0px"],
-    ["lg", "0px"],
+    ["md", "0px 2.5px"],
+    ["lg", "0px 3.125px"],
   ] as const;
 
   it.each(rows)("size=%s inner text span padding is %s", (size, padding) => {

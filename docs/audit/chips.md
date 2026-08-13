@@ -226,3 +226,23 @@ Direct visual follow-up, with a screenshot: with §16's fix in place, an icon-le
 Requested: "add a bit of a side padding" back. Reintroduced a deliberate horizontal-only bump on the OUTER `padding` (vertical stays untouched at the confirmed-derived 4px/6px): `md` `0.25rem` → `0.25rem 0.5rem` (4px vertical / 8px horizontal), `lg` `0.375rem` → `0.375rem 0.625rem` (6px vertical / 10px horizontal). The inner text span's own padding (§15's `textPadding` fix) stays zeroed at `md`/`lg` — this horizontal/vertical difference now lives entirely and explicitly in the one outer `padding` value, not stacked across two padding sources like the original §14/§15 bug.
 
 Verified live: `md` chip now computes `padding: 4px 8px`, rendering at 44.5px × 32px (width/height ratio 1.39, up from 1.14) — a clear pill again, without returning to the original button-like 8px/12px. Tests updated to the new padding strings. 704/704 passing (`@shikho/ui`). Typecheck clean. Docs build clean.
+
+## 18. Superseded: `sm` declared the base, `md`/`lg` rebuilt as a 1.25x geometric scale
+
+Direct request, mirroring the exact same treatment already applied to Tags (tags.md §19/§20): "sm looks perfect — treat it as the base, scale others 1.25x each step." This **replaces** every one of §14–§17's own independently-confirmed and previously-overridden md/lg values (padding across several rounds, `textPadding` zeroing, the pill-shape horizontal bump) with a pure geometric derivation from `sm` alone.
+
+`sm` is untouched — still its own confirmed base values (height 24, padding 4px vertical/6px horizontal, `gap` 0, `iconSize` 14, `fontSize` 11, `textPadding` 2px horizontal). Every `md`/`lg` number is that same value × 1.25 / × 1.5625, exactly, no rounding, no token-snapping:
+
+| Metric | `sm` (base) | `md` (×1.25) | `lg` (×1.5625) |
+|---|---|---|---|
+| height | 24 | 30 | 37.5 |
+| padding | 4px / 6px | 5px / 7.5px | 6.25px / 9.375px |
+| `gap` | 0 | 0 | 0 |
+| `iconSize` | 14 | 17.5 | 21.875 |
+| `fontSize` | 11 | 13.75 | 17.1875 |
+| `lineHeight` | 16px | 20px | 25px |
+| `textPadding` (inner text span) | 2px | 2.5px | 3.125px |
+
+`textPadding` deliberately scales up *with* `sm`'s own non-zero value now, reintroducing inner padding that §15 had zeroed to fix a stacking-asymmetry bug — under the sm-based model this isn't a bug, since `sm` itself has always had this same ratio of outer-to-inner padding; scaling both together preserves that exact ratio at every size (total horizontal:vertical inset is identical to `sm`'s own 2:1 ratio throughout).
+
+Tests rewritten for the new sm-based values. 705/705 passing (`@shikho/ui`, up from 704). Typecheck clean. Docs build clean. Verified live: height steps 24px → 30px → 37.5px, each exactly 1.25× the last; `md` computes `padding: 5px 7.5px`.

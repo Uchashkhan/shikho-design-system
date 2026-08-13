@@ -11,12 +11,12 @@ export type ChipType = "unselected" | "selected" | "selected_neutral" | "Green" 
 export type ChipState = "disabled" | "focus" | "hover" | "drag" | "default";
 
 /**
- * Per-size metrics — every row confirmed by a live `get_design_context` sample of that size's
- * `unselected/default` variant during the P1 repair pass.
- *
- * The previous implementation carried a per-size `heightPx` table but a SINGLE padding (`p-8`),
- * gap (2px), icon size (16px) and font size (12px) — all of which were `md`'s values applied to
- * all three sizes. Figma defines each independently.
+ * Per-size metrics. `sm` is the confirmed base (docs/audit/chips.md §14/§18, unchanged). `md`/`lg`
+ * are now a pure geometric derivation from `sm` alone — 1.25x/step (1.5625x from `sm` to `lg`),
+ * the same "sm as base, scale up like Figma's Scale tool (K)" request already applied to Tags
+ * (tags.md §19/§20). This REPLACES md/lg's own independently-confirmed Figma values and every
+ * prior override on them (padding rounds, the empty-icon-slot fix's follow-on pill-shape bump,
+ * etc. — see §18's own history) with a mechanical scale of `sm`'s numbers, not a correction.
  */
 interface ChipSizeMetrics {
   height: number;
@@ -25,31 +25,25 @@ interface ChipSizeMetrics {
   iconSize: number;
   fontSize: number;
   lineHeight: string;
-  /** The inner text span's own horizontal-only padding — confirmed `px-[spacing/2, 2px]`,
-   * identical at all 3 sizes. Requested zeroed at `md`/`lg` (see this table's own comment on
-   * `padding`): even after the OUTER `padding` above was made uniform, this inner padding stacked
-   * on top of it horizontally only, so the total edge-to-text inset was still visibly bigger on
-   * the sides than top/bottom. Zeroing it at `md`/`lg` makes the total inset (outer + inner)
-   * genuinely equal on all 4 sides — not just the outer container's own padding. `sm` keeps the
-   * confirmed 2px value (not part of the request). */
+  /** The inner text span's own horizontal-only padding. `sm`'s own confirmed value (2px) is the
+   * base; `md`/`lg` are that value scaled by the same 1.25x/step factor as everything else in
+   * this table, reintroducing non-zero inner padding by design (mirroring `sm`'s own structure
+   * exactly — the total horizontal:vertical inset ratio this produces at every size is identical
+   * to `sm`'s own ratio, since both `padding` and `textPadding` scale together). */
   textPadding: string;
 }
 
 const SIZE_METRICS: Record<ChipSize, ChipSizeMetrics> = {
+  // The base — confirmed exact against Figma (§14), unchanged. `md`/`lg` below are derived from
+  // these numbers alone, not independently confirmed.
   sm: { height: 24, padding: "0.25rem 0.375rem", gap: "0", iconSize: 14, fontSize: 11, lineHeight: "16px", textPadding: "0 0.125rem" },
-  // `md`/`lg` padding below is a deliberate, requested code-only override, not a Figma value —
-  // both were confirmed byte-for-byte exact against Figma (md: 8px uniform, node 66075:28885;
-  // lg: 12px horizontal / 8px vertical, node 66075:28800; docs/audit/chips.md §14) but read as
-  // button-like at those sizes. Reduced across several rounds of direct feedback: md 8px -> 4px
-  // uniform, lg 12px -> 10px -> 8px -> 6px uniform — then, once the empty-icon-slot bug (§16) was
-  // fixed and the chip actually shrank to hug its own text, fully-uniform padding on a short
-  // label made it read as a circle rather than a pill (height 32/40 vs. a barely-wider width).
-  // Restored a deliberate horizontal-only bump — vertical stays at the same 4px/6px, only
-  // horizontal grows back out — enough to read clearly as an elongated pill again without
-  // returning to the original button-like 8px/12px. `height` (Figma-confirmed 32px/40px) is
-  // still untouched throughout.
-  md: { height: 32, padding: "0.25rem 0.5rem", gap: "0.125rem", iconSize: 16, fontSize: 12, lineHeight: "16px", textPadding: "0" },
-  lg: { height: 40, padding: "0.375rem 0.625rem", gap: "0.25rem", iconSize: 18, fontSize: 13, lineHeight: "20px", textPadding: "0" },
+  // sm x1.25, exactly: height 24->30, padding 4px/6px->5px/7.5px, iconSize 14->17.5, fontSize
+  // 11->13.75, lineHeight 16->20, textPadding 2px->2.5px. `gap` (0 at sm) stays 0. `padding`/
+  // `textPadding` are raw computed px now, not the confirmed rem values sm still uses.
+  md: { height: 30, padding: "5px 7.5px", gap: "0", iconSize: 17.5, fontSize: 13.75, lineHeight: "20px", textPadding: "0 2.5px" },
+  // sm x1.5625 (md x1.25 again): height 24->37.5, padding 4px/6px->6.25px/9.375px, iconSize
+  // 14->21.875, fontSize 11->17.1875, lineHeight 16->25, textPadding 2px->3.125px.
+  lg: { height: 37.5, padding: "6.25px 9.375px", gap: "0", iconSize: 21.875, fontSize: 17.1875, lineHeight: "25px", textPadding: "0 3.125px" },
 };
 
 const chipRadius = radius.full; // radius/border_radius_round (1000) — the ONLY radius token, §7/§9
