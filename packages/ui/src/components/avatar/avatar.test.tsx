@@ -94,52 +94,23 @@ describe("confirmed status indicator (§8)", () => {
   });
 });
 
-describe("confirmed verification badge (§8)", () => {
-  it("does not render by default", () => {
-    render(<Avatar type="image" src="/photo.jpg" />);
-    expect(screen.queryByTestId("avatar-verification")).not.toBeInTheDocument();
-  });
-
-  it("renders at the requested +2px size (14px at md — was the confirmed 12px) with a white ring", () => {
-    render(
-      <Avatar type="image" src="/photo.jpg" verification verificationContent={<span>✓</span>} />,
-    );
-    const badge = screen.getByTestId("avatar-verification");
-    expect(badge.style.width).toBe("14px");
-    expect(badge.style.height).toBe("14px");
-    expect(screen.getByText("✓")).toBeInTheDocument();
-    // Requested addition — Figma's own confirmed verification_tick carries no border at all.
-    expect(badge.style.borderRadius).toBe("1000px");
-    expect(badge.style.border).toContain("rgb(255, 255, 255)");
-    expect(badge.style.border).toContain("1.5625px"); // md's own statusBorder width, reused
-  });
-
-  // Fix: a fixed-size consumer glyph bigger than the ring's inner content area (which shrinks
-  // under border-box) overflowed the circular boundary and read as a pill/capsule, not a circle.
-  it("is explicitly box-sizing: content-box, and clips content to the circle via overflow: hidden", () => {
-    render(
-      <Avatar type="image" src="/photo.jpg" verification verificationContent={<span>✓</span>} />,
-    );
-    const badge = screen.getByTestId("avatar-verification");
-    expect(badge.style.boxSizing).toBe("content-box");
-    expect(badge.style.overflow).toBe("hidden");
-  });
-});
-
+// `verification` (a confirmed top-right checkmark badge, §8) was removed entirely per direct
+// user request ("rename ring with badge and remove the current badge") — replaced by `badge`
+// below, which is unrelated in both shape and Figma provenance.
 describe("no auto-layout, no elevation — confirmed architectural differences", () => {
-  it("positions status and verification absolutely against a relative root", () => {
-    render(<Avatar type="image" src="/photo.jpg" status verification />);
+  it("positions status absolutely against a relative root", () => {
+    render(<Avatar type="image" src="/photo.jpg" status />);
     const status = screen.getByTestId("avatar-status");
-    const verification = screen.getByTestId("avatar-verification");
     expect(status.style.position).toBe("absolute");
-    expect(verification.style.position).toBe("absolute");
   });
 });
 
-// Requested addition, not part of the original Figma audit (docs/audit/avatars.md §15) — no
-// confirmed reusable "ring" property exists on the actual `avatar` component set; this reuses the
-// 3px stroke width from a one-off reference example (node 66200:18587), scaled per size.
-describe("ring (requested addition)", () => {
+// Requested addition, not part of the original Figma audit (docs/audit/avatars.md §15–§17) — no
+// confirmed reusable "ring"/"badge" property exists on the actual `avatar` component set; this
+// reuses the 3px stroke width from a one-off reference example (node 66200:18587), scaled per
+// size. Named `badge` per direct follow-up request (renamed from `ring`, which replaced and
+// removed the unrelated `verification` prop entirely — see above).
+describe("badge (requested addition, renamed from ring)", () => {
   it("does not render a border by default", () => {
     const { container } = render(<Avatar type="image" src="/photo.jpg" />);
     const root = container.firstChild as HTMLElement;
@@ -148,22 +119,22 @@ describe("ring (requested addition)", () => {
 
   it("draws a solid ring in the given color at the confirmed md ratio (1.875px, 3px * 40/64)", () => {
     const { container } = render(
-      <Avatar type="image" src="/photo.jpg" ring ringColor="#8f45f5" />,
+      <Avatar type="image" src="/photo.jpg" badge badgeColor="#8f45f5" />,
     );
     const root = container.firstChild as HTMLElement;
     expect(root.style.border).toContain("1.875px");
     expect(root.style.border).toContain("rgb(143, 69, 245)"); // #8f45f5
   });
 
-  it("scales the ring width per size the same way statusBorder does", () => {
-    const { container, rerender } = render(<Avatar type="image" src="/photo.jpg" size="xl" ring ringColor="#8f45f5" />);
+  it("scales the badge ring width per size the same way statusBorder does", () => {
+    const { container, rerender } = render(<Avatar type="image" src="/photo.jpg" size="xl" badge badgeColor="#8f45f5" />);
     expect((container.firstChild as HTMLElement).style.border).toContain("3px");
-    rerender(<Avatar type="image" src="/photo.jpg" size="xs" ring ringColor="#8f45f5" />);
+    rerender(<Avatar type="image" src="/photo.jpg" size="xs" badge badgeColor="#8f45f5" />);
     expect((container.firstChild as HTMLElement).style.border).toContain("1.125px");
   });
 
   it("is explicitly box-sizing: content-box, so the ring adds around the avatar rather than shrinking it", () => {
-    const { container } = render(<Avatar type="image" src="/photo.jpg" ring ringColor="#8f45f5" />);
+    const { container } = render(<Avatar type="image" src="/photo.jpg" badge badgeColor="#8f45f5" />);
     const root = container.firstChild as HTMLElement;
     expect(root.style.boxSizing).toBe("content-box");
     expect(root.style.width).toBe("40px"); // md's own confirmed box, unaffected by the ring
@@ -201,23 +172,22 @@ describe("type=text and type=icon render brand gradients, not a flat gray fill",
 });
 
 describe("per-size metrics are independent, not extrapolated from md", () => {
-  // `verification` column is the requested +2px-per-size bump (was 8/10/12/14/18).
   // `statusBorder` column is re-derived from the confirmed online-badge reference (node
   // 66200:18587): border = 0.15625 * status, at every size. `xl`'s own `status` corrects from a
   // previously-measured 14 to the newly-confirmed 16 (xs/sm/md/lg unchanged).
   const cases = [
-    ["xs", "11px", 6, "0.9375px", 10],
-    ["sm", "12px", 8, "1.25px", 12],
-    ["md", "13px", 10, "1.5625px", 14],
-    ["lg", "13px", 12, "1.875px", 16],
-    ["xl", "22px", 16, "2.5px", 20],
+    ["xs", "11px", 6, "0.9375px"],
+    ["sm", "12px", 8, "1.25px"],
+    ["md", "13px", 10, "1.5625px"],
+    ["lg", "13px", 12, "1.875px"],
+    ["xl", "22px", 16, "2.5px"],
   ] as const;
 
   it.each(cases)(
-    "size=%s uses %s initials, a %ipx status dot and a %ipx verification tick",
-    (size, fontSize, status, statusBorder, verification) => {
+    "size=%s uses %s initials and a %ipx status dot",
+    (size, fontSize, status, statusBorder) => {
       render(
-        <Avatar size={size} type="text" status verification>
+        <Avatar size={size} type="text" status>
           AT
         </Avatar>,
       );
@@ -226,8 +196,6 @@ describe("per-size metrics are independent, not extrapolated from md", () => {
       const dot = screen.getByTestId("avatar-status");
       expect(dot.style.width).toBe(`${status}px`);
       expect(dot.style.border).toContain(statusBorder);
-
-      expect(screen.getByTestId("avatar-verification").style.width).toBe(`${verification}px`);
     },
   );
 });

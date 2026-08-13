@@ -246,3 +246,14 @@ Implemented as `ring?: boolean` + `ringColor?: string` (no default color — the
 Implementation note, same caveat as `status`/`verification`'s own `box-sizing` fix (§14): the avatar's root div now explicitly sets `box-sizing: content-box`, otherwise a global `border-box` reset (present in the docs app and most real consumer apps) would make the ring's border eat into the declared `box` size and shrink the avatar image itself, rather than adding a ring around it.
 
 Tests added for default (no border), color, per-size scaling, and the explicit `content-box`. 703/703 passing (`@shikho/ui`, up from 699). Typecheck clean. Docs build clean. Verified live: all 5 sizes render a clean, proportionally-scaled ring around the avatar image, matching the reference.
+
+## 17. `ring` renamed to `badge`; `verification` removed entirely
+
+Direct follow-up request: "rename ring with badge and remove the current badge." Two changes:
+
+- `ring`/`ringColor` (§16) renamed to `badge`/`badgeColor` — same behavior, same confirmed-3px-at-xl reference, same per-size scaling, just a different name. The internal `ringWidth` metric field is now `badgeWidth`.
+- `verification`/`verificationContent` (§8's confirmed top-right checkmark container, later given a requested white ring and +2px size bump in §13) is **removed entirely** — no longer a prop on `Avatar` at all. This is a real deletion, not a rename: `verification` was a small corner badge; `badge` is an unrelated whole-avatar ring. Consumers who want a checkmark-style corner indicator now have no built-in slot for it — only `status` (bottom-right dot) and `badge` (whole-avatar ring) remain.
+
+Updated everywhere `verification`/`ring` were referenced: `avatar.tsx` (props, metrics table, render), `avatar.test.tsx`, `avatar.stories.tsx` (`WithVerification`/`StatusAndVerification` stories replaced with `WithBadge`/`StatusAndBadge`), `apps/docs/src/registry/pages/avatar.tsx` (playground control, props table, gaps, showcases), `docs.meta.ts`, and `README.md` (added an "Implementation note" section pointing at this history rather than rewriting the original confirmed/derived findings, which stay accurate to what the original Figma audit found).
+
+700/700 passing (`@shikho/ui`, `verification`'s own describe block removed, `badge`'s tests carried over from `ring` unchanged in substance). Typecheck clean in both packages. Docs build clean. Verified live: the playground now shows a single "Badge" control (the old separate verification checkmark toggle is gone), correctly rendering the whole-avatar ring.

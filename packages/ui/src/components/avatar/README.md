@@ -29,6 +29,16 @@ Implements the `avatar` component set audited in `docs/audit/avatars.md` — dee
 - Whether `status`/`verification` scale, reposition, or behave differently across the other four sizes and the `icon`/`text` types — out of scope, no sibling inference performed.
 - Default variant configuration for any of the three component sets — not confirmed.
 
+## Implementation note (post-audit changes, docs/audit/avatars.md §13–§17)
+
+The confirmed/derived findings above describe what the original Figma audit found — kept intact as history. The actual component has since diverged from it, per direct user requests:
+
+- **`verification` was removed entirely.** It's still accurately described above as a real, confirmed Figma property — but the implementation no longer has it. Removed and replaced by `badge` below.
+- **`badge` (`boolean`) / `badgeColor` (`string`) were added — not confirmed in Figma at all.** Draws a solid ring around the WHOLE avatar (not a corner badge), reusing a 3px stroke width sampled from one reference example (node `66200:18587`, unrelated to the actual `avatar` component set) and scaled per size. `badgeColor` has no default.
+- **`status`'s border is now opaque white**, not the confirmed `72%`-alpha `white[800]` described above, and its size/border-width per step were re-derived from that same reference example rather than the original flat `10px`/`3px`.
+
+See `docs/audit/avatars.md` §13 onward for the full reasoning behind each change.
+
 ## Usage
 
 ```tsx

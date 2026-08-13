@@ -62,45 +62,20 @@ export const WithStatus: Story = {
   ),
 };
 
-/** The confirmed verification badge (§8) — 12×12, no glyph asset exists yet so the checkmark is a supplied slot. */
-export const WithVerification: Story = {
+/** `badge` (docs/audit/avatars.md §16/§17) — a requested addition, not part of the original
+ * Figma audit: a solid ring around the whole avatar. Renamed from `ring`; replaces the removed
+ * `verification` (top-right checkmark) feature entirely. */
+export const WithBadge: Story = {
   render: () => (
     <div style={{ display: "flex", gap: 12 }}>
-      <Avatar
-        type="image"
-        src={PHOTO}
-        verification
-        verificationContent={
-          <span
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: 1000,
-              background: "#5468ff",
-              display: "block",
-            }}
-          />
-        }
-      />
+      <Avatar type="image" src={PHOTO} badge badgeColor="#8f45f5" />
     </div>
   ),
 };
 
-/** Both badges together — status bottom-right, verification top-right, per the confirmed layer positions (§8). */
-export const StatusAndVerification: Story = {
-  render: () => (
-    <Avatar
-      type="image"
-      src={PHOTO}
-      status
-      verification
-      verificationContent={
-        <span
-          style={{ width: 12, height: 12, borderRadius: 1000, background: "#5468ff", display: "block" }}
-        />
-      }
-    />
-  ),
+/** `status` and `badge` together — status bottom-right, badge wrapping the whole avatar. */
+export const StatusAndBadge: Story = {
+  render: () => <Avatar type="image" src={PHOTO} status badge badgeColor="#8f45f5" />,
 };
 
 /**
